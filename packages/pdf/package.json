@@ -1,0 +1,32 @@
+{
+  "name": "@repo/pdf",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client/usePdf": "./src/client/usePdf.ts",
+    "./templates/invoice": "./src/templates/invoice.tsx",
+    "./templates/certificate": "./src/templates/certificate.tsx",
+    "./templates/agreement": "./src/templates/agreement.tsx"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "4.9.0",
+    "@tanstack/react-query": "5.104.1",
+    "dejavu-fonts-ttf": "2.37.3",
+    "pdfkit": "0.20.2",
+    "qrcode": "1.5.4",
+    "react": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "19.3.0",
+    "bun-types": "1.4.4",
+    "typescript": "7.0.2"
+  }
+}

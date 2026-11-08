@@ -1,0 +1,17 @@
+{
+  "extends": "@repo/typescript-config/expo.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "uniwind-types.d.ts",
+    "global.css"
+  ],
+  "exclude": ["node_modules"]
+}

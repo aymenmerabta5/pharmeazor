@@ -1,0 +1,42 @@
+{
+  "name": "@repo/analytics",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
+    "./server": "./src/server/index.ts",
+    "./shared": "./src/shared/index.ts",
+    "./testing": "./src/testing/mocks.ts",
+    "./proxy": "./src/proxy/README.md"
+  },
+  "scripts": {
+    "test": "bun test tests/barrel.test.ts && bun --conditions=react-server test --preload ../../scripts/test-env.ts tests/server-barrel.test.ts",
+    "test:unit": "bun test tests/barrel.test.ts && bun --conditions=react-server test --preload ../../scripts/test-env.ts tests/server-barrel.test.ts",
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@base-ui/react": "1.8.0",
+    "@repo/config": "workspace:*",
+    "@repo/observability": "workspace:*",
+    "posthog-js": "1.435.8",
+    "posthog-node": "5.55.0",
+    "server-only": "0.0.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/react": "19.3.0",
+    "bun-types": "1.4.4",
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0",
+    "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "next": "16.3.8",
+    "react": "19.3.0"
+  }
+}

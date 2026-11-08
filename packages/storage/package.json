@@ -1,0 +1,21 @@
+{
+  "name": "@repo/storage",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1146.0",
+    "@repo/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

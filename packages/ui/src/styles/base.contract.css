@@ -1,0 +1,18 @@
+@custom-variant ui-hover (&:where(.ui-hover, .ui-hover *));
+@custom-variant ui-active (&:where(.ui-active, .ui-active *));
+@custom-variant ui-selected (&:where(.ui-selected, .ui-selected *));
+@custom-variant ui-disabled (&:where(.ui-disabled, .ui-disabled *));
+@custom-variant ui-loading (&:where(.ui-loading, .ui-loading *));
+@custom-variant ui-error (&:where(.ui-error, .ui-error *));
+
+@theme inline {
+  --ui-role-canvas: var(--background);
+  --ui-role-content: var(--foreground);
+  --ui-role-surface: var(--card);
+  --ui-role-surface-content: var(--card-foreground);
+  --ui-role-muted-content: var(--muted-foreground);
+  --ui-role-action: var(--primary);
+  --ui-role-action-content: var(--primary-foreground);
+  --ui-role-danger: var(--destructive);
+  --ui-role-focus: var(--ring);
+}

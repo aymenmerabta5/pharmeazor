@@ -1,0 +1,11 @@
+{
+  "name": "@tooling/architecture",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  }
+}

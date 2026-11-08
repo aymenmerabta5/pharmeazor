@@ -1,0 +1,47 @@
+{
+  "extends": "@repo/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@repo/*": ["../../packages/*/src"],
+      "@repo/analytics": ["../../packages/analytics/src/index.ts"],
+      "@repo/api": ["../../packages/api/src/index.ts"],
+      "@repo/auth": ["../../packages/auth/src/index.ts"],
+      "@repo/auth/*": ["../../packages/auth/src/*"],
+      "@repo/billing": ["../../packages/billing/src/index.ts"],
+      "@repo/billing/*": ["../../packages/billing/src/*"],
+      "@repo/config": ["../../packages/config/src/index.ts"],
+      "@repo/config/desktop-main": ["../../packages/config/src/desktop-main.ts"],
+      "@repo/config/expo": ["../../packages/config/src/expo.ts"],
+      "@repo/config/next": ["../../packages/config/src/next.ts"],
+      "@repo/config/server": ["../../packages/config/src/server.ts"],
+      "@repo/config/vite": ["../../packages/config/src/vite.ts"],
+      "@repo/contracts": ["../../packages/contracts/src/index.ts"],
+      "@repo/database": ["../../packages/database/src/index.ts"],
+      "@repo/database/*": ["../../packages/database/src/*"],
+      "@repo/email": ["../../packages/email/src/index.ts"],
+      "@repo/kernel": ["../../packages/kernel/src/index.ts"],
+      "@repo/modules": ["../../packages/modules/src/index.ts"],
+      "@repo/modules/*": ["../../packages/modules/src/*"],
+      "@repo/observability": ["../../packages/observability/src/index.ts"],
+      "@repo/realtime": ["../../packages/realtime/src/index.ts"],
+      "@repo/realtime/*": ["../../packages/realtime/src/*"],
+      "@repo/services": ["../../packages/services/src/index.ts"],
+      "@repo/services/*": ["../../packages/services/src/*"],
+      "@repo/storage": ["../../packages/storage/src/index.ts"],
+      "@repo/storage/*": ["../../packages/storage/src/*"],
+      "@repo/ui": ["../../packages/ui/src/index.ts"],
+      "@repo/ui/*": ["../../packages/ui/src/*"]
+    },
+    "noEmit": true,
+    "incremental": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".ghostinit", "dist"]
+}

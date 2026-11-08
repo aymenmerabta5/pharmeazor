@@ -1,0 +1,41 @@
+@theme inline {
+  --font-sans:
+    var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+}
+
+@layer base {
+  :root {
+    --font-geist-sans: "Geist Variable", "Noto Sans Arabic Variable";
+    --font-geist-mono: "Geist Mono Variable";
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  .display {
+    letter-spacing: var(--tracking-display);
+    text-wrap: balance;
+  }
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+  }
+}

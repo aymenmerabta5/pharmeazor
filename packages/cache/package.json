@@ -1,0 +1,22 @@
+{
+  "name": "@repo/cache",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@upstash/redis": "1.39.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "bun-types": "1.4.4",
+    "typescript": "7.0.2"
+  }
+}

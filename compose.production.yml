@@ -1,0 +1,29 @@
+# Production application Compose file. The development Postgres service remains in docker-compose.yml.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      secrets:
+        - ghostinit_env
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      # Match the image's fail-closed production default even when development
+      # .env.local contains STORAGE_DRIVER=local.
+      STORAGE_DRIVER: s3
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    # The generated supervisor reserves 20s for SIGTERM and 5s before escalation.
+    stop_grace_period: 30s
+    volumes:
+      - eve_workflow_data:/app/apps/eve/.eve/.workflow-data
+secrets:
+  ghostinit_env:
+    # BuildKit mounts this ephemerally for validation/build; it is never copied.
+    file: .env.local
+volumes:
+  eve_workflow_data:
+    # Stable across container replacement; do not remove it with compose down -v.
+    name: "${COMPOSE_PROJECT_NAME:-pharmeazor}_eve_workflow_data"

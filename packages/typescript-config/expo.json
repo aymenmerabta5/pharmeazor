@@ -1,0 +1,23 @@
+{
+  "extends": "./base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "noEmit": true,
+    "incremental": true,
+    "composite": false,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@repo/*": ["../../packages/*/src", "../../tooling/*/src"],
+      "@repo/config": ["../../packages/config/src/index.ts"],
+      "@repo/config/server": ["../../packages/config/src/server.ts"],
+      "@repo/config/desktop-main": ["../../packages/config/src/desktop-main.ts"],
+      "@repo/config/next": ["../../packages/config/src/next.ts"],
+      "@repo/config/vite": ["../../packages/config/src/vite.ts"],
+      "@repo/config/expo": ["../../packages/config/src/expo.ts"],
+      "@repo/ui": ["../../packages/ui/src/index.ts"],
+      "@repo/ui/*": ["../../packages/ui/src/*"]
+    },
+    "types": ["bun-types", "node", "expo/types"]
+  }
+}

@@ -1,0 +1,12 @@
+# GhostInit lefthook alternative to husky
+# Install: bun add -d lefthook && bunx lefthook install
+# Docs: https://github.com/evilmartians/lefthook
+pre-commit:
+  parallel: false
+  commands:
+    oxlint:
+      run: bunx --no-install oxlint --deny-warnings .
+    oxfmt:
+      run: bunx --no-install oxfmt --check .
+    arch:
+      run: bunx --bun ghostinit@0.1.0 check --json

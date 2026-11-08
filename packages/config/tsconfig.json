@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "composite": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@repo/*": ["../../packages/*/src"]
+    }
+  },
+  "include": ["src/**/*"]
+}

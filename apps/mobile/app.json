@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "pharmeazor",
+    "slug": "pharmeazor",
+    "scheme": "pharmeazor",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "associatedDomains": ["applinks:myapp.example.com"]
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "myapp.example.com",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "platforms": ["ios", "android", "web"]
+  }
+}

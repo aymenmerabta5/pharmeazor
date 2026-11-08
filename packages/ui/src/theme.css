@@ -1,0 +1,2 @@
+/* Compatibility entrypoint. The OKLCH --background tokens and @theme inline mapping live in styles/theme.css. */
+@import "./styles/theme.css";

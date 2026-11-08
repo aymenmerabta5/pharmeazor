@@ -1,0 +1,30 @@
+{
+  "name": "@repo/auth",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./access": "./src/access.ts",
+    "./identity-capabilities": "./src/identity-capabilities.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@better-auth/core": "1.6.33",
+    "@better-auth/expo": "1.6.33",
+    "@better-auth/passkey": "1.6.33",
+    "@repo/config": "workspace:*",
+    "@repo/database": "workspace:*",
+    "@repo/email": "workspace:*",
+    "better-auth": "1.6.33"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@repo/config",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./next": "./src/next.ts",
+    "./vite": "./src/vite.ts",
+    "./expo": "./src/expo.ts",
+    "./desktop-main": "./src/desktop-main.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "0.13.11",
+    "@t3-oss/env-nextjs": "0.13.11",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

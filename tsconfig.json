@@ -1,0 +1,73 @@
+{
+  "extends": "./packages/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": true,
+    "composite": false,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@repo/services/application": ["./packages/services/src/application/index.ts"],
+      "@repo/*": ["./packages/*/src", "./tooling/*/src"],
+      "@repo/config": ["./packages/config/src/index.ts"],
+      "@repo/config/server": ["./packages/config/src/server.ts"],
+      "@repo/config/desktop-main": ["./packages/config/src/desktop-main.ts"],
+      "@repo/config/next": ["./packages/config/src/next.ts"],
+      "@repo/config/vite": ["./packages/config/src/vite.ts"],
+      "@repo/config/expo": ["./packages/config/src/expo.ts"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".output",
+    ".turbo",
+    "apps/*/dist",
+    "apps/*/.next",
+    "packages/*/dist"
+  ],
+  "references": [
+    {
+      "path": "packages/typescript-config"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "packages/kernel"
+    },
+    {
+      "path": "packages/contracts"
+    },
+    {
+      "path": "packages/observability"
+    },
+    {
+      "path": "packages/database"
+    },
+    {
+      "path": "packages/auth"
+    },
+    {
+      "path": "packages/billing"
+    },
+    {
+      "path": "packages/api"
+    },
+    {
+      "path": "packages/modules"
+    },
+    {
+      "path": "packages/services"
+    },
+    {
+      "path": "packages/ui"
+    },
+    {
+      "path": "apps/web"
+    },
+    {
+      "path": "apps/mobile"
+    }
+  ]
+}

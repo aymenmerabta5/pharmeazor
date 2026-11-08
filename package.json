@@ -1,0 +1,78 @@
+{
+  "name": "pharmeazor",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "audit:dependencies": "bun scripts/audit-dependencies.ts",
+    "audit:lock": "bun scripts/audit-dependencies.ts --lock-only",
+    "audit:lock:refresh": "bun scripts/audit-dependencies.ts --refresh-lock-evidence",
+    "build": "bun scripts/build-with-eve.mjs",
+    "check": "bunx --bun ghostinit@0.1.0 check",
+    "check:fix": "bunx --bun ghostinit@0.1.0 check --fix",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:push": "turbo run db:push",
+    "dev": "turbo run dev",
+    "doctor:fix": "bunx --bun ghostinit@0.1.0 doctor --fix",
+    "eve:build": "bun --env-file=.env.local run --cwd apps/eve build",
+    "eve:dev": "bun --env-file=.env.local run --cwd apps/eve dev:diagnostic",
+    "eve:start": "bun --env-file=.env.local run --cwd apps/eve start:diagnostic",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "install:bootstrap": "bun scripts/security-dependencies.cjs install --bootstrap",
+    "install:cmd": "bun run install:verified",
+    "install:verified": "bun scripts/security-dependencies.cjs install",
+    "lint": "bun scripts/lib/dependency-security-integrity.cjs && oxlint --deny-warnings . && bun scripts/check-import-aliases.cjs && bun scripts/check-next-parity.cjs && bun scripts/check-navigation-imports.cjs",
+    "lint:all": "bun run lint && bun run lint:architecture && bun run lint:rtl && bun run lint:animations && bun run lint:server-only && bun run typecheck",
+    "lint:animations": "bun scripts/check-animation-imports.cjs",
+    "lint:architecture": "bun scripts/check-feature-folder.cjs && bun scripts/check-frontend-ownership.cjs",
+    "lint:imports": "bun scripts/check-import-aliases.cjs",
+    "lint:navigation": "bun scripts/check-navigation-imports.cjs",
+    "lint:next-parity": "bun scripts/check-next-parity.cjs",
+    "lint:oxlint": "bun scripts/lib/dependency-security-integrity.cjs && oxlint --deny-warnings .",
+    "lint:rtl": "bun scripts/check-rtl-logical.cjs",
+    "lint:server-only": "bun scripts/check-server-only.cjs",
+    "lint:tooling-integrity": "bun scripts/lib/dependency-security-integrity.cjs",
+    "lock:resolve": "bun install --lockfile-only --ignore-scripts",
+    "preinstall": "bun scripts/audit-dependencies.ts --lock-only",
+    "prepare": "husky",
+    "security:audit": "bun scripts/security-dependencies.cjs audit",
+    "security:fix": "bun scripts/security-dependencies.cjs fix",
+    "start": "bun --env-file=.env.local run start:production",
+    "start:eve": "node apps/eve/.output/server/index.mjs",
+    "start:production": "bun scripts/start-production.mjs",
+    "start:web": "bun run --cwd apps/web start",
+    "storage:cleanup-worker": "bun --conditions=react-server packages/api/src/workers/storage/cleanup.ts --ghostinit-storage-cleanup-worker",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "bun-types": "1.4.4",
+    "husky": "9.1.7",
+    "oxc-parser": "0.152.0",
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0",
+    "turbo": "2.11.7",
+    "typescript": "7.0.2"
+  },
+  "overrides": {
+    "drizzle-orm": "0.45.4",
+    "pdfkit": "0.20.2",
+    "undici": "8.10.2"
+  },
+  "engines": {
+    "bun": "1.4.4"
+  },
+  "packageManager": "bun@1.4.4",
+  "patchedDependencies": {
+    "image-size@1.2.1": "patches/image-size@1.2.1.patch",
+    "braces@3.0.3": "patches/braces@3.0.3.patch",
+    "node-forge@1.4.0": "patches/node-forge@1.4.0.patch"
+  }
+}

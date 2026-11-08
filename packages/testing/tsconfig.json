@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["bun-types"],
+    "composite": true,
+    "incremental": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"]
+}

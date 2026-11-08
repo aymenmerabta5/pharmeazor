@@ -1,0 +1,475 @@
+{
+  "$schema": "https://ghostinit.dev/schemas/component-registry.schema.json",
+  "schemaVersion": 1,
+  "registryVersion": "1.0.0",
+  "componentBase": "base-ui",
+  "iconLibraries": {
+    "web": "lucide-react",
+    "electron": "lucide-react",
+    "native": "lucide-react-native"
+  },
+  "components": [
+    {
+      "id": "action.button",
+      "category": "action",
+      "semanticImport": "button",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/button",
+          "primitive": "@base-ui/react/button",
+          "exports": ["Button"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/button",
+          "primitive": "@base-ui/react/button",
+          "exports": ["Button"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/button",
+          "primitive": "react-native/Pressable",
+          "exports": ["Button"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.action.button.v1"]
+    },
+    {
+      "id": "data.table",
+      "category": "data",
+      "semanticImport": "table",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/table",
+          "primitive": "react",
+          "exports": ["Table", "TableBody", "TableCell", "TableRow"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/table",
+          "primitive": "react",
+          "exports": ["Table", "TableBody", "TableCell", "TableRow"]
+        },
+        "native": {
+          "status": "inapplicable",
+          "rationale": "data.table has no approved Expo source wrapper in contract version 1; use platform feedback instead."
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.data.table.v1"]
+    },
+    {
+      "id": "feedback.alert",
+      "category": "feedback",
+      "semanticImport": "alert",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/alert",
+          "primitive": "react",
+          "exports": ["Alert", "AlertDescription", "AlertTitle"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/alert",
+          "primitive": "react",
+          "exports": ["Alert", "AlertDescription", "AlertTitle"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/alert",
+          "primitive": "react-native/View",
+          "exports": ["Alert", "AlertDescription", "AlertTitle"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.feedback.alert.v1"]
+    },
+    {
+      "id": "feedback.empty",
+      "category": "feedback",
+      "semanticImport": "empty",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/empty",
+          "primitive": "react",
+          "exports": ["Empty", "EmptyDescription", "EmptyTitle"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/empty",
+          "primitive": "react",
+          "exports": ["Empty", "EmptyDescription", "EmptyTitle"]
+        },
+        "native": {
+          "status": "inapplicable",
+          "rationale": "feedback.empty has no approved Expo source wrapper in contract version 1; use platform feedback instead."
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.feedback.empty.v1"]
+    },
+    {
+      "id": "feedback.toast",
+      "category": "feedback",
+      "semanticImport": "sonner",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/sonner",
+          "primitive": "sonner",
+          "exports": ["Toaster"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/sonner",
+          "primitive": "sonner",
+          "exports": ["Toaster"]
+        },
+        "native": {
+          "status": "inapplicable",
+          "rationale": "feedback.toast has no approved Expo source wrapper in contract version 1; use platform feedback instead."
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.feedback.toast.v1"]
+    },
+    {
+      "id": "form.input",
+      "category": "form",
+      "semanticImport": "input",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/input",
+          "primitive": "react",
+          "exports": ["Input"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/input",
+          "primitive": "react",
+          "exports": ["Input"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/input",
+          "primitive": "react-native/TextInput",
+          "exports": ["Input"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.form.input.v1"]
+    },
+    {
+      "id": "form.label",
+      "category": "form",
+      "semanticImport": "label",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/label",
+          "primitive": "react",
+          "exports": ["Label"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/label",
+          "primitive": "react",
+          "exports": ["Label"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/label",
+          "primitive": "react-native/Text",
+          "exports": ["Label"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.form.label.v1"]
+    },
+    {
+      "id": "form.select",
+      "category": "form",
+      "semanticImport": "select",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/select",
+          "primitive": "@base-ui/react/select",
+          "exports": ["Select", "SelectContent", "SelectItem"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/select",
+          "primitive": "@base-ui/react/select",
+          "exports": ["Select", "SelectContent", "SelectItem"]
+        },
+        "native": {
+          "status": "inapplicable",
+          "rationale": "form.select has no approved Expo source wrapper in contract version 1; use platform feedback instead."
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.form.select.v1"]
+    },
+    {
+      "id": "identity.avatar",
+      "category": "identity",
+      "semanticImport": "avatar",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/avatar",
+          "primitive": "@base-ui/react/avatar",
+          "exports": ["Avatar", "AvatarFallback", "AvatarImage"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/avatar",
+          "primitive": "@base-ui/react/avatar",
+          "exports": ["Avatar", "AvatarFallback", "AvatarImage"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/avatar",
+          "primitive": "react-native/View",
+          "exports": ["Avatar", "AvatarFallback", "AvatarImage"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.identity.avatar.v1"]
+    },
+    {
+      "id": "layout.separator",
+      "category": "layout",
+      "semanticImport": "separator",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/separator",
+          "primitive": "@base-ui/react/separator",
+          "exports": ["Separator"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/separator",
+          "primitive": "@base-ui/react/separator",
+          "exports": ["Separator"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/separator",
+          "primitive": "react-native/View",
+          "exports": ["Separator"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.layout.separator.v1"]
+    },
+    {
+      "id": "loading.skeleton",
+      "category": "loading",
+      "semanticImport": "skeleton",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/skeleton",
+          "primitive": "react",
+          "exports": ["Skeleton"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/skeleton",
+          "primitive": "react",
+          "exports": ["Skeleton"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/skeleton",
+          "primitive": "react-native/View",
+          "exports": ["Skeleton"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.loading.skeleton.v1"]
+    },
+    {
+      "id": "navigation.tabs",
+      "category": "navigation",
+      "semanticImport": "tabs",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/tabs",
+          "primitive": "@base-ui/react/tabs",
+          "exports": ["Tabs", "TabsContent", "TabsList", "TabsTrigger"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/tabs",
+          "primitive": "@base-ui/react/tabs",
+          "exports": ["Tabs", "TabsContent", "TabsList", "TabsTrigger"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/tabs",
+          "primitive": "react-native/Pressable",
+          "exports": ["Tabs", "TabsContent", "TabsList", "TabsTrigger"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.navigation.tabs.v1"]
+    },
+    {
+      "id": "overlay.dialog",
+      "category": "overlay",
+      "semanticImport": "dialog",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/dialog",
+          "primitive": "@base-ui/react/dialog",
+          "exports": ["Dialog", "DialogContent", "DialogTitle"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/dialog",
+          "primitive": "@base-ui/react/dialog",
+          "exports": ["Dialog", "DialogContent", "DialogTitle"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/dialog",
+          "primitive": "react-native/Modal",
+          "exports": ["Dialog", "DialogContent", "DialogTitle"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.overlay.dialog.v1"]
+    },
+    {
+      "id": "status.badge",
+      "category": "status",
+      "semanticImport": "badge",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/badge",
+          "primitive": "react",
+          "exports": ["Badge"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/badge",
+          "primitive": "react",
+          "exports": ["Badge"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/badge",
+          "primitive": "react-native/View",
+          "exports": ["Badge"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.status.badge.v1"]
+    },
+    {
+      "id": "surface.card",
+      "category": "surface",
+      "semanticImport": "card",
+      "targets": {
+        "web": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/card",
+          "primitive": "react",
+          "exports": ["Card", "CardContent", "CardHeader", "CardTitle"]
+        },
+        "electron": {
+          "status": "applicable",
+          "implementation": "shadcn-base-ui",
+          "importPattern": "@/components/ui/card",
+          "primitive": "react",
+          "exports": ["Card", "CardContent", "CardHeader", "CardTitle"]
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/card",
+          "primitive": "react-native/View",
+          "exports": ["Card", "CardContent", "CardHeader", "CardTitle"]
+        }
+      },
+      "requiredStates": ["default", "hover", "focus", "active", "disabled"],
+      "fixtures": ["component.surface.card.v1"]
+    },
+    {
+      "id": "typography.text",
+      "category": "typography",
+      "semanticImport": "text",
+      "targets": {
+        "web": {
+          "status": "inapplicable",
+          "rationale": "Web and Electron use semantic HTML typography rather than a generated Text wrapper."
+        },
+        "electron": {
+          "status": "inapplicable",
+          "rationale": "Electron uses semantic HTML typography rather than a generated Text wrapper."
+        },
+        "native": {
+          "status": "applicable",
+          "implementation": "react-native-reusables",
+          "importPattern": "@/components/ui/text",
+          "primitive": "react-native/Text",
+          "exports": ["Text"]
+        }
+      },
+      "requiredStates": ["default", "disabled"],
+      "fixtures": ["component.typography.text.v1"]
+    }
+  ]
+}

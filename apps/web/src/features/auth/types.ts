@@ -1,0 +1,14 @@
+import type { useAuthMethods } from "./use-auth-methods";
+import type { useSignInForm } from "./use-sign-in-form";
+import type { useSignUpForm } from "./use-sign-up-form";
+export type AuthMethodsState = ReturnType<typeof useAuthMethods>;
+export type SignInFormState = ReturnType<typeof useSignInForm>;
+export type SignUpFormState = ReturnType<typeof useSignUpForm>;
+import type { useTwoFactorForm } from "./use-two-factor-form";
+import type { useForgotPasswordForm } from "./use-forgot-password-form";
+import type { useResetPasswordForm } from "./use-reset-password-form";
+import type { useEmailFlowForm } from "./use-email-flow-form";
+export type TwoFactorFormState = ReturnType<typeof useTwoFactorForm>;
+export type ForgotPasswordFormState = ReturnType<typeof useForgotPasswordForm>;
+export type ResetPasswordFormState = ReturnType<typeof useResetPasswordForm>;
+export type EmailFlowFormState = ReturnType<typeof useEmailFlowForm>;

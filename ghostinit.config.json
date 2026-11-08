@@ -1,0 +1,46 @@
+{
+  "$schema": "https://ghostinit.dev/schemas/project-config.schema.json",
+  "schemaVersion": 2,
+  "name": "pharmeazor",
+  "mode": "monorepo",
+  "runtime": "bun",
+  "packageManager": {
+    "name": "bun",
+    "version": "1.4.4"
+  },
+  "apps": [
+    {
+      "id": "mobile",
+      "target": "expo",
+      "deploy": "none"
+    },
+    {
+      "id": "web",
+      "target": "nextjs",
+      "deploy": "docker"
+    }
+  ],
+  "backend": {
+    "hostApp": "web",
+    "executionRuntime": "bun",
+    "database": "postgres"
+  },
+  "capabilities": {
+    "transport": true,
+    "auth": true,
+    "billing": {
+      "providers": ["chargily", "manual", "stripe"]
+    },
+    "messaging": false,
+    "email": true,
+    "storage": true,
+    "cache": "redis",
+    "analytics": true,
+    "i18n": true,
+    "pdf": true,
+    "eve": true,
+    "notifications": false,
+    "featureFlags": false,
+    "jobs": false
+  }
+}

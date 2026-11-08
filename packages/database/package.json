@@ -1,0 +1,28 @@
+{
+  "name": "@repo/database",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "db:generate": "bun --env-file=../../.env.local drizzle-kit generate",
+    "db:migrate": "bun --env-file=../../.env.local drizzle-kit migrate",
+    "db:push": "bun --env-file=../../.env.local drizzle-kit push"
+  },
+  "dependencies": {
+    "@repo/config": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11",
+    "typescript": "7.0.2"
+  }
+}

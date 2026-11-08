@@ -1,0 +1,28 @@
+import { defineConfig } from "drizzle-kit";
+
+function buildConnectionString(): string {
+  const user = process.env.POSTGRES_USER ?? "postgres";
+  const password = process.env.POSTGRES_PASSWORD ?? "";
+  const host = process.env.POSTGRES_HOST ?? "localhost";
+  const port = process.env.POSTGRES_PORT ?? "5432";
+  const db = process.env.POSTGRES_DB ?? process.env.APP_NAME ?? "ghostinit";
+  return (
+    "postgresql://" +
+    encodeURIComponent(user) +
+    ":" +
+    encodeURIComponent(password) +
+    "@" +
+    host +
+    ":" +
+    port +
+    "/" +
+    encodeURIComponent(db)
+  );
+}
+
+export default defineConfig({
+  schema: "./src/schema/index.ts",
+  out: "./drizzle",
+  dialect: "postgresql",
+  dbCredentials: { url: process.env.DATABASE_URL ?? buildConnectionString() },
+});

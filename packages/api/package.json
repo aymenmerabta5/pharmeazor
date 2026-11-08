@@ -1,0 +1,40 @@
+{
+  "name": "@repo/api",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./eve": "./src/eve/index.ts",
+    "./identity": "./src/identity/index.ts",
+    "./openapi": "./src/openapi.ts",
+    "./storage": "./src/storage/index.ts",
+    "./workers/storage/cleanup": "./src/workers/storage/cleanup.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
+    "@orpc/client": "1.15.4",
+    "@orpc/contract": "1.15.4",
+    "@orpc/openapi": "1.15.4",
+    "@orpc/server": "1.15.4",
+    "@orpc/zod": "1.15.4",
+    "@repo/auth": "workspace:*",
+    "@repo/billing": "workspace:*",
+    "@repo/config": "workspace:*",
+    "@repo/database": "workspace:*",
+    "@repo/observability": "workspace:*",
+    "@repo/services": "workspace:*",
+    "@repo/storage": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "server-only": "0.0.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

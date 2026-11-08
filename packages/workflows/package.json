@@ -1,0 +1,13 @@
+{
+  "name": "@repo/workflows",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  }
+}

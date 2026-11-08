@@ -1,0 +1,17 @@
+{
+  "name": "@repo/observability",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

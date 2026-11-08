@@ -1,0 +1,6 @@
+@import "uniwind";
+@import "@repo/ui/styles/adapters/expo/v1.css";
+
+@source "./app/**/*.{js,jsx,ts,tsx}";
+@source "./src/**/*.{js,jsx,ts,tsx}";
+@source "./components/**/*.{js,jsx,ts,tsx}";
