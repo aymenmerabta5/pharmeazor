@@ -258,10 +258,10 @@ async function dispatchUpstream(
   }
 }
 
-async function bestEffortReset(sessionId: string, origin: string, secret: string): Promise<void> {
+async function bestEffortEnd(sessionId: string, origin: string, secret: string): Promise<void> {
   if (!isValidEveSessionId(sessionId)) return;
   try {
-    await fetch(new URL("/eve/v1/session/" + encodeURIComponent(sessionId) + "/reset", origin), {
+    await fetch(new URL("/eve/v1/session/" + encodeURIComponent(sessionId) + "/end", origin), {
       method: "POST",
       headers: upstreamHeaders(secret),
       body: JSON.stringify({ reason: "ownership_claim_failed" }),
@@ -431,17 +431,17 @@ export async function handleEveFacadeRequest(request: Request): Promise<Response
         retainAdmissionLease = true;
       } catch {
         // A caller-provided operation id may have resumed an older session. Only
-        // reset a non-idempotent create, where Eve necessarily minted this id for
+        // end a non-idempotent create, where Eve necessarily minted this id for
         // the request, so cleanup can never retire another owner's conversation.
         if (typeof body?.operationId !== "string") {
-          await bestEffortReset(sessionId, upstreamOrigin, secret);
+          await bestEffortEnd(sessionId, upstreamOrigin, secret);
         }
         return privateResponse(503, "ownership_unavailable", "The session could not be claimed.");
       }
       return browserResponse(upstream, source);
     }
 
-    if (decision.route.kind === "reset" && upstream.ok && decision.route.sessionId !== null) {
+    if (decision.route.kind === "end" && upstream.ok && decision.route.sessionId !== null) {
       try {
         const retired = await agentSessionOwnershipPort.retire({
           actor: ownershipActor,

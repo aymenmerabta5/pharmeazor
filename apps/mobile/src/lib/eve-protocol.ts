@@ -26,11 +26,31 @@ export interface EveInvokeOptions {
 }
 
 type JsonObject = Record<string, unknown>;
-type EveEvent = { readonly type: string; readonly data: JsonObject };
+interface EveFact {
+  readonly type: string;
+  readonly data: JsonObject;
+}
+interface EveProgress {
+  readonly type: string;
+  readonly data: JsonObject;
+}
+type ParsedRecord =
+  | { readonly kind: "facts"; readonly at: string; readonly facts: readonly EveFact[] }
+  | { readonly kind: "progress"; readonly progress: EveProgress }
+  | { readonly kind: "transport"; readonly name: string }
+  | { readonly kind: "position"; readonly next: number };
+
+interface StreamReceipt {
+  readonly sessionId: string;
+  readonly deliveryId: string | null;
+}
 
 const MAX_MESSAGE_LENGTH = 64 * 1024;
 const MAX_EVENT_BATCH_BYTES = 2 * 1024 * 1024;
 const SESSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;
+const DELIVERY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;
+/** Eve retires a session when it ends or the server restarts with fresh state. */
+const STALE_SESSION_STATUSES = new Set([404, 409]);
 
 export class EveClientError extends Error {
   readonly status: number | null;
@@ -98,7 +118,10 @@ async function expectSuccess(response: Response): Promise<Response> {
   return response;
 }
 
-async function acceptedSessionId(response: Response, fallback: string | null): Promise<string> {
+async function acceptedReceipt(
+  response: Response,
+  fallback: string | null,
+): Promise<StreamReceipt> {
   const source = await response.text();
   let value: unknown;
   try {
@@ -107,18 +130,24 @@ async function acceptedSessionId(response: Response, fallback: string | null): P
     throw new EveClientError("The Eve service returned invalid JSON.", response.status);
   }
   const fromBody = isObject(value) ? text(value.sessionId) : null;
-  const candidate = fallback ?? fromBody ?? response.headers.get("x-eve-session-id");
-  if (!candidate || !SESSION_ID_PATTERN.test(candidate)) {
+  const sessionId = fallback ?? fromBody ?? response.headers.get("x-eve-session-id");
+  if (!sessionId || !SESSION_ID_PATTERN.test(sessionId)) {
     throw new EveClientError("The Eve service omitted a valid session id.", response.status);
   }
-  return candidate;
+  const receipt = isObject(value) ? text(value.deliveryId) : null;
+  const deliveryId = receipt && DELIVERY_ID_PATTERN.test(receipt) ? receipt : null;
+  return { sessionId, deliveryId };
 }
 
-function parseEvents(source: string): EveEvent[] {
+function parseRecords(source: string): {
+  readonly records: readonly ParsedRecord[];
+  readonly storedLines: number;
+} {
   if (source.length > MAX_EVENT_BATCH_BYTES) {
     throw new EveClientError("The Eve event batch is too large.");
   }
-  const events: EveEvent[] = [];
+  const records: ParsedRecord[] = [];
+  let storedLines = 0;
   for (const line of source.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed) continue;
@@ -128,16 +157,69 @@ function parseEvents(source: string): EveEvent[] {
     } catch {
       throw new EveClientError("The Eve event stream contained invalid JSON.");
     }
-    if (!isObject(value) || typeof value.type !== "string") {
+    if (!isObject(value)) {
       throw new EveClientError("The Eve event stream contained an invalid event.");
     }
-    events.push({ type: value.type, data: isObject(value.data) ? value.data : {} });
+    if (typeof value.$eve === "string") {
+      if (
+        value.$eve === "position" &&
+        Number.isSafeInteger(value.next) &&
+        Number(value.next) >= 0
+      ) {
+        records.push({ kind: "position", next: Number(value.next) });
+      } else {
+        records.push({ kind: "transport", name: value.$eve });
+      }
+      continue;
+    }
+    if (isObject(value.progress)) {
+      const progress = value.progress;
+      if (typeof progress.type !== "string") {
+        throw new EveClientError("The Eve event stream contained an invalid progress record.");
+      }
+      storedLines += 1;
+      records.push({
+        kind: "progress",
+        progress: {
+          type: progress.type,
+          data: isObject(progress.data) ? progress.data : {},
+        },
+      });
+      continue;
+    }
+    if (Array.isArray(value.facts) && typeof value.at === "string") {
+      const facts: EveFact[] = [];
+      for (const entry of value.facts) {
+        if (!isObject(entry) || typeof entry.type !== "string") continue;
+        facts.push({ type: entry.type, data: isObject(entry.data) ? entry.data : {} });
+      }
+      storedLines += 1;
+      records.push({ kind: "facts", at: value.at, facts });
+      continue;
+    }
+    throw new EveClientError("The Eve event stream contained an invalid event.");
   }
-  return events;
+  return { records, storedLines };
 }
 
-function failureMessage(event: EveEvent): string {
-  return text(event.data.message) ?? text(event.data.error) ?? "The Eve session failed.";
+function failureMessage(data: JsonObject): string {
+  const error = data.error;
+  if (isObject(error)) {
+    return (
+      text(error.message) ??
+      text(error.hint) ??
+      text(error.code) ??
+      text(data.message) ??
+      "The Eve session failed."
+    );
+  }
+  return text(error) ?? text(data.message) ?? text(data.reason) ?? "The Eve session failed.";
+}
+
+interface PartState {
+  kind: string;
+  phase: string | null;
+  text: string;
 }
 
 export function createEveClient(transport: EveTransport) {
@@ -159,20 +241,85 @@ export function createEveClient(transport: EveTransport) {
       }
 
       throwIfAborted(options.signal);
-      const postPath = previous
-        ? "/api/agent/eve/v1/session/" + encodeURIComponent(previous.sessionId)
-        : "/api/agent/eve/v1/session";
-      const accepted = await expectSuccess(
-        await transport.request(postPath, {
-          body: JSON.stringify({ message: normalized }),
-          method: "POST",
-          signal: options.signal,
-        }),
+      const send = async (cursor: EveSessionCursor | null): Promise<Response> =>
+        await transport.request(
+          cursor
+            ? "/api/agent/eve/v1/session/" + encodeURIComponent(cursor.sessionId)
+            : "/api/agent/eve/v1/session",
+          {
+            body: JSON.stringify({ message: normalized }),
+            method: "POST",
+            signal: options.signal,
+          },
+        );
+      let resumed = previous !== null;
+      let accepted = await send(previous);
+      if (!accepted.ok && resumed && STALE_SESSION_STATUSES.has(accepted.status)) {
+        // Eve retired the saved session, for example when the server restarted.
+        // Continuing in a new session keeps the next turn usable; its history
+        // starts empty because the old conversation no longer exists.
+        resumed = false;
+        accepted = await send(null);
+      }
+      const receipt = await acceptedReceipt(
+        await expectSuccess(accepted),
+        resumed && previous ? previous.sessionId : null,
       );
-      const sessionId = await acceptedSessionId(accepted, previous?.sessionId ?? null);
-      let nextIndex = previous?.nextIndex ?? 0;
-      let assistantMessage = "";
+      const { sessionId, deliveryId } = receipt;
+
+      const parts = new Map<string, PartState>();
+      const order: string[] = [];
+      let replyIds: readonly string[] = [];
+      let nextIndex = resumed && previous ? previous.nextIndex : 0;
       const deadline = Date.now() + (options.timeoutMs ?? 120_000);
+
+      const partFor = (partId: string, kind: string | undefined): PartState => {
+        const existing = parts.get(partId);
+        if (existing) {
+          if (kind !== undefined && existing.text.length === 0) existing.kind = kind;
+          return existing;
+        }
+        const created: PartState = { kind: kind ?? "text", phase: null, text: "" };
+        parts.set(partId, created);
+        order.push(partId);
+        return created;
+      };
+
+      const rendered = (): string => {
+        let value = "";
+        for (const partId of order) {
+          const part = parts.get(partId);
+          if (part && part.kind === "text") value += part.text;
+        }
+        return value;
+      };
+
+      const finalMessage = (): string => {
+        if (replyIds.length > 0) {
+          let value = "";
+          for (const partId of replyIds) {
+            const part = parts.get(partId);
+            if (part && part.kind === "text") value += part.text;
+          }
+          if (value.length > 0) return value;
+        }
+        let replied = "";
+        let hasReply = false;
+        for (const partId of order) {
+          const part = parts.get(partId);
+          if (part && part.kind === "text" && part.phase === "reply") {
+            replied += part.text;
+            hasReply = true;
+          }
+        }
+        return hasReply ? replied : rendered();
+      };
+
+      const finish = (status: "completed" | "waiting"): EveInvokeResult => ({
+        message: finalMessage(),
+        session: { sessionId, nextIndex },
+        status,
+      });
 
       for (;;) {
         throwIfAborted(options.signal);
@@ -190,25 +337,80 @@ export function createEveClient(transport: EveTransport) {
         if (Number.isFinite(declared) && declared > MAX_EVENT_BATCH_BYTES) {
           throw new EveClientError("The Eve event batch is too large.", stream.status);
         }
-        const events = parseEvents(await stream.text());
-        nextIndex += events.length;
+        const headerTail = stream.headers.get("x-eve-stream-tail-index");
+        const tail = headerTail === null ? Number.NaN : Number(headerTail);
+        const { records, storedLines } = parseRecords(await stream.text());
+        const marked = records.reduce<number | null>(
+          (next, record) => (record.kind === "position" ? record.next : next),
+          null,
+        );
+        nextIndex =
+          Number.isSafeInteger(tail) && tail >= -1
+            ? tail + 1
+            : Math.max(nextIndex + storedLines, marked ?? 0);
 
-        for (const event of events) {
-          if (event.type === "message.appended") {
-            assistantMessage =
-              text(event.data.message) ?? assistantMessage + (text(event.data.messageDelta) ?? "");
-            options.onText?.(assistantMessage);
-          } else if (event.type === "message.completed") {
-            assistantMessage = text(event.data.message) ?? assistantMessage;
-            options.onText?.(assistantMessage);
-          } else if (event.type === "session.failed" || event.type === "turn.failed") {
-            throw new EveClientError(failureMessage(event));
-          } else if (event.type === "session.completed" || event.type === "session.waiting") {
-            return {
-              message: assistantMessage,
-              session: { sessionId, nextIndex },
-              status: event.type === "session.completed" ? "completed" : "waiting",
-            };
+        for (const record of records) {
+          if (record.kind === "transport") {
+            if (record.name === "stream.ended") return finish("completed");
+            continue;
+          }
+          if (record.kind === "position") continue;
+          if (record.kind === "progress") {
+            const { type, data } = record.progress;
+            if (type !== "content.delta") continue;
+            const partId = text(data.partId);
+            const delta = typeof data.delta === "string" ? data.delta : null;
+            if (!partId || delta === null) continue;
+            const part = partFor(partId, typeof data.kind === "string" ? data.kind : undefined);
+            if (part.kind !== "text") continue;
+            part.text += delta;
+            options.onText?.(rendered());
+            continue;
+          }
+
+          for (const fact of record.facts) {
+            const data = fact.data;
+            if (fact.type === "content.completed") {
+              const partId = text(data.partId);
+              if (!partId) continue;
+              const kind = typeof data.kind === "string" ? data.kind : "text";
+              const part = partFor(partId, kind);
+              part.kind = kind;
+              if (typeof data.phase === "string") part.phase = data.phase;
+              if (typeof data.value === "string") part.text = data.value;
+              if (part.kind === "text") options.onText?.(rendered());
+              continue;
+            }
+            if (fact.type === "turn.settled") {
+              const outcome = text(data.outcome);
+              if (outcome === "failed") throw new EveClientError(failureMessage(data));
+              if (outcome === "cancelled") {
+                throw new EveClientError("The Eve turn was cancelled.");
+              }
+              if (Array.isArray(data.reply)) {
+                replyIds = data.reply.filter((id): id is string => typeof id === "string");
+              }
+              if (deliveryId === null && outcome === "completed") return finish("waiting");
+              continue;
+            }
+            if (fact.type === "delivery.settled") {
+              if (deliveryId === null || data.deliveryId !== deliveryId) continue;
+              const outcome = text(data.outcome);
+              if (outcome === "failed" || outcome === "refused") {
+                throw new EveClientError(text(data.reason) ?? "Eve could not process the message.");
+              }
+              if (outcome === "ignored") {
+                throw new EveClientError("Eve ignored the message because the session changed.");
+              }
+              return finish("waiting");
+            }
+            if (fact.type === "session.ended") {
+              if (text(data.outcome) === "failed") throw new EveClientError(failureMessage(data));
+              return finish("completed");
+            }
+            if (fact.type === "turn.paused" && deliveryId === null) {
+              return finish("waiting");
+            }
           }
         }
         await pause(250, options.signal);

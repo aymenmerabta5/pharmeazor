@@ -100,10 +100,10 @@ export const identityClient = Object.freeze({
   useSession() {
     return authClient.useSession();
   },
-  signInWithEmail(input: { email: string; password: string; callbackURL: string }) {
+  signInWithEmail(input: { email: string; password: string; callbackURL?: string }) {
     return authClient.signIn.email(input);
   },
-  signUpWithEmail(input: { name: string; email: string; password: string; callbackURL: string }) {
+  signUpWithEmail(input: { name: string; email: string; password: string; callbackURL?: string }) {
     return authClient.signUp.email(input);
   },
 

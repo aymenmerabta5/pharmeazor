@@ -23,4 +23,4 @@ The integrated process exposes browser traffic through the Next.js origin. If Ev
 - `/eve/` for health, sessions, streams, tools, channels, and subagents
 - `/.well-known/workflow/` for Workflow callbacks
 
-Set `AI_GATEWAY_API_KEY` on non-Vercel hosts when the agent uses a string model ID. Replace the generated placeholder through the host secret manager.
+Set the model provider credential on non-Vercel hosts: `OPENROUTER_API_KEY` for the generated `openrouter/free` model, or `AI_GATEWAY_API_KEY` when the agent uses an AI Gateway string model ID. Replace the generated placeholders through the host secret manager. `bun run dev` loads the repository-root `.env.local` with `--env-file`; workspace scripts that start Eve directly must do the same.

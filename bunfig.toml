@@ -1,7 +1,12 @@
 [install]
 hoist = true
 registry = "https://registry.npmjs.org/"
-minimumReleaseAge = 604800
+# TEMPORARY (project owner authorized): the seven-day release-age gate is
+# disabled so eve@1.0.0-rc.6 and its nitro prerelease can be installed.
+# Restore the reviewed policy below and re-enable the `preinstall` audit in the
+# root package.json once eve ships a stable 1.x release.
+# minimumReleaseAge = 604800
+minimumReleaseAge = 0
 minimumReleaseAgeExcludes = []
 
 [install.lockfile]

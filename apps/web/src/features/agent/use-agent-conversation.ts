@@ -5,7 +5,10 @@ import { sendAgentPrompt } from "./mutations";
 
 export function useAgentConversation() {
   const agent = useAgentSession();
-  const busy = agent.status === "submitted" || agent.status === "streaming";
+  // Eve reports outstanding work as "busy" or "resuming"; the transcript marker follows the
+  // assistant message Eve is still streaming.
+  const busy = agent.status !== "idle";
+  const streaming = agent.messages.some((message) => message.metadata?.status === "streaming");
   const form = useAppForm({
     defaultValues: { input: "" },
     onSubmit: async ({ value }): Promise<void> => {
@@ -30,8 +33,8 @@ export function useAgentConversation() {
       void form.handleSubmit();
     },
     busy,
-    messages: agent.data.messages,
-    streaming: agent.status === "streaming",
+    messages: agent.messages,
+    streaming,
     error: agent.error,
   };
 }

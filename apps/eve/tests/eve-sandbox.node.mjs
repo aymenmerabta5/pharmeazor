@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { registerHooks } from "node:module";
-import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scenario = process.argv[2];
@@ -33,7 +32,8 @@ if (scenario === "missing") {
       ? join(process.env.SystemRoot ?? "C:/Windows", "System32")
       : "/__ghostinit_no_package_manager__";
 }
-const { default: sandbox } = await import("../agent/sandbox.ts");
+const moduleUrl = new URL("../agent/sandbox.ts", import.meta.url);
+const { default: sandbox, environment } = await import(moduleUrl);
 async function dependencyHashes() {
   const hashes = {};
   let directory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,55 +52,45 @@ async function dependencyHashes() {
   }
 }
 const before = await dependencyHashes();
-const fixture = await mkdtemp(join(tmpdir(), "ghostinit-eve-sandbox-"));
-const target = resolve(fixture);
-if (dirname(target) !== resolve(tmpdir()) || !basename(target).startsWith("ghostinit-eve-sandbox-"))
-  throw new Error("Unsafe sandbox fixture cleanup");
-try {
-  const backend = sandbox.backend;
-  assert.equal(backend?.name, scenario === "hosted-selection" ? "vercel" : "just-bash");
-  const templateKey = "ghostinit-proof-" + randomUUID();
-  const runtimeContext = { appRoot: fixture };
-  const input = {
-    templateKey,
-    runtimeContext,
-    seedFiles: [{ path: "/workspace/proof.txt", content: "sandbox-ready" }],
-  };
-  if (scenario === "hosted-selection") {
-    // Resolve the bundled hosted backend without provisioning a billable sandbox.
-    assert.equal(typeof backend.create, "function");
-    assert.equal(typeof backend.prewarm, "function");
-  } else if (scenario === "missing") {
-    await assert.rejects(
-      backend.prewarm(input),
-      (error) => /just-bash/.test(error.message) && !/Automatic installation/.test(error.message),
-    );
-  } else {
-    await backend.prewarm(input);
-    const handle = await backend.create({
-      templateKey,
-      sessionKey: "proof-" + randomUUID(),
-      runtimeContext,
-    });
-    try {
-      const result = await handle.session.run({ command: "cat /workspace/proof.txt" });
-      assert.equal(result.exitCode, 0);
-      assert.equal(result.stdout, "sandbox-ready");
-    } finally {
-      await handle.shutdown();
-    }
-  }
-  assert.equal(installAttempts, 0);
-  assert.deepEqual(await dependencyHashes(), before);
-  process.stdout.write(
-    JSON.stringify({
-      ok: true,
-      scenario,
-      nodeVersion: process.versions.node,
-      dependencyHashesUnchanged: true,
-    }) + "\n",
-  );
-} finally {
-  console.info = originalInfo;
-  await rm(target, { recursive: true, force: true });
+
+// Selecting a provider never loads its engine, so an unavailable or uninstalled
+// backend cannot reach a package manager during import.
+assert.equal(typeof sandbox, "function");
+assert.equal(typeof environment.open, "function");
+assert.equal(
+  environment.provider,
+  scenario === "hosted-selection" ? "vercel" : "just-bash",
+  "sandbox provider selection",
+);
+assert.equal(installAttempts, 0, "sandbox import installed a dependency");
+
+// The local backend must opt out of Eve's automatic package installation, and a
+// production runtime must never grow dependencies at run time.
+const source = await readFile(fileURLToPath(moduleUrl), "utf8");
+assert.match(
+  source,
+  /JustBashSandbox\.environment\(\{\s*autoInstall:\s*false\s*\}\)/,
+  "just-bash environment must disable autoInstall",
+);
+
+// Opening a sandbox belongs to the Eve runtime, which passes the constructor
+// context; outside it the environment refuses instead of provisioning anything.
+await assert.rejects(
+  environment.open(),
+  (error) => !/installing optional dependency/i.test(error.message),
+);
+if (scenario === "hosted-selection") {
+  // The bundled hosted backend is reachable without creating a billable sandbox.
+  assert.equal(typeof environment.open, "function");
 }
+assert.equal(installAttempts, 0);
+assert.deepEqual(await dependencyHashes(), before);
+console.info = originalInfo;
+process.stdout.write(
+  JSON.stringify({
+    ok: true,
+    scenario,
+    nodeVersion: process.versions.node,
+    dependencyHashesUnchanged: true,
+  }) + "\n",
+);

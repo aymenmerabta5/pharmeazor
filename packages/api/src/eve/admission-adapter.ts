@@ -294,7 +294,7 @@ export const agentAdmissionPort = {
       }
 
       const compactLifecycleEvent =
-        input.eventType === "compaction.requested" || input.eventType === "compaction.completed";
+        input.eventType === "context.started" || input.eventType === "context.settled";
       const terminalEvent = isTerminalEveRuntimeEvent(input.eventType);
       if (input.leaseId === undefined && !compactLifecycleEvent && !terminalEvent) return;
       const eligible = and(

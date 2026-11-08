@@ -65,19 +65,21 @@ async function probeDurableTail(
     return { state: "unknown" };
   }
   if (!response.ok) return { state: "unknown" };
+  const tailIndexHeader = response.headers.get("x-eve-stream-tail-index");
+  const tailIndex = tailIndexHeader === null ? Number.NaN : Number(tailIndexHeader);
   const text = await readBoundedText(response);
   if (text === null) return { state: "unknown" };
   const lines = text.split(/\r?\n/).filter(Boolean);
   const tail = lines.at(-1);
   if (!tail) return { state: "unknown" };
-  const event = terminalEveEvent(tail);
+  const event = terminalEveEvent({ line: tail, lineIndex: tailIndex, sessionId });
   return event ? { event, state: "terminal" } : { state: "active" };
 }
 
 /**
  * Expiry is only a recovery trigger. A bound lease is never reclaimed from its
- * timestamp alone: the private Eve stream must prove a waiting/terminal tail.
- * An unavailable or active runtime is fenced by renewal and admission remains
+ * timestamp alone: the private Eve stream must prove a settled tail. An
+ * unavailable or active runtime is fenced by renewal and admission remains
  * fail-closed, including when no browser ever attached to the public stream.
  */
 export async function reconcileExpiredEveAdmissions(input: {

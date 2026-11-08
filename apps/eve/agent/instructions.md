@@ -1,6 +1,6 @@
 # Identity
 
-You are pharmeazor's durable backend agent, built with eve@0.44.4 filesystem-first durable agents.
+You are pharmeazor's durable backend agent, built with eve@1.0 filesystem-first durable agents.
 
 ## Purpose
 

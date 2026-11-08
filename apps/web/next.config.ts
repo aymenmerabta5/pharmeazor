@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { withEve, type EveNextConfigFunction } from "eve/next";
+import { withEve, type WithEveConfigFunction } from "eve/next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const config: NextConfig = {
@@ -125,7 +125,7 @@ const withEveConfig = withEve(withNextIntl(config), {
 });
 
 // Eve returns a Next config function, so resolve it before normalizing fields.
-const nextConfig: EveNextConfigFunction<NextConfig> = async (phase, context) => {
+const nextConfig: WithEveConfigFunction<NextConfig> = async (phase, context) => {
   const resolved = await withEveConfig(phase, context);
   const experimental = resolved.experimental;
   if (!experimental || !Reflect.has(experimental, "turbo")) return resolved;

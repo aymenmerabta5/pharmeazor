@@ -2,7 +2,7 @@
   "name": "pharmeazor-eve",
   "version": "0.1.0",
   "private": true,
-  "description": "pharmeazor durable backend agent via eve@0.44.4 filesystem-first framework",
+  "description": "pharmeazor durable backend agent via eve@1.0 filesystem-first framework",
   "type": "module",
   "imports": {
     "#*": "./agent/*",
@@ -19,16 +19,17 @@
     "format:check": "oxfmt --check ."
   },
   "dependencies": {
+    "@openrouter/ai-sdk-provider": "3.1.0",
     "@repo/config": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/database": "workspace:*",
     "@repo/kernel": "workspace:*",
     "@repo/modules": "workspace:*",
     "@repo/workflows": "workspace:*",
-    "@vercel/connect": "1.0.0",
-    "ai": "7.0.79",
-    "eve": "0.44.4",
-    "just-bash": "3.4.2",
+    "@vercel/connect": "2.7.0",
+    "ai": "7.0.159",
+    "eve": "1.0.0-rc.6",
+    "just-bash": "3.6.0",
     "zod": "4.6.5"
   },
   "devDependencies": {
@@ -38,7 +39,7 @@
     "typescript": "7.0.2"
   },
   "overrides": {
-    "ai": "7.0.79"
+    "ai": "7.0.159"
   },
   "engines": {
     "node": "24.19.0"

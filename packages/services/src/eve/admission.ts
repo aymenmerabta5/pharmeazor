@@ -82,11 +82,9 @@ export interface AgentRuntimeAdmissionPort {
 const EVE_RUNTIME_EVENT_ID_PATTERN = /^evt_[A-Za-z0-9_-]{8,80}$/;
 const EVE_RUNTIME_EVENT_TYPE_PATTERN = /^[a-z][a-z0-9.]{0,63}$/;
 const EVE_ADMISSION_LEASE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;
-const TERMINAL_EVE_RUNTIME_EVENTS = new Set([
-  "session.waiting",
-  "session.failed",
-  "session.completed",
-]);
+// Stream v27 ends work with one event that carries an outcome. A manual
+// compaction is forwarded as `context.settled`; threshold compactions are not.
+const TERMINAL_EVE_RUNTIME_EVENTS = new Set(["turn.settled", "session.ended", "context.settled"]);
 
 export function isTerminalEveRuntimeEvent(eventType: string): boolean {
   return TERMINAL_EVE_RUNTIME_EVENTS.has(eventType);

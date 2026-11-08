@@ -7,7 +7,7 @@ export type EveFacadeRouteKind =
   | "cancel"
   | "compact"
   | "clear"
-  | "reset"
+  | "end"
   | "stream";
 
 export type EveFacadeRoute = {
@@ -24,7 +24,7 @@ export type EveRouteDecision =
 
 const FACADE_PREFIX = "/api/agent";
 const SESSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;
-const CONTROLS = ["cancel", "compact", "clear", "reset"] as const;
+const CONTROLS = ["cancel", "compact", "clear", "end"] as const;
 
 function isControl(value: string): value is (typeof CONTROLS)[number] {
   return CONTROLS.some((control) => control === value);

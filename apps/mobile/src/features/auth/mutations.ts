@@ -6,10 +6,10 @@ export function signInWithOAuth(provider: IdentityOAuthProvider) {
 }
 
 export function signInWithEmail(input: { email: string; password: string }) {
-  return identityClient.signInWithEmail({ ...input, callbackURL: "/dashboard" });
+  return identityClient.signInWithEmail(input);
 }
 export function signUpWithEmail(input: { name: string; email: string; password: string }) {
-  return identityClient.signUpWithEmail({ ...input, callbackURL: "/dashboard" });
+  return identityClient.signUpWithEmail(input);
 }
 export function verifyAuthChallenge(
   method: "authenticator" | "backup",

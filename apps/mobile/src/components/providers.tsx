@@ -15,6 +15,7 @@ import { useCanonicalQueryAuthScope } from "@/lib/query-auth-scope";
 import { orpcClient } from "@/lib/orpc";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { useAuthenticatedLanding } from "@/features/app-shell/use-authenticated-landing";
 
 const readCurrentApplication = () => orpcClient.me();
 
@@ -30,6 +31,7 @@ function AppNavigation() {
     readCurrentApplication,
   );
   const isAuthenticated = canonical.scope !== null;
+  useAuthenticatedLanding(isAuthenticated);
   const cacheScope =
     canonical.isPending || canonical.error ? null : nativeQueryCacheScope(canonical.scope);
   const { isRestoring } = useOfflineSync(queryClient, cacheScope);
@@ -54,9 +56,7 @@ function AppNavigation() {
       <Stack screenOptions={{ header: () => <Header /> }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="2fa" options={{ title: t("twoFactor") }} />
-        <Stack.Protected guard={!isAuthenticated}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack.Protected>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Protected guard={isAuthenticated}>
           <Stack.Screen name="dashboard" options={{ title: t("dashboard") }} />
           <Stack.Screen name="settings" options={{ title: t("settings") }} />

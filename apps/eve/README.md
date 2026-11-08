@@ -1,6 +1,6 @@
 # pharmeazor — Eve Durable Agent
 
-Uses eve@0.44.4 filesystem-first durable backend agents.
+Uses eve@1.0 filesystem-first durable backend agents.
 Agent directory: agent/agent.ts + instructions.md + tools/ + skills/ + channels/ + schedules/ + subagents/
 Standalone diagnostic: from the repository root run bun run eve:dev
 Integrated Next.js projects use the root bun run dev/build/start lifecycle.
