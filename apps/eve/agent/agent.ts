@@ -1,18 +1,18 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createGroq } from "@ai-sdk/groq";
 import { defineAgent, type EveLanguageModel } from "eve";
 
-// OpenRouter is a direct provider: the key stays server-side and the model is
+// Groq is a direct provider: the key stays server-side and the model is
 // resolved in code instead of through the Vercel AI Gateway.
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  appName: "PharmEazor",
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
-const model: EveLanguageModel = openrouter.chat("openrouter/free");
+const model: EveLanguageModel = groq.languageModel("openai/gpt-oss-120b");
 
 export default defineAgent({
   model,
   // AI Gateway has no metadata for a direct provider model, so eve needs the
-  // window to decide when to compact. openrouter/free reports 200k tokens.
-  modelContextWindowTokens: 200_000,
+  // window to decide when to compact. Groq reports 131,072 tokens for
+  // openai/gpt-oss-120b.
+  modelContextWindowTokens: 131_072,
 });

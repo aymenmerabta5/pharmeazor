@@ -1,9 +1,20 @@
 # syntax=docker/dockerfile:1
 FROM oven/bun:1.4.4 AS bun-runtime
 
+# The agent runs its sandbox in a sibling container, so the image needs the
+# Docker CLI. The official CLI image ships a statically linked binary that
+# runs on this Debian-based runtime.
+FROM docker:29.9.3-cli AS docker-cli
+
 FROM node:24.19.0-bookworm-slim AS base
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /app
+
+# The agent sandbox runs in a sibling container, so the build reaches the host
+# Docker daemon through its socket. Point this argument at a different socket
+# when the daemon does not use the default path.
+ARG DOCKER_SOCKET=/var/run/docker.sock
 
 # Stable Dockerfile syntax deliberately copies the complete workspace before
 # installation. This preserves workspace paths and makes Bun read bunfig.toml
@@ -15,9 +26,15 @@ RUN bun install --frozen-lockfile
 
 RUN --mount=type=secret,id=ghostinit_env,required=false \
     --mount=type=secret,id=ghostinit_env_b64,required=false \
+    --mount=type=bind,source=${DOCKER_SOCKET},target=/var/run/docker.sock \
     set -eu; \
     build_env=/tmp/ghostinit-build.env; \
     trap 'rm -f "$build_env"' EXIT; \
+    if [ ! -S /var/run/docker.sock ]; then \
+      echo "The agent sandbox runs in a Docker container, so the build needs a reachable Docker daemon." >&2; \
+      echo "Build on a Linux host that exposes /var/run/docker.sock, or point the DOCKER_SOCKET build argument at it." >&2; \
+      exit 1; \
+    fi; \
     if [ -s /run/secrets/ghostinit_env ]; then \
       bun --env-file=/run/secrets/ghostinit_env scripts/build-deployment.mjs; \
     elif [ -s /run/secrets/ghostinit_env_b64 ]; then \
@@ -43,6 +60,7 @@ RUN rm -rf apps/mobile
 
 FROM node:24.19.0-bookworm-slim
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

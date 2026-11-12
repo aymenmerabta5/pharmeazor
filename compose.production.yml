@@ -17,8 +17,17 @@ services:
       - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000"
     # The generated supervisor reserves 20s for SIGTERM and 5s before escalation.
     stop_grace_period: 30s
+    group_add:
+      # The agent sandbox runs in a sibling container on the host daemon, so the
+      # service needs the host docker group. Set DOCKER_GID to the group id of
+      # the host socket owner, for example `stat -c %g /var/run/docker.sock`.
+      - "${DOCKER_GID:-999}"
     volumes:
       - eve_workflow_data:/app/apps/eve/.eve/.workflow-data
+      # The agent sandbox container is created on the host daemon. This mount
+      # gives the service control of that daemon, so it is a root-equivalent
+      # privilege on the host; isolate the daemon on a dedicated machine.
+      - /var/run/docker.sock:/var/run/docker.sock
 secrets:
   ghostinit_env:
     # BuildKit mounts this ephemerally for validation/build; it is never copied.

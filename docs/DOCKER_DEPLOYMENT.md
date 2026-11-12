@@ -33,7 +33,9 @@ These commands work from PowerShell, cmd, bash, and zsh (enter the `docker run` 
 ```bash
 docker build --secret id=ghostinit_env,src=.env.local -t pharmeazor .
 docker run -d --name pharmeazor --env-file .env.local -p 127.0.0.1:3000:3000 \
-  --mount type=volume,src=pharmeazor_eve_workflow_data,dst=/app/apps/eve/.eve/.workflow-data pharmeazor
+  --mount type=volume,src=pharmeazor_eve_workflow_data,dst=/app/apps/eve/.eve/.workflow-data \
+  --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+  --group-add "$(stat -c %g /var/run/docker.sock)" pharmeazor
 docker inspect --format "{{json .State.Health}}" pharmeazor
 docker stop --time 30 pharmeazor
 ```
@@ -41,3 +43,23 @@ docker stop --time 30 pharmeazor
 `STOPSIGNAL SIGTERM` selects the signal but does not extend Docker's default
 10-second timeout. Always retain the Compose grace period or use
 `docker stop --time 30` for standalone containers.
+
+## Agent sandbox
+
+The agent runs its tools in a Docker container that carries a Python runtime,
+so the host needs a reachable Docker daemon.
+
+- The image build prepares the sandbox template, so the build mounts the host
+  Docker socket. Build on a Linux host that exposes `/var/run/docker.sock`, or
+  point the build argument at another socket: `docker build --build-arg DOCKER_SOCKET=/run/user/1000/docker.sock ...`.
+- The runtime creates the sandbox container on the same daemon, so the running
+  container needs the same socket and a process that may use it. The image
+  runs as uid 1000, so add the group that owns the host socket with
+  `--group-add`.
+- The prepared template image lives on the daemon that built it. Keep that
+  image on the host, and run every replica against the same daemon.
+- The socket grants control of the daemon, which is a root-equivalent
+  privilege on the host. Keep the daemon on a dedicated machine.
+
+See `docs/EVE_SELF_HOSTING.md` for the full contract and
+`apps/eve/agent/sandbox/README.md` for the runtime the container provides.

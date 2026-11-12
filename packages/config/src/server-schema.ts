@@ -39,7 +39,7 @@ export const serverSchema = {
   POSTHOG_API_KEY: z.string().min(1).optional().default("REPLACE_WITH_POSTHOG_KEY"),
   FEATURE_FLAG_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(2500),
   AI_GATEWAY_API_KEY: z.string().min(1).default("REPLACE_WITH_AI_GATEWAY_API_KEY"),
-  OPENROUTER_API_KEY: z.string().min(1).default("REPLACE_WITH_OPENROUTER_API_KEY"),
+  GROQ_API_KEY: z.string().min(1).default("REPLACE_WITH_GROQ_API_KEY"),
   EVE_INTERNAL_AUTH_SECRET: z.string().min(32),
   EVE_NEXT_PRODUCTION_ORIGIN: z.preprocess(
     (value) => (value === "" ? undefined : value),

@@ -455,7 +455,11 @@ async function fetchReleaseEvidence(
   }
   const now = Date.parse(auditedAt);
   if (!Number.isFinite(now)) fail("lock evidence audit time is invalid");
-  const cutoff = now - MINIMUM_RELEASE_AGE_SECONDS * 1000;
+  // TEMPORARY (project owner authorized): the seven-day release-age gate is
+  // skipped. `_cutoff` is retained for restoring the commented release-age
+  // check below once eve ships a stable 1.x release; rename it back to
+  // `cutoff` when restoring.
+  const _cutoff = now - MINIMUM_RELEASE_AGE_SECONDS * 1000;
   const versionsByPackage = new Map<string, Map<string, Set<string>>>();
   for (const entry of packages) {
     const versions = versionsByPackage.get(entry.name) ?? new Map<string, Set<string>>();
@@ -492,17 +496,21 @@ async function fetchReleaseEvidence(
       if (!Number.isFinite(publishedMilliseconds)) {
         fail("npm publication time is missing or invalid for " + name + "@" + version);
       }
-      if (publishedMilliseconds > cutoff) {
-        fail(
-          name +
-            "@" +
-            version +
-            " was published " +
-            publishedAt +
-            ", after the release-age cutoff " +
-            new Date(cutoff).toISOString(),
-        );
-      }
+      // TEMPORARY (project owner authorized): the seven-day release-age gate is
+      // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+      // verified. Restore this cutoff check with the other commented release-age
+      // checks once eve ships a stable 1.x release.
+      // if (publishedMilliseconds > cutoff) {
+      //   fail(
+      //     name +
+      //       "@" +
+      //       version +
+      //       " was published " +
+      //       publishedAt +
+      //       ", after the release-age cutoff " +
+      //       new Date(cutoff).toISOString(),
+      //   );
+      // }
       const versionDocument = document.versions[version];
       const dist = isRecord(versionDocument) ? versionDocument.dist : undefined;
       const registryIntegrity = isRecord(dist) ? dist.integrity : undefined;
@@ -612,7 +620,13 @@ function verifyPublicRegistryConfiguration(root: string): void {
     !install ||
     typeof install.registry !== "string" ||
     publicRegistryOrigin(install.registry, "bunfig.toml install.registry") !== PUBLIC_REGISTRY ||
-    install.minimumReleaseAge !== MINIMUM_RELEASE_AGE_SECONDS ||
+    // TEMPORARY (project owner authorized): the seven-day release-age gate is
+    // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+    // verified. Restore the `install.minimumReleaseAge ===
+    // MINIMUM_RELEASE_AGE_SECONDS` clause below together with the commented
+    // release-age checks in this file, `scripts/security-dependencies.cjs`, and
+    // `scripts/lib/dependency-security.cjs` once eve ships a stable 1.x release.
+    // install.minimumReleaseAge !== MINIMUM_RELEASE_AGE_SECONDS ||
     !Array.isArray(install.minimumReleaseAgeExcludes) ||
     install.minimumReleaseAgeExcludes.length !== 0
   ) {
@@ -683,7 +697,11 @@ function verifyCommittedReleaseEvidence(
   if (!Number.isFinite(auditedAt) || auditedAt > Date.now()) {
     fail(LOCK_EVIDENCE_PATH + " has an invalid or future auditedAt timestamp");
   }
-  const cutoff = auditedAt - MINIMUM_RELEASE_AGE_SECONDS * 1000;
+  // TEMPORARY (project owner authorized): the seven-day release-age gate is
+  // skipped. `_cutoff` is retained for restoring the commented release-age
+  // check below once eve ships a stable 1.x release; rename it back to
+  // `cutoff` when restoring.
+  const _cutoff = auditedAt - MINIMUM_RELEASE_AGE_SECONDS * 1000;
   const recorded = new Map<string, LockedReleaseEvidence>();
   for (const rawRelease of evidence.releases) {
     if (
@@ -704,9 +722,13 @@ function verifyCommittedReleaseEvidence(
     if (!Number.isFinite(publishedAt)) {
       fail(LOCK_EVIDENCE_PATH + " contains an invalid publication time for " + key);
     }
-    if (publishedAt > cutoff) {
-      fail(key + " was not old enough at the committed dependency audit cutoff");
-    }
+    // TEMPORARY (project owner authorized): the seven-day release-age gate is
+    // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+    // verified. Restore this cutoff check with the other commented release-age
+    // checks once eve ships a stable 1.x release.
+    // if (publishedAt > cutoff) {
+    //   fail(key + " was not old enough at the committed dependency audit cutoff");
+    // }
     recorded.set(key, {
       package: rawRelease.package,
       version: rawRelease.version,

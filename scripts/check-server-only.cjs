@@ -10,6 +10,7 @@ const DECLARATION_EXTENSIONS = [".d.ts", ".d.mts", ".d.cts"];
 const SOURCE_ROOTS = ["src", "app", "apps", "packages", "convex"];
 const SKIPPED_DIRECTORIES = new Set([
   ".git",
+  ".eve",
   ".next",
   ".nitro",
   ".output",

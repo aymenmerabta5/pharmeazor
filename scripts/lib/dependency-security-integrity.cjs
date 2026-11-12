@@ -4,8 +4,8 @@ const { createHash } = require("node:crypto");
 const { createRequire, isBuiltin } = require("node:module");
 const { Script } = require("node:vm");
 
-const EXPECTED_SHA256 = "33d3d9a8747b07ead5d66d51054b6653616669041fe0737f09300a9056ac2caf";
-const EXPECTED_BYTES = 1197791;
+const EXPECTED_SHA256 = "179660a7481b06fb9b6f43f52f83b01015344dd8dd0da5dc5c79b2190f373de1";
+const EXPECTED_BYTES = 1198915;
 const ROOT = path.resolve(__dirname, "../..");
 const FILE = path.join(ROOT, "scripts/lib/dependency-security.cjs");
 
