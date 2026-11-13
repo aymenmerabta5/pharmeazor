@@ -260,16 +260,33 @@ jobs:
         run: bun scripts/prepare-ci-env.mjs
       - name: Validate the production Compose contract
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
-      - name: Build the application image
+      - name: Resolve the host Docker socket
         run: |
           # The agent sandbox needs the host Docker socket, and the daemon
           # does not always publish it at the default path.
-          socket="$(docker context inspect --format '{{.Endpoints.docker.Host}}' | sed -e 's|^unix://||' -e 's|^npipe://||')"
-          if [ ! -S "$socket" ]; then
-            socket="/var/run/docker.sock"
-          fi
-          docker build \
-            --build-arg DOCKER_SOCKET="$socket" \
-            --secret id=ghostinit_env,src=.env.local \
-            --tag pharmeazor:ci \
-            .
+          echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
+          echo "context endpoint: $(docker context inspect --format '{{.Endpoints.docker.Host}}')"
+          for candidate in /var/run/docker.sock /run/docker.sock; do
+            if [ -e "$candidate" ]; then
+              echo "found: $candidate ($(stat -c '%F' "$candidate"))"
+            else
+              echo "absent: $candidate"
+            fi
+          done
+      - name: Build the application image
+        run: |
+          for socket in /var/run/docker.sock /run/docker.sock; do
+            if [ ! -S "$socket" ]; then
+              continue
+            fi
+            echo "Building with DOCKER_SOCKET=$socket"
+            if docker build \
+              --build-arg DOCKER_SOCKET="$socket" \
+              --secret id=ghostinit_env,src=.env.local \
+              --tag pharmeazor:ci \
+              .; then
+              exit 0
+            fi
+          done
+          echo "No usable host Docker socket was found for the sandbox mount." >&2
+          exit 1
