@@ -49,6 +49,22 @@ rewritten by `ghostinit sync`. `docker-compose.override.yml` repeats the
 pgvector service fields so they survive that regeneration. Do not run
 `docker compose -f docker-compose.yml` without the override file.
 
+## Continuous integration environment
+
+The server environment schema fails closed for Redis and for the other
+providers that must be reachable at runtime, so a build cannot run against the
+placeholder values in `.env.example`. CI generates a throwaway `.env.local`
+with non-secret placeholders instead:
+
+```bash
+bun scripts/prepare-ci-env.mjs
+```
+
+That file is never committed. To verify a database against the same contract
+the pipeline uses, run `bun run db:verify`, which asserts the server version,
+the registered `vector` extension, the `halfvec` type, and a real vector
+distance computation.
+
 ## Standalone Docker
 
 These commands work from PowerShell, cmd, bash, and zsh (enter the `docker run` command on one line where shell continuation differs):

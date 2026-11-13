@@ -15,10 +15,10 @@ alwaysApply: true
 
 - Mode: monorepo with `apps/*`, `packages/*`, and `tooling/*` workspaces.
 - Package manager: Bun 1.4.4 (`packageManager: bun@1.4.4`). Do not use npm, pnpm, or Yarn.
-- Supply-chain delay: `bunfig.toml` rejects packages newer than 604800 seconds and has no exclusions.
+- Supply-chain delay: `bunfig.toml` currently sets `minimumReleaseAge = 0` under a project-owner-authorized temporary exception so the `eve@1.0.0-rc.6` prerelease can be installed. The seven-day delay and the empty exclusion list are the intended policy; the audit scripts carry the matching temporary exception. Restore both when eve ships a stable 1.x release.
 - Backend execution target: Bun 1.4.4. Installation and repository scripts still use Bun.
 - Frontend apps: mobile, web.
-- Web framework: Next.js 16.3.8.
+- Web framework: Next.js 16.4.1.
 - Database: PostgreSQL 18.7 through Drizzle in `packages/database`, with pgvector 0.8.7 enabled. The image is built from `docker/postgres/Dockerfile` and pins both the server patch and the extension build.
 - TypeScript: 7.0.2. React: 19.3.0.
 - Next development and builds executed by Bun use the supported Webpack compatibility profile; Node uses Turbopack. PDF-enabled Bun commands preload the declared renderer before Next initializes.
@@ -26,6 +26,8 @@ alwaysApply: true
 - Billing providers: stripe, chargily, manual.
 - Durable agent: `apps/eve` on eve@1.0.0-rc.6, Groq `openai/gpt-oss-120b` with a 131,072-token context window, plus a Python sandbox that reads PDF, Word, and spreadsheet documents.
 - Retrieval is not a GhostInit capability in this configuration. It is an owner-approved extension only, assembled from the packages already in this repository. See "Retrieval Architecture".
+- Generator CLI: the pinned architecture checker and the generated-state gate run `ghostinit@0.1.0` from the public npm registry. The generator owns `packages/database/src/schema/index.ts`, `packages/api/src/contract.ts`, `packages/api/src/router.ts`, and `packages/modules/src/index.ts`; `bunx --bun ghostinit@0.1.0 sync --check --json` must report them in sync.
+- Dependency floors: `better-auth` 1.7.7, `next` 16.4.1, `zod` 4.6.6, `undici` 8.12.3, `node-forge` 1.4.3, `decode-uri-component` 0.5.1. The transitive floors are root `overrides`; the `node-forge@1.4.0` patch is retired because 1.4.3 clears every advisory it worked around.
 
 ## Architecture
 
@@ -137,6 +139,10 @@ Use `bun run security:audit` for a read-only report, `bun run security:fix --dry
 
 Fixes retain the seven-day delay and empty exclusions. High/critical or unknown unresolved findings block repair; unreviewed low/moderate findings remain visible and explicit audit/fix exits nonzero. Keep the verified security floors in `ghostinit.config.json.dependencySecurity` so later reconciliation preserves repaired versions.
 
+`scripts/audit-dependencies.ts` and the copy of it embedded in `policy.auditScriptContent` must stay byte-identical, because the dependency-security runtime rewrites the file from the embedded copy during a repair. `bun scripts/sync-audit-script-policy.mjs` verifies that and `--write` resynchronises it.
+
+Bun 1.4.4 writes a v3 lockfile whenever it has to resolve a changed graph, and the v3 package map has the same shape as v2, so the audit accepts all three lockfile versions. A v2 lockfile is only preserved while the resolved graph stays unchanged.
+
 After a failed install, source changes may already be applied. Inspect `.ghostinit/security-installation.json` and retry the fix after resolving the reported cause; installed dependencies are not rolled back. A `CLEANUP_UNVERIFIED` journal blocks mutation until process cleanup is independently verified and the journal is explicitly reconciled.
 If `init` fails after attempting installation in an initially empty directory, it preserves the incomplete project and its recovery record. A dependency fix alone does not finish creation state or local secrets; resolve the cause, repeat the original `init` selections with `--force`, and follow any bootstrap instruction.
 
@@ -208,6 +214,25 @@ ghostinit check --json
 ```
 
 `bun run start` starts only the web process. Use `bun run start:production` to supervise the web process and selected PostgreSQL workers; Fly runs them as separate process groups.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs seven independent stages. Each one catches a failure class the others cannot, so a red pipeline names the broken layer.
+
+| Stage           | Gate                                                                      | Catches                                                           |
+| --------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Supply chain    | `audit:lock`, `audit:dependencies`                                        | unreviewed HIGH/CRITICAL advisories, lock drift, broken integrity |
+| Generated state | `ghostinit@0.1.0 sync --check --json`                                     | generator-owned registries drifting from the committed source     |
+| Static analysis | workspace and root formatting, `lint:all`, `ghostinit@0.1.0 check --json` | formatting, lint, import boundaries, architecture findings        |
+| Tests           | `bun run test`                                                            | behavioural regressions                                           |
+| Build           | `bun run build` plus a tracked-change check                               | build breakage, generators that rewrite tracked files             |
+| Database        | the pinned Postgres image plus `db:verify`                                | a broken or unpinned database image, a missing vector extension   |
+| Containers      | Compose validation plus the application image build                       | an unbuildable or invalid deployment artifact                     |
+
+Two rules the pipeline depends on:
+
+- The build must not change tracked files. `apps/web/next-env.d.ts` is regenerated by Next.js with different type paths in dev and build, so the build stage restores it before comparing. `apps/mobile/uniwind-types.d.ts` is regenerated by the mobile build, so that build formats it.
+- Every job that builds needs an environment that satisfies the server schema, which fails closed for Redis. `bun scripts/prepare-ci-env.mjs` writes `.env.local` with non-secret placeholders. Never commit that file.
 
 Retrieval changes add their own gates on top of the list above:
 
