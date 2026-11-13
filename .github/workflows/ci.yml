@@ -262,23 +262,24 @@ jobs:
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
       - name: Resolve the host Docker socket
         run: |
-          # The agent sandbox needs the host Docker socket, and the daemon
-          # does not always publish it at the default path.
+          # The agent sandbox needs the host Docker socket, and BuildKit
+          # resolves a bind mount on the daemon side. The runner publishes the
+          # socket at a path that is not always the default one.
           echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
           echo "context endpoint: $(docker context inspect --format '{{.Endpoints.docker.Host}}')"
-          for candidate in /var/run/docker.sock /run/docker.sock; do
-            if [ -e "$candidate" ]; then
-              echo "found: $candidate ($(stat -c '%F' "$candidate"))"
-            else
-              echo "absent: $candidate"
-            fi
+          mapfile -t sockets < <(find /run /var/run "$HOME/.docker" -type s -name 'docker.sock' 2>/dev/null | sort -u)
+          echo "socket candidates: ${sockets[*]:-none}"
+          for candidate in "${sockets[@]:-}"; do
+            echo "found: $candidate -> $(readlink -f "$candidate")"
           done
       - name: Build the application image
         run: |
-          for socket in /var/run/docker.sock /run/docker.sock; do
-            if [ ! -S "$socket" ]; then
-              continue
-            fi
+          mapfile -t sockets < <(find /run /var/run "$HOME/.docker" -type s -name 'docker.sock' 2>/dev/null | sort -u)
+          if [ "${#sockets[@]}" -eq 0 ]; then
+            echo "No host Docker socket was found for the sandbox mount." >&2
+            exit 1
+          fi
+          for socket in "${sockets[@]}"; do
             echo "Building with DOCKER_SOCKET=$socket"
             if docker build \
               --build-arg DOCKER_SOCKET="$socket" \
