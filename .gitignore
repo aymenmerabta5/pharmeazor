@@ -59,7 +59,11 @@ node_modules/
 Thumbs.db
 
 # GhostInit internal state
-/.ghostinit/
+# The project manifest is committed. Every generator command needs it to know
+# which files it owns, so a fresh checkout has to be able to run the pinned
+# architecture checker and the generated-state gate without re-initialising.
+/.ghostinit/*
+!/.ghostinit/state.json
 /apps/*/.ghostinit/
 /.ghostinit-staging/
 /.ghostinit.lock

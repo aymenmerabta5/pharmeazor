@@ -7,6 +7,7 @@
     ".output",
     ".turbo",
     "convex/_generated",
-    "**/routeTree.gen.ts"
+    "**/routeTree.gen.ts",
+    "/.ghostinit"
   ]
 }

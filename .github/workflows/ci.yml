@@ -88,7 +88,10 @@ jobs:
       - name: Check repository whitespace
         run: |
           empty_tree="$(git hash-object -t tree /dev/null)"
-          git diff --check "$empty_tree" HEAD
+          # A unified diff renders an empty context line as a single space, so
+          # the patch files are whitespace-only by format rather than by
+          # accident. Every other file is checked.
+          git diff --check "$empty_tree" HEAD -- . ':(exclude)patches/**'
       - name: Check workspace formatting
         run: bun run format:check
       - name: Check repository-root formatting
@@ -259,7 +262,14 @@ jobs:
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
       - name: Build the application image
         run: |
+          # The agent sandbox needs the host Docker socket, and the daemon
+          # does not always publish it at the default path.
+          socket="$(docker context inspect --format '{{.Endpoints.docker.Host}}' | sed -e 's|^unix://||' -e 's|^npipe://||')"
+          if [ ! -S "$socket" ]; then
+            socket="/var/run/docker.sock"
+          fi
           docker build \
+            --build-arg DOCKER_SOCKET="$socket" \
             --secret id=ghostinit_env,src=.env.local \
             --tag pharmeazor:ci \
             .
