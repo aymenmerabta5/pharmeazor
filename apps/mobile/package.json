@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build": "expo export",
+    "build": "expo export && oxfmt --write uniwind-types.d.ts",
     "typecheck": "bun check",
     "lint": "oxlint --deny-warnings .",
     "format": "oxfmt --write .",

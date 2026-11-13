@@ -1,43 +1,107 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions:
   contents: read
 
+# A newer push to the same ref makes the older run irrelevant.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: 1.4.4
+  # The generator CLI is pinned to an exact published version so the
+  # architecture gate and the generated-state gate always run the same
+  # generator. Bump this together with the published package.
+  GHOSTINIT_VERSION: 0.1.0
+  # The Postgres image the application expects. Both the server patch and the
+  # pgvector extension build are pinned in docker/postgres/Dockerfile.
+  POSTGRES_IMAGE: pharmeazor/postgres-pgvector:18.7-0.8.7
+
 jobs:
-  build:
+  # ---------------------------------------------------------------------
+  # Stage 1 — supply chain. A dependency advisory is a release blocker even
+  # when every functional gate is green, so it runs first and alone.
+  # ---------------------------------------------------------------------
+  supply-chain:
+    name: Supply chain
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
         with:
-          bun-version: 1.4.4
+          bun-version: ${{ env.BUN_VERSION }}
       - name: Verify committed lock trust, integrity, and release age
         run: bun run audit:lock
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
       - name: Audit dependencies for high-severity vulnerabilities
         run: bun run audit:dependencies
+      - name: Re-verify the installed graph against the committed lock
+        run: bun run audit:lock
+
+  # ---------------------------------------------------------------------
+  # Stage 2 — generated state. The generator owns the module registry, the
+  # API contract, the router, and the database schema barrel. Drift there
+  # means the committed source no longer matches what the generator would
+  # produce.
+  # ---------------------------------------------------------------------
+  generated-state:
+    name: Generated state
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Verify generated registries are in sync
+        run: bunx --bun "ghostinit@${{ env.GHOSTINIT_VERSION }}" sync --check --json
+
+  # ---------------------------------------------------------------------
+  # Stage 3 — static analysis. Formatting, linting, the import-boundary
+  # checks, and the architecture checker all run without a database.
+  # ---------------------------------------------------------------------
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
       - name: Check repository whitespace
         run: |
           empty_tree="$(git hash-object -t tree /dev/null)"
           git diff --check "$empty_tree" HEAD
-      - name: Check formatting
+      - name: Check workspace formatting
         run: bun run format:check
+      - name: Check repository-root formatting
+        # `bun run format:check` is workspace-scoped, so root-level files such
+        # as the agent rule files and the docs are only covered here.
+        run: bunx --no-install oxfmt --check .
       - name: Run blocking lint, boundary, and security checks
         run: bun run lint:all
-      - name: Run generated project tests
-        run: bun run test
-      - name: Build generated project
-        run: bun run build
       - name: Run pinned architecture checker
         shell: bash
         run: |
           report="$RUNNER_TEMP/ghostinit-architecture-check.json"
-          bunx --bun ghostinit@0.1.0 check --json > "$report"
+          bunx --bun "ghostinit@${{ env.GHOSTINIT_VERSION }}" check --json > "$report"
           REPORT_PATH="$report" bun -e '
             const reportPath = process.env.REPORT_PATH;
             if (!reportPath) throw new Error("architecture report path is missing");
@@ -58,7 +122,144 @@ jobs:
               throw new Error("architecture check returned a failing JSON envelope");
             }
           '
-      - name: Verify checks leave no tracked changes
+
+  # ---------------------------------------------------------------------
+  # Stage 4 — tests.
+  # ---------------------------------------------------------------------
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Run generated project tests
+        run: bun run test
+
+  # ---------------------------------------------------------------------
+  # Stage 5 — build. The build must not leave the working tree dirty, which
+  # catches generators that rewrite tracked files.
+  # ---------------------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Prepare the build environment
+        # The server environment schema fails closed for providers that must be
+        # reachable at runtime. CI never reaches them, so it builds against
+        # non-secret placeholders that satisfy the schema.
+        run: bun scripts/prepare-ci-env.mjs
+      - name: Build generated project
+        run: bun run build
+      - name: Verify the build leaves no tracked changes
         run: |
           git diff --check
+          # Next.js regenerates next-env.d.ts with the build-time type paths
+          # while the committed copy keeps the dev paths. The file belongs to
+          # the framework, so it is restored before the comparison.
+          git checkout -- apps/web/next-env.d.ts
           git diff --exit-code
+
+  # ---------------------------------------------------------------------
+  # Stage 6 — database. Builds the pinned Postgres image and proves the
+  # vector extension is usable, so a broken image never reaches a deploy.
+  # ---------------------------------------------------------------------
+  database:
+    name: Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Build the pinned Postgres image
+        run: |
+          docker build \
+            --file docker/postgres/Dockerfile \
+            --tag "$POSTGRES_IMAGE" \
+            docker/postgres
+      - name: Verify the image reports the pinned server and extension
+        run: |
+          docker run --rm --entrypoint sh "$POSTGRES_IMAGE" -c '
+            postgres --version
+            test -f /usr/share/postgresql/18/extension/vector.control
+          '
+      - name: Start the database and verify the vector extension
+        run: |
+          docker run --detach --name ci-postgres \
+            --env POSTGRES_USER=postgres \
+            --env POSTGRES_PASSWORD=ci-password \
+            --env POSTGRES_DB=pharmeazor \
+            --publish 127.0.0.1:5432:5432 \
+            "$POSTGRES_IMAGE"
+      - name: Wait for the database to accept connections
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker exec ci-postgres pg_isready -U postgres -d pharmeazor; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "database did not become ready" >&2
+          docker logs ci-postgres >&2
+          exit 1
+      - name: Verify the vector extension is registered and usable
+        env:
+          DATABASE_URL: postgresql://postgres:ci-password@127.0.0.1:5432/pharmeazor
+        run: bun packages/database/src/workers/database/verify.ts
+      - name: Report database logs on failure
+        if: failure()
+        run: docker logs ci-postgres
+      - name: Stop the database
+        if: always()
+        run: docker rm --force ci-postgres
+
+  # ---------------------------------------------------------------------
+  # Stage 7 — containers. Validates the Compose contract and proves the
+  # application image still builds from the committed sources.
+  # ---------------------------------------------------------------------
+  containers:
+    name: Containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Validate the development Compose contract
+        run: docker compose --env-file .env.example config --quiet
+      - name: Prepare the build environment
+        # The production Compose file injects .env.local, so it has to exist
+        # before that contract can be validated.
+        run: bun scripts/prepare-ci-env.mjs
+      - name: Validate the production Compose contract
+        run: docker compose --env-file .env.example -f compose.production.yml config --quiet
+      - name: Build the application image
+        run: |
+          docker build \
+            --secret id=ghostinit_env,src=.env.local \
+            --tag pharmeazor:ci \
+            .
