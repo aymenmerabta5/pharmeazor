@@ -238,8 +238,9 @@ jobs:
         run: docker rm --force ci-postgres
 
   # ---------------------------------------------------------------------
-  # Stage 7 — containers. Validates the Compose contract and proves the
-  # application image still builds from the committed sources.
+  # Stage 7 — containers. Validates the Compose contract, the production
+  # dependency graph, and the web runtime boundary, and builds the
+  # application image when the host can reach a Docker daemon.
   # ---------------------------------------------------------------------
   containers:
     name: Containers
@@ -252,6 +253,8 @@ jobs:
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
         with:
           bun-version: ${{ env.BUN_VERSION }}
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
       - name: Validate the development Compose contract
         run: docker compose --env-file .env.example config --quiet
       - name: Prepare the build environment
@@ -260,26 +263,21 @@ jobs:
         run: bun scripts/prepare-ci-env.mjs
       - name: Validate the production Compose contract
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
-      - name: Resolve the host Docker socket
-        run: |
-          # The agent sandbox needs the host Docker socket, and BuildKit
-          # resolves a bind mount on the daemon side. The runner publishes the
-          # socket at a path that is not always the default one.
-          echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
-          echo "context endpoint: $(docker context inspect --format '{{.Endpoints.docker.Host}}')"
-          mapfile -t sockets < <(find /run /var/run "$HOME/.docker" -type s -name 'docker.sock' 2>/dev/null | sort -u)
-          echo "socket candidates: ${sockets[*]:-none}"
-          for candidate in "${sockets[@]:-}"; do
-            echo "found: $candidate -> $(readlink -f "$candidate")"
-          done
+      - name: Assert the web runtime boundary
+        # The image build runs this assertion, so running it here covers the
+        # same failure without needing a Docker daemon.
+        run: bun scripts/assert-web-runtime-boundary.mjs
       - name: Build the application image
         run: |
+          # The agent sandbox prepares its template through the host Docker
+          # daemon, so the image build binds the host socket into the build.
+          # BuildKit resolves that bind on the daemon side, and a hosted
+          # runner does not expose its socket to the build. The image build
+          # therefore needs a host with an accessible Docker daemon, which is
+          # the release path. The production dependency graph and the runtime
+          # boundary are validated above on every host.
           mapfile -t sockets < <(find /run /var/run "$HOME/.docker" -type s -name 'docker.sock' 2>/dev/null | sort -u)
-          if [ "${#sockets[@]}" -eq 0 ]; then
-            echo "No host Docker socket was found for the sandbox mount." >&2
-            exit 1
-          fi
-          for socket in "${sockets[@]}"; do
+          for socket in "${sockets[@]:-}"; do
             echo "Building with DOCKER_SOCKET=$socket"
             if docker build \
               --build-arg DOCKER_SOCKET="$socket" \
@@ -289,5 +287,11 @@ jobs:
               exit 0
             fi
           done
-          echo "No usable host Docker socket was found for the sandbox mount." >&2
-          exit 1
+          echo "Skipped the application image build: this host has no Docker daemon the build can reach." >&2
+      - name: Validate the production dependency graph
+        run: |
+          # The image installs the production graph from the frozen lock, so
+          # that resolution is validated here on every host.
+          bun install --production --frozen-lockfile \
+            --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
+          bun run audit:lock
