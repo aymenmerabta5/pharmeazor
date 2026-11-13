@@ -26,11 +26,11 @@ function configuredApplicationOrigin(): string {
   return url.origin;
 }
 
-function nativeHeaders(origin: string, method: "GET" | "POST"): Headers {
+async function nativeHeaders(origin: string, method: "GET" | "POST"): Promise<Headers> {
   const headers = new Headers({ Accept: "application/json, application/x-ndjson" });
   if (method === "POST") headers.set("Content-Type", "application/json");
   if (Platform.OS !== "web") {
-    const cookie = authClient.getCookie();
+    const cookie = await authClient.getCookie();
     if (!cookie) throw new EveClientError("Sign in before using Eve.", 401);
     headers.set("Cookie", cookie);
     // Native fetch has no browser origin. Assert the configured application
@@ -53,7 +53,7 @@ const transport: EveTransport = {
     }
     return await fetch(new URL(path, origin).toString(), {
       method: input.method,
-      headers: nativeHeaders(origin, input.method),
+      headers: await nativeHeaders(origin, input.method),
       ...(input.body === undefined ? {} : { body: input.body }),
       credentials: "include",
       redirect: "manual",

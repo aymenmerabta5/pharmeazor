@@ -12,7 +12,9 @@
     "format:check": "oxfmt --check .",
     "db:generate": "bun --env-file=../../.env.local drizzle-kit generate",
     "db:migrate": "bun --env-file=../../.env.local drizzle-kit migrate",
-    "db:push": "bun --env-file=../../.env.local drizzle-kit push"
+    "db:push": "bun --env-file=../../.env.local drizzle-kit push",
+    "db:ensure-extensions": "bun --conditions=react-server --env-file=../../.env.local src/workers/database/ensure-extensions.ts --ghostinit-database-extension-bootstrap",
+    "db:verify": "bun --env-file=../../.env.local src/workers/database/verify.ts"
   },
   "dependencies": {
     "@repo/config": "workspace:*",

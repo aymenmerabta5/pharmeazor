@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "registry": "https://registry.npmjs.org",
   "minimumReleaseAgeSeconds": 604800,
-  "auditedAt": "2026-11-12T19:53:21.966Z",
-  "lockSha256": "95d4055af7ff5721fe5ba1998dfa5df9e5ec354ee433ec6b05ec6f3065ac76cb",
+  "auditedAt": "2026-11-13T16:41:12.135Z",
+  "lockSha256": "32cd19460c24563df41b84682e26e882d42f5c213baefce3e581fd984c2b5395",
   "releases": [
     {
       "package": "@ai-sdk/gateway",
@@ -607,57 +607,57 @@
     },
     {
       "package": "@better-auth/core",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:06:43.452Z",
-      "integrity": "sha512-DTadFTdcEad+IAmcJAEVGjD+6wtjt8BkLqmfBdRK+AeYOHaKy/gwtSlmxDuHKfsRaOmn1P8/gtEi/L5wVeEojQ=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:30:24.768Z",
+      "integrity": "sha512-srgFzHEjB2WWlokFz1i4BfG41sNhsA105Pukgqu6RrEh5A+LSkzf1mCHydVipkjt9l5qswtBMi7IL6ouHbZL4Q=="
     },
     {
       "package": "@better-auth/drizzle-adapter",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:06:42.830Z",
-      "integrity": "sha512-/BXRx0FoqoWKV3LZLWjnPJHHGvXEZro7goVzzV7K7ZPZG+PbBa+HYN+eJuXSMFb3JCwJEhW+JNLHWekzHQnTLA=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:32:56.762Z",
+      "integrity": "sha512-qon0U94PR5FQysuyGoAlGVQpIIiNg5dtDpwjE63sN/HjoRWZadZzHPcS9mn7JsJyQZK6iTNhd7LD0AaXt2f78w=="
     },
     {
       "package": "@better-auth/expo",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:05:31.354Z",
-      "integrity": "sha512-hNuGXQJ4Tytw+PDFnZSs6RFddkJLokLKtFAZXUHROZlRmhzkkfrAhEYox4Hh8p0pIkpoOG1ywhb4t8BkHz4sVw=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:29:42.039Z",
+      "integrity": "sha512-DP2K5l7qK6Jr66j30AVXSRTSWw+A+iSSmrKbRGzJT+G9iwMzXsYZOv3WeYKOf4Ay1Y1kCv1n5/HcUsKO7PRlkg=="
     },
     {
       "package": "@better-auth/kysely-adapter",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:06:43.237Z",
-      "integrity": "sha512-CUYXGxJhx29iilmCr2jdzWBGg/Iq1XjghGlRO15N5SsR+hz8KOGob57UFMVtHEQAhN3tcdgJNllx/ZLmNCyO/A=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:29:43.323Z",
+      "integrity": "sha512-9FONOCgOcrQI9wJ5v1oDGIg9sT7pa9RjZZQ4fsCTudo8R87SrIGNUvUxDFTJhZvUblvFfGaIBR9Vb8LA+8bqLQ=="
     },
     {
       "package": "@better-auth/memory-adapter",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:07:43.543Z",
-      "integrity": "sha512-vw8uuW+zWUd4TLNnmtlwIiUb4jcj/mAopKWohv7ojDR6Esha7ZkM6EsW8W1PVdRhAfLiHeGqh0RvNtFm5mNDjQ=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:29:48.907Z",
+      "integrity": "sha512-FqKFEe+b5tXXV0gRbyirca+qXgMpLOeJ8Wk19yykb/scQKy0WJ4k22WzEV3TTPctQV9DZhwCXPlDtQhnlOv5Gg=="
     },
     {
       "package": "@better-auth/mongo-adapter",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:07:47.897Z",
-      "integrity": "sha512-JxAENypnmQbYcNboePWafLaP2egLgKQYoKPnZ8dNvaV50/h/dSlBDn1KaUrEMkJWjRXQ2rwgJzUl2yvGxQUZow=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:30:09.945Z",
+      "integrity": "sha512-ZnVDuRrXqbf0oHphrEN27oTImNH5NTO26dtWatq5cXyYAsH7goof9QIoTOmxTbBxUQahKBw9T6+9h6n+RtOE+g=="
     },
     {
       "package": "@better-auth/passkey",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:06:48.201Z",
-      "integrity": "sha512-lYJq3d2gxnaOY63UN+aY2NtFB+9SvbqXOv+vOcl5hJdAC3jYXKoAxaitV3/sXNsywef9MYhcTCVl0Oipgnfm5Q=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:29:49.362Z",
+      "integrity": "sha512-FMhL3bspBxne8EcyPWx9LdWUCnmrNRoSxCnH9Q2FIWsSWXMYuPPcHOs07v4g0zUXmTlBSr4vwW3J6t2vdUIOlg=="
     },
     {
       "package": "@better-auth/prisma-adapter",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:08:50.250Z",
-      "integrity": "sha512-wloYc35VpI7tjuWgOckB4GVX8y0Ow12ER5CfSqc55K88BefgRtR3brruZ9GhHSll+ZIxjf/0p5IGa+z8rKUR2Q=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:29:49.372Z",
+      "integrity": "sha512-4YcnrcVdvWiAZw0sZl63tWUClPXg5r3QsLn7C2sG7kKEBY06zOng0ibecyxRBixKq1zE1ceHuEUqez5Rhi+nQA=="
     },
     {
       "package": "@better-auth/telemetry",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:06:49.029Z",
-      "integrity": "sha512-k8BmE90sWIXlst84zyvCjWoXuftdujCmevlDDI86zXg81Pl+F2AZFPZFXzWkqaNmecnUjbm9bohNGCY6JonWQQ=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:30:34.926Z",
+      "integrity": "sha512-PaRA6i+kAioVYmza2gHPcdrxP0hAotph4KV9hft2GeNJq+AZXDiBu3FuLM9HxvcmiZeUT74Vufqd9ypmB8veTA=="
     },
     {
       "package": "@better-auth/utils",
@@ -676,6 +676,12 @@
       "version": "1.3.1",
       "publishedAt": "2026-06-15T22:04:05.928Z",
       "integrity": "sha512-ABkD1WhyfPZprKRQI3bhATjeiFuNWC9PXhfGWqL+sg/gKrM977oFrYkdb4msM3hgUGonr7KlOsOFT5TU2rht9g=="
+    },
+    {
+      "package": "@better-fetch/fetch",
+      "version": "1.3.2",
+      "publishedAt": "2026-09-11T05:51:39.562Z",
+      "integrity": "sha512-Gs7n99b5tqUC6cQAPbV0uED3IraHB6xQbHLQ/C3l7ZFafHScOx9pQ+DYmP5blbLFShVWLqxNUlI9wi4xU/X+ow=="
     },
     {
       "package": "@chargily/chargily-pay",
@@ -1699,57 +1705,57 @@
     },
     {
       "package": "@next/env",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:56:43.745Z",
-      "integrity": "sha512-Al9zqHVV7TJv0eFuOU4U7Lvv74PTih4Ch63sk2xCIpSTkE3udFnaOcnzP2lQVymiL7yS9Cj2iClUXlR3EQ5sEw=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:29:56.519Z",
+      "integrity": "sha512-5sUUrrSvs/2/2LnLoesybMGx12EtPB46fdZ6RhAw0XDGSPxU2LFyQBB7yuEiOFFJPKmBY6+q2jTr1/AMbnp0/g=="
     },
     {
       "package": "@next/swc-darwin-arm64",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:56:35.278Z",
-      "integrity": "sha512-2JPRMh2nmQG5CiL7cXGL9AGwnPWJQ//cTtAUCT+w511QHk79SYz3LGv/pc5X643B/WEO0rvu3Yww0hqwt3kgeA=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:28:49.343Z",
+      "integrity": "sha512-U+hQ5Gj3fpzf4fveTIF3dpUFYhaSW8vHhdAnbiIomzXzg7boreYFgBqprepXFtW4sw+aTttiNmg0gew/iFNhbg=="
     },
     {
       "package": "@next/swc-darwin-x64",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:57:12.290Z",
-      "integrity": "sha512-GZtCCOBKJ4leVIT/Th0llWKhD1ca92lzbQiS5R5ON9QkoiFnilFsebDae1JU2a3HWoKMEmEZWGs1AGLavVM72Q=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:28:11.640Z",
+      "integrity": "sha512-/hqC3V1XLUjhMASf/WridKdO9FXoEgN3HBWmtKbj00MPgnltutfraWJ3bYTpCRIgEIpbjJyOVLpYgAhh/BkdcQ=="
     },
     {
       "package": "@next/swc-linux-arm64-gnu",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:57:23.310Z",
-      "integrity": "sha512-O659ygeQYqneJ1fBKMpFxIFqYkYswu8IAS1OCKK/4f3ZgJJm1dRz4fVJZRi/kLLWjnBKnebOePA4WNv+sV1pVA=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:35:55.845Z",
+      "integrity": "sha512-GHzncHbcaS9g95kcvTNtKQW3aCLoR+xc3Jm7qrkpk1R+D2BjMHIPyvQGRPKCdMX95BsH/421jBUK06q9tEwzjw=="
     },
     {
       "package": "@next/swc-linux-arm64-musl",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:56:41.148Z",
-      "integrity": "sha512-dSjKSyWpzxoO1d3DIZZcP4XJcNaKeLmxQMFOiYl5vuBRMmweIqnAhty8tAmRsvTss779cK1FtYnDMj40e4TQlg=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:30:50.610Z",
+      "integrity": "sha512-1SuJyDxW/PR9dHJat/ZRgcYLhuSZ+1psP4DlKb2tKIuXbjygqpLrJWRSq+onZQBv8LcmU67EIrmb6c3XTaJLjw=="
     },
     {
       "package": "@next/swc-linux-x64-gnu",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:57:37.276Z",
-      "integrity": "sha512-lbqOuz3RPRcv+o9msNsJw5x4+Y1ZwPTs6vmL6DCf7i0fZfvng/F59wyeDwqHIvV0mK//RBy/jJkZ+nCKsSMXjQ=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:29:05.782Z",
+      "integrity": "sha512-Istng1hMGp9TGO4lUqeKLd70MPN/OOkucVTP2Nmj+gLkwBgmPqUw8CJYBCC7nbl/B/23bBCcjCI5Hsh6hazC1A=="
     },
     {
       "package": "@next/swc-linux-x64-musl",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:57:19.346Z",
-      "integrity": "sha512-+316WswI8ScVgZeUd+1KGaXkHhaYQzCjvH/05TZSpJ8zBizb1a4G7DtO7F12jcBIqMOtsz9ji1t48fmKtzqsGA=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:29:20.557Z",
+      "integrity": "sha512-aSC9wMNiZRRFVpPkPWBzRwLQxIGm/CiQcXyFF1XNcgodb+uMxdk7aSSGGpDXCbnvZdf4itjHxpOd5h7i7zaiYw=="
     },
     {
       "package": "@next/swc-win32-arm64-msvc",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:59:57.117Z",
-      "integrity": "sha512-ji0gd4kMYUxO+1fJBIbiBVRCjzG/lloiyCccnlebvb1ZJ5qXCPZqYg4Jl1DrrixnWNMKylzgpmMWx0yNDYXlzw=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:33:35.290Z",
+      "integrity": "sha512-t/myvwFDlypMUjRvbBf8qLPyuaB0iXYYdBtwMt6DM6f+60wtGr4bSYholdPqNeV5VUXZhrpMwfza829kmhS3iA=="
     },
     {
       "package": "@next/swc-win32-x64-msvc",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T15:58:21.647Z",
-      "integrity": "sha512-WcTlaKt/TWkh5kUjdJcUmB1XgZ+1c6fz4Y9fDHL73YNSdGaUWjceeWrrlwF0nv19iABYWC4iAq1oX1w4Bn0vfg=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:29:09.511Z",
+      "integrity": "sha512-6ICqPo9awCkrtYNPhwkx1uU7rlFWrZRrIboDHS2LU+jv088UBYQtmJ25h6pCp27/+FZjF6BQ4Te4ErugyMeuBg=="
     },
     {
       "package": "@noble/ciphers",
@@ -3547,9 +3553,9 @@
     },
     {
       "package": "@vercel/cli-config",
-      "version": "0.3.5",
-      "publishedAt": "2026-10-29T19:38:26.071Z",
-      "integrity": "sha512-O7y3EFzHENSLtE/3fjM3vIRqDpFFhZor2dMcZaND4G1d88gQk9u8yBcZhRR9CKnBowgzXdl0qcXkuINI05I72w=="
+      "version": "0.3.6",
+      "publishedAt": "2026-11-03T00:32:53.460Z",
+      "integrity": "sha512-jKsEWixJ+yMs2V29fqFxeDTQDglsgj7hvSXJf9pPmyYISvuTpTt45j/g47O6RWbe7aJycPbDOk7uKPHPA+LDYg=="
     },
     {
       "package": "@vercel/cli-exec",
@@ -3565,15 +3571,9 @@
     },
     {
       "package": "@vercel/oidc",
-      "version": "3.2.0",
-      "publishedAt": "2026-02-11T02:00:17.267Z",
-      "integrity": "sha512-UycprH3T6n3jH0k44NHMa7pnFHGu/N05MjojYr+Mc6I7obkoLIJujSWwin1pCvdy/eOxrI/l3uDLQsmcrOb4ug=="
-    },
-    {
-      "package": "@vercel/oidc",
-      "version": "4.0.5",
-      "publishedAt": "2026-10-29T19:38:41.307Z",
-      "integrity": "sha512-E+duTxv0W8r3qNCGUYxTLt0V0BlLUlrEqxYOu2OoFubIbxwGjwm4wofache+YgU6Sr0MwoAA/vsSrrNrrWjimw=="
+      "version": "4.0.6",
+      "publishedAt": "2026-11-03T00:32:24.188Z",
+      "integrity": "sha512-VlrMq9V20Sts9PRYeeh7d8+QCuTvDgujZ0OyakfEJkM7NpQTW+x2IFvVWGJzg+84RhFFa2kKir6gw5E4EcTsuw=="
     },
     {
       "package": "@workflow/serde",
@@ -3805,9 +3805,9 @@
     },
     {
       "package": "better-auth",
-      "version": "1.6.33",
-      "publishedAt": "2026-09-14T22:06:43.487Z",
-      "integrity": "sha512-QkVKOmJw/LQ3HjIib2wx2Td0xB9EuPgw0ARYPKeFu3niN0VSBW32j4QwfewFZOQi5Hb/jOB6U+wdvtBhF7+URw=="
+      "version": "1.7.7",
+      "publishedAt": "2026-09-30T21:30:55.572Z",
+      "integrity": "sha512-Zhgxi/c5ylmfB/sX+nwnBbsFf/j6k0L8DvL6CJXZSrXgxc5pPMC/e7j812zNd4L4B4ELmdURCPw3X8nAOUdcjw=="
     },
     {
       "package": "better-call",
@@ -4303,9 +4303,9 @@
     },
     {
       "package": "decode-uri-component",
-      "version": "0.2.2",
-      "publishedAt": "2022-12-01T18:22:59.105Z",
-      "integrity": "sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ=="
+      "version": "0.5.1",
+      "publishedAt": "2026-10-23T12:48:46.830Z",
+      "integrity": "sha512-vWHQkXgg2cE3BB4rR0c+PYw9BCQzLoNIRMI7AunIkZst74tw/vpPp7VLoYtsR/cy1f55g3XDWUslfeCZjiZJyA=="
     },
     {
       "package": "deepmerge",
@@ -5917,9 +5917,9 @@
     },
     {
       "package": "next",
-      "version": "16.3.8",
-      "publishedAt": "2026-09-30T16:07:21.198Z",
-      "integrity": "sha512-U7QEZaTini6wKrb8A8hqLLqYQyCetegKjCpJOyxk642vWoMoU1x5PyZCJFvgYgiptA8xc5j/9xYlZFO7w9Sjmw=="
+      "version": "16.4.1",
+      "publishedAt": "2026-10-14T17:43:55.246Z",
+      "integrity": "sha512-uc657V62E34fOI6W5NtG9IzwsPcms0Z60grz2MJGtglgD+pTFnNt4Yw2PzaU622tfX4vhrDgLZzicE2YlhI20Q=="
     },
     {
       "package": "next-intl",
@@ -5959,9 +5959,9 @@
     },
     {
       "package": "node-forge",
-      "version": "1.4.0",
-      "publishedAt": "2026-03-24T21:44:34.668Z",
-      "integrity": "sha512-LarFH0+6VfriEhqMMcLX2F7SwSXeWwnEAJEsYm5QKWchiVYVvJyV9v7UDvUv+w5HO23ZpQTXDv/GxdDdMyOuoQ=="
+      "version": "1.4.3",
+      "publishedAt": "2026-11-04T01:06:47.014Z",
+      "integrity": "sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g=="
     },
     {
       "package": "node-int64",
@@ -7381,9 +7381,9 @@
     },
     {
       "package": "undici",
-      "version": "8.10.2",
-      "publishedAt": "2026-09-04T14:00:54.766Z",
-      "integrity": "sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ=="
+      "version": "8.12.3",
+      "publishedAt": "2026-10-19T14:02:56.699Z",
+      "integrity": "sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw=="
     },
     {
       "package": "undici-types",
@@ -7711,21 +7711,9 @@
     },
     {
       "package": "zod",
-      "version": "3.25.76",
-      "publishedAt": "2025-07-08T09:10:18.684Z",
-      "integrity": "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="
-    },
-    {
-      "package": "zod",
-      "version": "4.1.11",
-      "publishedAt": "2025-09-20T17:16:31.591Z",
-      "integrity": "sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg=="
-    },
-    {
-      "package": "zod",
-      "version": "4.6.5",
-      "publishedAt": "2026-09-13T23:25:14.644Z",
-      "integrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q=="
+      "version": "4.6.6",
+      "publishedAt": "2026-10-11T16:18:23.878Z",
+      "integrity": "sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA=="
     }
   ]
 }

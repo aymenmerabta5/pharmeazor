@@ -19,6 +19,7 @@
     "db:migrate": "turbo run db:migrate",
     "db:push": "turbo run db:push",
     "db:ensure-extensions": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/database/ensure-extensions.ts --ghostinit-database-extension-bootstrap",
+    "db:verify": "bun --env-file=.env.local packages/database/src/workers/database/verify.ts",
     "dev": "bun --env-file=.env.local run turbo run dev",
     "doctor:fix": "bunx --bun ghostinit@0.1.0 doctor --fix",
     "eve:build": "bun --env-file=.env.local run --cwd apps/eve build",
@@ -62,9 +63,13 @@
     "typescript": "7.0.2"
   },
   "overrides": {
+    "@expo/cli/zod": "4.6.6",
+    "@vercel/oidc": "4.0.6",
+    "decode-uri-component": "0.5.1",
     "drizzle-orm": "0.45.4",
+    "node-forge": "1.4.3",
     "pdfkit": "0.20.2",
-    "undici": "8.10.2"
+    "undici": "8.12.3"
   },
   "engines": {
     "bun": "1.4.4"
@@ -72,7 +77,6 @@
   "packageManager": "bun@1.4.4",
   "patchedDependencies": {
     "image-size@1.2.1": "patches/image-size@1.2.1.patch",
-    "braces@3.0.3": "patches/braces@3.0.3.patch",
-    "node-forge@1.4.0": "patches/node-forge@1.4.0.patch"
+    "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }

@@ -78,7 +78,10 @@ type JsonToken =
 
 const HAS_IMAGE_SIZE_PATCH = true;
 const HAS_OPENNEXT_PATCH = false;
-const HAS_EXPO_TOOLCHAIN_PATCHES = true;
+const HAS_BRACES_PATCH = true;
+// node-forge 1.4.3 clears every advisory the 1.4.0 patch worked around, so the
+// patch is retired rather than carried forward.
+const HAS_NODE_FORGE_PATCH = false;
 const HAS_ELECTRON_TOOLCHAIN_PATCHES = false;
 const PATCH_KEY = "image-size@1.2.1";
 const PATCH_PATH = "patches/image-size@1.2.1.patch";
@@ -135,7 +138,6 @@ const REVIEWED_ADVISORIES = new Map<string, string>([
   ["GHSA-w3rx-r6r6-pgpr", "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr"],
   ["GHSA-5p2g-fcmc-qvqq", "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq"],
   ["GHSA-vfj7-8cjw-p6xm", "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"],
-  ["GHSA-86w9-cpqp-85rv", "https://github.com/advisories/GHSA-86w9-cpqp-85rv"],
   ["GHSA-ch52-4w7c-c8xp", "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"],
 ]);
 // Tracks which reviewed patches resolve into the committed lock. Installed
@@ -149,9 +151,12 @@ const severityRank = new Map<string, number>([
   ["high", 3],
   ["critical", 4],
 ]);
-// Bun 1.4.4 reads existing v1 text locks and emits v2 for freshly resolved
-// workspace graphs. Both are structural JSONC variants of the same package map.
-const SUPPORTED_BUN_LOCKFILE_VERSIONS = new Set<number>([1, 2]);
+// Bun 1.4.4 reads existing v1 text locks and v2 JSONC locks, and emits v3
+// JSONC when it has to rewrite a resolved graph. All three are structural
+// JSONC variants of the same package map: the `packages` entries keep the
+// same [resolution, "", {dependencies}, integrity] tuple, and `workspaces`,
+// `patchedDependencies`, and `overrides` keep the same shape.
+const SUPPORTED_BUN_LOCKFILE_VERSIONS = new Set<number>([1, 2, 3]);
 const punctuation = new Set(["{", "}", "[", "]", ":", ","]);
 const bunRuntime = (globalThis as typeof globalThis & { readonly Bun?: BunRuntime }).Bun;
 
@@ -1261,8 +1266,8 @@ async function verifyLockOnly(root: string, refreshEvidence: boolean): Promise<P
   const registryPackages = lockedRegistryPackages(lock);
   if (HAS_IMAGE_SIZE_PATCH) verifyReviewedPatchLock(root, manifest, lock, registryPackages);
   if (HAS_OPENNEXT_PATCH) verifyOpenNextPatchLock(root, manifest, lock, registryPackages);
-  if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyBracesPatchLock(root, manifest, lock, registryPackages);
-  if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyNodeForgePatchLock(root, manifest, lock, registryPackages);
+  if (HAS_BRACES_PATCH) verifyBracesPatchLock(root, manifest, lock, registryPackages);
+  if (HAS_NODE_FORGE_PATCH) verifyNodeForgePatchLock(root, manifest, lock, registryPackages);
   if (HAS_ELECTRON_TOOLCHAIN_PATCHES)
     verifyHttpCacheSemanticsPatchLock(root, manifest, lock, registryPackages);
   if (refreshEvidence) {
@@ -1365,8 +1370,8 @@ if (lockOnly) {
 }
 if (HAS_IMAGE_SIZE_PATCH) verifyReviewedPatchInstalled(root, manifest);
 if (HAS_OPENNEXT_PATCH) verifyOpenNextPatchInstalled(root, manifest);
-if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyBracesPatchInstalled(root, manifest);
-if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyNodeForgePatchInstalled(root, manifest);
+if (HAS_BRACES_PATCH) verifyBracesPatchInstalled(root, manifest);
+if (HAS_NODE_FORGE_PATCH) verifyNodeForgePatchInstalled(root, manifest);
 if (HAS_ELECTRON_TOOLCHAIN_PATCHES) verifyHttpCacheSemanticsPatchInstalled(root, manifest);
 const parsedReport = await bunAuditReport(root);
 const unexpected: string[] = [];
@@ -1386,7 +1391,8 @@ for (const [packageName, advisories] of Object.entries(parsedReport)) {
     const id = advisoryId(entry.url);
     const isReviewedImageSizePatch = HAS_IMAGE_SIZE_PATCH && packageName === "image-size";
     const isReviewedExpoToolchainPatch =
-      HAS_EXPO_TOOLCHAIN_PATCHES && (packageName === "braces" || packageName === "node-forge");
+      (HAS_BRACES_PATCH && packageName === "braces") ||
+      (HAS_NODE_FORGE_PATCH && packageName === "node-forge");
     const isReviewedElectronToolchainPatch =
       HAS_ELECTRON_TOOLCHAIN_PATCHES && packageName === "http-cache-semantics";
     if (
