@@ -18,6 +18,7 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:push": "turbo run db:push",
+    "db:ensure-extensions": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/database/ensure-extensions.ts --ghostinit-database-extension-bootstrap",
     "dev": "bun --env-file=.env.local run turbo run dev",
     "doctor:fix": "bunx --bun ghostinit@0.1.0 doctor --fix",
     "eve:build": "bun --env-file=.env.local run --cwd apps/eve build",
