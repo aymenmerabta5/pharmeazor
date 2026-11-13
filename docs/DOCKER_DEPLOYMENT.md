@@ -26,6 +26,29 @@ The Compose file mounts the stable named volume `pharmeazor_eve_workflow_data` a
 
 This profile uses process-local admission or Workflow state. Run exactly one application replica until a shared transactional adapter is configured.
 
+## Database
+
+The application expects PostgreSQL 18.7 with the pgvector 0.8.7 extension. The
+production Compose file does not run a database; point `DATABASE_URL` at a
+managed instance that already has the extension, or at a container built from
+`docker/postgres/Dockerfile`.
+
+The development database is started with:
+
+```bash
+docker compose --env-file .env.local up -d
+```
+
+Compose builds the pgvector image on first run and mounts
+`docker/postgres/init` so a fresh database registers the extension
+automatically. For a database that already exists, run
+`bun run db:ensure-extensions` once; it is idempotent.
+
+`docker-compose.yml` and `start-database.sh` are generator-owned and are
+rewritten by `ghostinit sync`. `docker-compose.override.yml` repeats the
+pgvector service fields so they survive that regeneration. Do not run
+`docker compose -f docker-compose.yml` without the override file.
+
 ## Standalone Docker
 
 These commands work from PowerShell, cmd, bash, and zsh (enter the `docker run` command on one line where shell continuation differs):
