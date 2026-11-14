@@ -1,10 +1,15 @@
 # Docker production contract
 
-The image build requires BuildKit and mounts `.env.local` as the ephemeral
-`ghostinit_env` build secret. The Dockerfile never copies `.env*` into a
-layer. Runtime secrets are injected separately through Compose `env_file`.
-Replace every required `REPLACE_WITH_*` value before building; schema
-validation intentionally fails closed for selected providers such as Redis.
+The image build requires BuildKit and never copies `.env*` into a layer. Runtime
+secrets are injected separately through Compose `env_file`. Replace every
+required `REPLACE_WITH_*` value before building; schema validation
+intentionally fails closed for selected providers such as Redis.
+
+The application artifacts are built before the image, not inside it. The agent
+sandbox prepares its template against the Docker daemon, and the daemon binds
+the project path of the machine that runs the build, so the build has to run
+where the daemon can reach it. The image then assembles the artifacts it
+produced and installs the production dependency graph.
 
 The build also requires a regular root `bun.lock`. If this project was created
 with `--no-install`, run `bun run install:bootstrap` using Bun `1.4.4` before
@@ -16,6 +21,7 @@ Both container installs read the generated `bunfig.toml`, enforcing a
 ## Compose (recommended)
 
 ```bash
+bun --env-file=.env.local scripts/build-deployment.mjs
 docker compose --env-file .env.local -f compose.production.yml up -d --build
 docker compose -f compose.production.yml ps
 ```
@@ -67,20 +73,15 @@ distance computation.
 
 ## Standalone Docker
 
-The build prepares the agent sandbox template, so it needs a reachable Docker
-daemon. BuildKit resolves the source of a bind mount against the build
-context, so a host socket cannot be mounted into a build step. Publish the
-daemon on the loopback interface and point the build at it:
+The application is built before the image, because the agent sandbox prepares
+its template against the Docker daemon and the daemon binds the project path
+of the machine that runs the build. These commands work from PowerShell, cmd,
+bash, and zsh (enter the `docker run` command on one line where shell
+continuation differs):
 
 ```bash
-node scripts/docker-tcp-proxy.mjs &
-docker build --network=host --build-arg DOCKER_HOST=tcp://127.0.0.1:2375 \
-  --secret id=ghostinit_env,src=.env.local -t pharmeazor .
-```
-
-These commands work from PowerShell, cmd, bash, and zsh (enter the `docker run` command on one line where shell continuation differs):
-
-```bash
+bun --env-file=.env.local scripts/build-deployment.mjs
+docker build -t pharmeazor .
 docker run -d --name pharmeazor --env-file .env.local -p 127.0.0.1:3000:3000 \
   --mount type=volume,src=pharmeazor_eve_workflow_data,dst=/app/apps/eve/.eve/.workflow-data \
   --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
@@ -98,11 +99,11 @@ docker stop --time 30 pharmeazor
 The agent runs its tools in a Docker container that carries a Python runtime,
 so the host needs a reachable Docker daemon.
 
-- The image build prepares the sandbox template, so the build needs a reachable
-  Docker daemon. BuildKit resolves the source of a bind mount against the build
-  context, so a host socket cannot be mounted into a build step. Publish the
-  daemon and point the build at it: run `node scripts/docker-tcp-proxy.mjs &`
-  and build with `--network=host --build-arg DOCKER_HOST=tcp://127.0.0.1:2375`.
+- The application is built before the image, because the agent sandbox
+  prepares its template against the Docker daemon and the daemon binds the
+  project path of the machine that runs the build. Build the application and
+  the image on the machine that runs the container, so both reach the same
+  daemon.
 - The runtime creates the sandbox container on the same daemon, so the running
   container needs the same socket and a process that may use it. The image
   runs as uid 1000, so add the group that owns the host socket with

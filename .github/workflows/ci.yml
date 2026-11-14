@@ -263,38 +263,14 @@ jobs:
         run: bun scripts/prepare-ci-env.mjs
       - name: Validate the production Compose contract
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
+      - name: Build the application artifacts
+        # The agent sandbox prepares its template against the Docker daemon,
+        # and the daemon binds the project path of the machine that runs the
+        # build. The build therefore runs on the runner that owns the daemon,
+        # and the image assembles the artifacts it produced.
+        run: bun --env-file=.env.local scripts/build-deployment.mjs
       - name: Build the application image
-        run: |
-          # The agent sandbox prepares its template against a Docker daemon, so
-          # the image build needs one. BuildKit resolves the source of a bind
-          # mount against the build context, so a host socket cannot be mounted
-          # into a build step. The daemon is published on the loopback
-          # interface and the build reaches it over TCP on the host network.
-          if ! docker info > /dev/null 2>&1; then
-            echo "Skipped the application image build: this host has no Docker daemon." >&2
-            exit 0
-          fi
-          node scripts/docker-tcp-proxy.mjs &
-          proxy_pid=$!
-          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
-          published=false
-          for attempt in $(seq 1 30); do
-            if docker --host tcp://127.0.0.1:2375 info > /dev/null 2>&1; then
-              published=true
-              break
-            fi
-            sleep 1
-          done
-          if [ "$published" != true ]; then
-            echo "The Docker daemon was not reachable on the published port." >&2
-            exit 1
-          fi
-          docker build \
-            --network=host \
-            --build-arg DOCKER_HOST=tcp://127.0.0.1:2375 \
-            --secret id=ghostinit_env,src=.env.local \
-            --tag pharmeazor:ci \
-            .
+        run: docker build --tag pharmeazor:ci .
       - name: Validate the production dependency graph
         run: |
           # The image installs the production graph from the frozen lock into a

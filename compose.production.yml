@@ -4,14 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        # The image build prepares the agent sandbox template, so it needs a
-        # reachable Docker daemon. BuildKit resolves the source of a bind mount
-        # against the build context, so the daemon is published and addressed
-        # through DOCKER_HOST. Export DOCKER_HOST before building.
-        DOCKER_HOST: "${DOCKER_HOST:-}"
-      secrets:
-        - ghostinit_env
     restart: unless-stopped
     env_file:
       - .env.local
@@ -34,10 +26,6 @@ services:
       # gives the service control of that daemon, so it is a root-equivalent
       # privilege on the host; isolate the daemon on a dedicated machine.
       - /var/run/docker.sock:/var/run/docker.sock
-secrets:
-  ghostinit_env:
-    # BuildKit mounts this ephemerally for validation/build; it is never copied.
-    file: .env.local
 volumes:
   eve_workflow_data:
     # Stable across container replacement; do not remove it with compose down -v.
