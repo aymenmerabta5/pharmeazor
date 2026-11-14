@@ -26,7 +26,7 @@ export const InputGroupInput = React.forwardRef<
     ref={ref}
     data-slot="input-group-input"
     className={cn(
-      "flex h-10 w-full min-w-0 bg-transparent px-3 py-2 text-base leading-6 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed md:text-sm",
+      "flex h-11 w-full min-w-0 bg-transparent px-3 py-2 text-base leading-6 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed md:text-sm",
       className,
     )}
     {...props}

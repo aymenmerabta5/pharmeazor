@@ -13,7 +13,7 @@ export function useSignUpForm() {
   const navigation = useAuthNavigation();
   const t = useSurfaceTranslations("auth");
   const [error, setError] = useState<string | null>(null);
-  const methods = useAuthMethods(intent, navigation.dashboard, "signUp", () => setError(null));
+  const methods = useAuthMethods(intent, "signUp", () => setError(null));
   const form = useAppForm({
     defaultValues: { name: "", email: "", password: "" },
     validators: {

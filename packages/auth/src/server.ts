@@ -278,13 +278,19 @@ const configuredAuth = betterAuth({
     !env.GITHUB_CLIENT_SECRET.startsWith("REPLACE_WITH")
       ? { github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET } }
       : {}),
+    ...(env.APPLE_CLIENT_ID &&
+    !env.APPLE_CLIENT_ID.startsWith("REPLACE_WITH") &&
+    env.APPLE_CLIENT_SECRET &&
+    !env.APPLE_CLIENT_SECRET.startsWith("REPLACE_WITH")
+      ? { apple: { clientId: env.APPLE_CLIENT_ID, clientSecret: env.APPLE_CLIENT_SECRET } }
+      : {}),
   },
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
       requireLocalEmailVerified: true,
-      trustedProviders: ["google", "github"],
+      trustedProviders: ["google", "github", "apple"],
     },
   },
   user: {

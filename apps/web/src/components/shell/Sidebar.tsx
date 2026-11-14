@@ -14,7 +14,7 @@ export function DashboardSidebar(): React.JSX.Element {
   const pathname = usePathname();
   return (
     <aside className="hidden w-56 shrink-0 flex-col gap-4 border-e py-6 pe-4 md:flex">
-      <div className="px-2 font-semibold tracking-tight">GhostInit</div>
+      <div className="px-2 font-semibold tracking-tight">pharmeazor</div>
       <nav className="flex flex-col gap-1">
         {NAV.map((item) => {
           const active = pathname === item.href || pathname?.startsWith(item.href + "/");

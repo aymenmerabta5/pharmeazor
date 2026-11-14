@@ -10,7 +10,7 @@ export function DashboardNavbar(): React.JSX.Element {
   return (
     <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b bg-background px-4">
       <div className="flex items-center gap-2">
-        <span className="font-semibold">GhostInit</span>
+        <span className="font-semibold">pharmeazor</span>
         {user ? <Badge variant="secondary">{user.role ?? "user"}</Badge> : null}
       </div>
       <div className="flex items-center gap-2">

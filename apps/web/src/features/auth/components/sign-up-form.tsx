@@ -4,6 +4,7 @@ import type * as React from "react";
 import Link from "next/link";
 import { AuthOAuthButtons } from "./oauth-buttons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BrandMark } from "@/components/brand-wordmark";
 import {
   Card,
   CardContent,
@@ -21,12 +22,15 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
   const t = useSurfaceTranslations("auth");
   const { form, error, methods } = state;
   return (
-    <Card className="border-0 bg-transparent p-0 shadow-none">
-      <CardHeader className="gap-2 p-0 pb-6 sm:p-0 sm:pb-6">
-        <CardTitle as="h1" className="text-3xl tracking-tight">
-          {t("signUp.title")}
-        </CardTitle>
-        <CardDescription className="max-w-[60ch]">{t("signUp.description")}</CardDescription>
+    <Card className="rounded-3xl border-border/80 bg-card p-6 shadow-surface sm:p-8">
+      <CardHeader className="items-center gap-4 p-0 pb-7 text-center sm:p-0 sm:pb-7">
+        <BrandMark className="size-12 rounded-2xl" />
+        <div className="flex flex-col gap-1.5">
+          <CardTitle as="h1" className="text-2xl sm:text-[1.75rem]">
+            {t("signUp.title")}
+          </CardTitle>
+          <CardDescription className="max-w-[34ch]">{t("signUp.description")}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-6 p-0 sm:p-0">
         {error ? (
@@ -37,19 +41,18 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
         ) : null}
         <AuthOAuthButtons
           googleLabel={t("signUp.oauthGoogle")}
-          githubLabel={t("signUp.oauthGitHub")}
+          appleLabel={t("signUp.oauthApple")}
           separatorLabel={t("signUp.or")}
           onSelect={methods.onOAuth}
           disabled={methods.pending}
         />
         <form.AppForm>
-          <Form form={form} className="flex flex-col gap-6">
-            <FieldGroup>
+          <Form form={form} className="flex flex-col gap-5">
+            <FieldGroup className="gap-4">
               <form.AppField name="name">
                 {(field) => (
                   <field.TextField
                     label={t("signUp.nameLabel")}
-                    description={t("signUp.nameDescription")}
                     placeholder={t("signUp.namePlaceholder")}
                     autoComplete="name"
                     required
@@ -62,7 +65,6 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
                   <field.TextField
                     type="email"
                     label={t("signUp.emailLabel")}
-                    description={t("signUp.emailDescription")}
                     placeholder={t("signUp.emailPlaceholder")}
                     autoComplete="email"
                     required
@@ -73,7 +75,6 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
                 {(field) => (
                   <field.PasswordField
                     label={t("signUp.passwordLabel")}
-                    description={t("signUp.passwordDescription")}
                     autoComplete="new-password"
                     required
                     minLength={8}
@@ -84,7 +85,7 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
             </FieldGroup>
             <form.SubmitButton
               disabled={methods.pending}
-              className="h-10 w-full"
+              className="h-11 w-full rounded-xl text-sm font-semibold"
               pendingLabel={t("signUp.submitting")}
             >
               {t("signUp.submit")}
@@ -93,14 +94,15 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
         </form.AppForm>
       </CardContent>
       <CardFooter className="mt-6 flex-col gap-3 border-t border-border/70 p-0 pt-5 sm:p-0 sm:pt-5">
-        <div className="flex w-full flex-wrap justify-center gap-3 text-sm">
+        <p className="text-center text-sm text-muted-foreground">
+          {t("signUp.signInPrompt")}{" "}
           <Link
             href="/sign-in"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
-            {t("signUp.signInPrompt")} {t("signUp.signInLink")}
+            {t("signUp.signInLink")}
           </Link>
-        </div>
+        </p>
       </CardFooter>
     </Card>
   );

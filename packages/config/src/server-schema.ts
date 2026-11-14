@@ -23,6 +23,8 @@ export const serverSchema = {
   GOOGLE_CLIENT_SECRET: z.string().min(1).default("REPLACE_WITH_GOOGLE_CLIENT_SECRET"),
   GITHUB_CLIENT_ID: z.string().min(1).default("REPLACE_WITH_GITHUB_CLIENT_ID"),
   GITHUB_CLIENT_SECRET: z.string().min(1).default("REPLACE_WITH_GITHUB_CLIENT_SECRET"),
+  APPLE_CLIENT_ID: z.string().min(1).default("REPLACE_WITH_APPLE_CLIENT_ID"),
+  APPLE_CLIENT_SECRET: z.string().min(1).default("REPLACE_WITH_APPLE_CLIENT_SECRET"),
   TRUSTED_PROXY: z.enum(["true", "false"]).default("false"),
   ANALYTICS_DISABLED: z.enum(["true", "false"]).default("false"),
   RESEND_API_KEY: z.string().min(1).default("REPLACE_WITH_RESEND_API_KEY"),

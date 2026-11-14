@@ -1,11 +1,8 @@
-import { identityClient, identityPasskeyClient } from "@/lib/auth-client";
+import { identityClient } from "@/lib/auth-client";
 import type { IdentityOAuthProvider } from "@/lib/auth-model";
 
 export function signInWithOAuth(provider: IdentityOAuthProvider) {
   return identityClient.signInWithOAuth({ provider, callbackURL: "/dashboard" });
-}
-export function authenticatePasskey() {
-  return identityPasskeyClient.authenticate();
 }
 export function signInWithEmail(input: { email: string; password: string }) {
   return identityClient.signInWithEmail({ ...input, callbackURL: "/dashboard" });

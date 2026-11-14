@@ -4,6 +4,7 @@ import type * as React from "react";
 import Link from "next/link";
 import { SignInMethods } from "./sign-in-methods";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BrandMark } from "@/components/brand-wordmark";
 import {
   Card,
   CardContent,
@@ -21,12 +22,15 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
   const t = useSurfaceTranslations("auth");
   const { form, error, methods } = state;
   return (
-    <Card className="border-0 bg-transparent p-0 shadow-none">
-      <CardHeader className="gap-2 p-0 pb-6 sm:p-0 sm:pb-6">
-        <CardTitle as="h1" className="text-3xl tracking-tight">
-          {t("signIn.title")}
-        </CardTitle>
-        <CardDescription className="max-w-[60ch]">{t("signIn.description")}</CardDescription>
+    <Card className="rounded-3xl border-border/80 bg-card p-6 shadow-surface sm:p-8">
+      <CardHeader className="items-center gap-4 p-0 pb-7 text-center sm:p-0 sm:pb-7">
+        <BrandMark className="size-12 rounded-2xl" />
+        <div className="flex flex-col gap-1.5">
+          <CardTitle as="h1" className="text-2xl sm:text-[1.75rem]">
+            {t("signIn.title")}
+          </CardTitle>
+          <CardDescription className="max-w-[34ch]">{t("signIn.description")}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-6 p-0 sm:p-0">
         {error ? (
@@ -37,14 +41,13 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
         ) : null}
         <SignInMethods state={methods} />
         <form.AppForm>
-          <Form form={form} className="flex flex-col gap-6">
-            <FieldGroup>
+          <Form form={form} className="flex flex-col gap-5">
+            <FieldGroup className="gap-4">
               <form.AppField name="email">
                 {(field) => (
                   <field.TextField
                     type="email"
                     label={t("signIn.emailLabel")}
-                    description={t("signIn.emailDescription")}
                     placeholder={t("signIn.emailPlaceholder")}
                     autoComplete="email"
                     required
@@ -65,7 +68,7 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
             </FieldGroup>
             <form.SubmitButton
               disabled={methods.pending}
-              className="h-10 w-full"
+              className="h-11 w-full rounded-xl text-sm font-semibold"
               pendingLabel={t("signIn.submitting")}
             >
               {t("signIn.submit")}
@@ -74,32 +77,18 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
         </form.AppForm>
       </CardContent>
       <CardFooter className="mt-6 flex-col gap-3 border-t border-border/70 p-0 pt-5 sm:p-0 sm:pt-5">
-        <div className="flex w-full flex-wrap gap-3 justify-between text-sm">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3 text-sm">
           <Link
             href="/forgot-password"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
           >
             {t("signIn.forgotPassword")}
           </Link>
           <Link
             href="/sign-up"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             {t("signIn.createAccountLink")}
-          </Link>
-        </div>
-        <div className="flex w-full flex-wrap justify-center gap-x-5 gap-y-2 text-xs">
-          <Link
-            href="/magic-link"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            {t("signIn.magicLink")}
-          </Link>
-          <Link
-            href="/verify-email"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            {t("signIn.verifyEmail")}
           </Link>
         </div>
       </CardFooter>

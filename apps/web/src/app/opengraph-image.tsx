@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "GhostInit";
+export const alt = "pharmeazor";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -13,12 +13,12 @@ export default function Image(): ImageResponse {
         height: "100%",
         alignItems: "center",
         justifyContent: "center",
-        background: "#000",
-        color: "#fff",
+        background: "#f7f5f0",
+        color: "#1f4d42",
         fontSize: 64,
       }}
     >
-      GhostInit
+      pharmeazor
     </div>,
     { ...size },
   );

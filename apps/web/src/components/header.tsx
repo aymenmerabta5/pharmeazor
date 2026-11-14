@@ -10,7 +10,7 @@ export function HeaderBrand(): React.JSX.Element {
   return (
     <Link
       href="/"
-      aria-label="GhostInit"
+      aria-label="pharmeazor"
       className="inline-flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <BrandWordmark />

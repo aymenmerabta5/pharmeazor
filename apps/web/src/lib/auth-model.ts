@@ -1,4 +1,4 @@
-export const IDENTITY_OAUTH_PROVIDERS = ["google", "github"] as const;
+export const IDENTITY_OAUTH_PROVIDERS = ["google", "apple"] as const;
 export type IdentityOAuthProvider = (typeof IDENTITY_OAUTH_PROVIDERS)[number];
 export function isIdentityOAuthProvider(value: string): value is IdentityOAuthProvider {
   return (IDENTITY_OAUTH_PROVIDERS as readonly string[]).includes(value);

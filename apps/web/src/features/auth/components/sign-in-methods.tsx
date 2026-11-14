@@ -2,7 +2,6 @@
 import type * as React from "react";
 import { AuthOAuthButtons } from "./oauth-buttons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { useSurfaceTranslations } from "@/lib/translations";
 import type { AuthMethodsState } from "../types";
 
@@ -24,20 +23,11 @@ export function SignInMethods({
       ) : null}
       <AuthOAuthButtons
         googleLabel={t("signIn.oauthGoogle")}
-        githubLabel={t("signIn.oauthGitHub")}
+        appleLabel={t("signIn.oauthApple")}
         separatorLabel={t("signIn.or")}
         onSelect={state.onOAuth}
         disabled={disabled || state.pending}
       />
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        disabled={disabled || state.pending}
-        onClick={() => void state.onPasskey()}
-      >
-        {t("signIn.passkey")}
-      </Button>
     </div>
   );
 }
