@@ -1,5 +1,5 @@
 import { orpcClient } from "@/lib/orpc";
-import type { ProviderName } from "./model";
+import type { CheckoutProviderName } from "./model";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { env } from "@repo/config/expo";
@@ -71,13 +71,13 @@ async function openProviderUrl(
 }
 
 export type BillingAction =
-  | { kind: "checkout"; provider: ProviderName }
-  | { kind: "portal"; provider: ProviderName }
+  | { kind: "checkout"; provider: CheckoutProviderName; planId: string }
+  | { kind: "portal"; provider: "stripe" }
   | {
       kind: "payment-link";
-      provider: ProviderName;
+      provider: "chargily";
       name: string;
-      price: string;
+      planId: string;
       afterCompletionMessage: string;
     };
 
@@ -89,7 +89,7 @@ export async function performBillingAction(
     const successUrl = billingReturnUrl("success");
     const result = await orpcClient.billing.createCheckout({
       provider: input.provider,
-      planId: "pro",
+      planId: input.planId,
       successUrl,
       failureUrl: billingReturnUrl("cancel"),
       requestKey: secureRequestKey(),
@@ -110,8 +110,8 @@ export async function performBillingAction(
   }
   const result = await orpcClient.billing.createPaymentLink({
     provider: input.provider,
+    planId: input.planId,
     name: input.name,
-    items: [{ price: input.price, quantity: 1 }],
     afterCompletionMessage: input.afterCompletionMessage,
   });
   if (!isCurrent()) return;

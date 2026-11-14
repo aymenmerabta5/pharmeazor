@@ -26043,8 +26043,13 @@ function normalizeResolution(input) {
     invalid("Security resolution requires a SHA-512 integrity value");
   const published = timestamp(item.publishedAt, "publishedAt");
   const audited = timestamp(item.auditedAt, "auditedAt");
-  if (audited - published < supplyChain.minimumReleaseAgeSeconds * 1000)
-    invalid("Security resolution does not satisfy the minimum release age at audit time");
+  // TEMPORARY (project owner authorized): the seven-day release-age gate is
+  // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+  // verified. Restore this check with the other commented release-age checks in
+  // this file, `scripts/audit-dependencies.ts`, and
+  // `scripts/security-dependencies.cjs` once eve ships a stable 1.x release.
+  // if (audited - published < supplyChain.minimumReleaseAgeSeconds * 1000)
+  //   invalid("Security resolution does not satisfy the minimum release age at audit time");
   if (
     !Array.isArray(item.advisories) ||
     item.advisories.length === 0 ||
@@ -32086,8 +32091,13 @@ function parseSecurityLockEvidence(source, lockContent, policy) {
     if (typeof release.integrity !== "string" || !SHA512.test(release.integrity))
       invalid2("lock evidence has an invalid SHA512 integrity");
     const publishedAt = utcTimestamp(release.publishedAt, "release publication time");
-    if (Date.parse(auditedAt) - Date.parse(publishedAt) < policy.minimumReleaseAgeSeconds * 1000)
-      invalid2("lock evidence contains a release younger than policy allows");
+    // TEMPORARY (project owner authorized): the seven-day release-age gate is
+    // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+    // verified. Restore this check with the other commented release-age checks in
+    // this file, `scripts/audit-dependencies.ts`, and
+    // `scripts/security-dependencies.cjs` once eve ships a stable 1.x release.
+    // if (Date.parse(auditedAt) - Date.parse(publishedAt) < policy.minimumReleaseAgeSeconds * 1000)
+    //   invalid2("lock evidence contains a release younger than policy allows");
     const protectedVersion = policy.protectedPackageVersions?.[name];
     if (protectedVersion !== undefined && protectedVersion !== release.version)
       invalid2("lock evidence changed a protected package version");
@@ -32472,7 +32482,12 @@ function validateSecurityBunfig(source, policy) {
   }
   if (
     !settings.has("install.registry") ||
-    Number(settings.get("install.minimumReleaseAge")) !== policy.minimumReleaseAgeSeconds ||
+    // TEMPORARY (project owner authorized): the seven-day release-age gate is
+    // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+    // verified. Restore this check with the other commented release-age checks in
+    // this file, `scripts/audit-dependencies.ts`, and
+    // `scripts/security-dependencies.cjs` once eve ships a stable 1.x release.
+    // Number(settings.get("install.minimumReleaseAge")) !== policy.minimumReleaseAgeSeconds ||
     !settings.has("install.minimumReleaseAgeExcludes") ||
     settings.get("install.lockfile.path") !== '"bun.lock"'
   )

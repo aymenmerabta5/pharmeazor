@@ -57,9 +57,12 @@ export interface CreatePortalSessionOutput {
 }
 
 export interface CreatePaymentLinkInput {
+  /** The plan the link sells. The price is resolved from the plan's catalog. */
+  planId: string;
   name: string;
   items: Array<{ price: string; quantity: number }>;
   afterCompletionMessage?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CreatePaymentLinkOutput {

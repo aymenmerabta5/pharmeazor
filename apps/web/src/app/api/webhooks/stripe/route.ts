@@ -1,9 +1,15 @@
 import Stripe from "stripe";
 import type { SubscriptionStatus } from "@repo/billing";
+import { stripeSubscriptionPeriod } from "@repo/billing/providers/stripe";
+import {
+  billingPlanCatalog,
+  billingSubscriptionRepository,
+  subscriptionLifecycle,
+} from "@repo/services/billing/server";
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@repo/database";
-import { webhook_events, checkouts, subscriptions, invoices, customers } from "@repo/billing";
+import { webhook_events, checkouts, invoices, customers } from "@repo/billing";
 import { logger } from "@repo/observability";
 
 const MAX_WEBHOOK_BODY_BYTES = 1048576;
@@ -227,76 +233,177 @@ async function completeWebhookDelivery(providerEventId: string, leaseToken: stri
   if (!completed) throw new Error("Webhook delivery completion was not stored");
 }
 
-type StripeSubscriptionStateClaim = { providerStateVersion: number; userId: string };
-type StripeSubscriptionState = {
-  status: SubscriptionStatus;
-  currentPeriodEnd?: Date | null;
-  trialEnd?: Date | null;
-  metadata?: Record<string, unknown> | null;
-  providerEventAt?: Date;
-};
-
-async function claimStripeSubscriptionState(
-  providerSubscriptionId: string,
-): Promise<StripeSubscriptionStateClaim | null> {
-  const [claimed] = await db
-    .update(subscriptions)
-    .set({ providerStateVersion: sql`${subscriptions.providerStateVersion} + 1` })
-    .where(
-      and(
-        eq(subscriptions.provider, "stripe"),
-        eq(subscriptions.providerSubscriptionId, providerSubscriptionId),
-      ),
-    )
-    .returning({
-      providerStateVersion: subscriptions.providerStateVersion,
-      userId: subscriptions.userId,
-    });
-  return claimed ?? null;
-}
-
-async function commitStripeSubscriptionState(
-  providerSubscriptionId: string,
-  claim: StripeSubscriptionStateClaim,
-  state: StripeSubscriptionState,
-): Promise<void> {
-  const [updated] = await db
-    .update(subscriptions)
-    .set({ ...state, updatedAt: new Date() })
-    .where(
-      and(
-        eq(subscriptions.provider, "stripe"),
-        eq(subscriptions.providerSubscriptionId, providerSubscriptionId),
-        eq(subscriptions.userId, claim.userId),
-        eq(subscriptions.providerStateVersion, claim.providerStateVersion),
-      ),
-    )
-    .returning({ id: subscriptions.id });
-  if (!updated)
-    throw new Error(`Stripe subscription ${providerSubscriptionId} reconciliation was superseded`);
-}
-
-async function createStripeSubscriptionState(
-  providerSubscriptionId: string,
-  userId: string,
-  state: StripeSubscriptionState,
-): Promise<void> {
-  const [created] = await db
-    .insert(subscriptions)
-    .values({ userId, provider: "stripe", providerSubscriptionId, ...state })
-    .onConflictDoNothing({ target: [subscriptions.provider, subscriptions.providerSubscriptionId] })
-    .returning({ id: subscriptions.id });
-  if (!created)
+/**
+ * The subscription row a Stripe event belongs to.
+ *
+ * A Stripe event does not always carry the plan, so the row itself is the
+ * fallback source of truth for which plan and which customer an event
+ * belongs to. The price id on the subscription is the last resort.
+ */
+async function resolveStripeSubscriptionTarget(input: {
+  providerSubscriptionId: string;
+  userId?: string | null;
+  planId?: string | null;
+  providerPriceId?: string | null;
+  existing?: Awaited<ReturnType<typeof billingSubscriptionRepository.findByProviderReference>>;
+}): Promise<{ userId: string; planId: string }> {
+  const existing =
+    input.existing ??
+    (await billingSubscriptionRepository.findByProviderReference({
+      provider: "stripe",
+      providerSubscriptionId: input.providerSubscriptionId,
+    }));
+  const userId = input.userId?.trim() || existing?.userId;
+  if (!userId) {
     throw new Error(
-      `Stripe subscription ${providerSubscriptionId} was created concurrently; retry reconciliation`,
+      `Stripe subscription ${input.providerSubscriptionId} does not identify a customer`,
     );
+  }
+  const planId =
+    existing?.planId ||
+    input.planId?.trim() ||
+    (input.providerPriceId
+      ? await billingPlanCatalog.resolvePlanIdByProviderPrice({
+          provider: "stripe",
+          providerPriceId: input.providerPriceId,
+        })
+      : null);
+  if (!planId) {
+    throw new Error(`Stripe subscription ${input.providerSubscriptionId} does not identify a plan`);
+  }
+  return { userId, planId };
 }
 
-function subscriptionPeriodEnd(subscription: Stripe.Subscription): Date | null {
-  const periodEnds = subscription.items.data.map((item) => item.current_period_end);
-  if (periodEnds.length === 0) return null;
-  // Mixed-interval subscriptions have no top-level period end in the Dahlia API.
-  return new Date(Math.min(...periodEnds) * 1000);
+function stripeSubscriptionPriceId(subscription: Stripe.Subscription): string | undefined {
+  return subscription.items.data[0]?.price?.id ?? undefined;
+}
+
+/**
+ * Reconcile a Stripe subscription into the one subscription row.
+ *
+ * The fencing token is claimed before the remote read. A concurrent
+ * cancellation claims a newer version, so this response cannot resurrect
+ * access that was already revoked.
+ */
+async function synchronizeStripeSubscription(
+  stripe: Stripe,
+  providerSubscriptionId: string,
+  providerEventAt: Date,
+  hints: {
+    userId?: string | null;
+    planId?: string | null;
+    providerPriceId?: string | null;
+  },
+  outcome?: {
+    status?: SubscriptionStatus;
+    /** The checkout payment status, used to refine the subscription status. */
+    paymentStatus?: Stripe.Checkout.Session.PaymentStatus;
+    periodStart?: Date;
+    periodEnd?: Date;
+    autoRenew?: boolean;
+    cancelAtPeriodEnd?: boolean;
+    trialEnd?: Date | null;
+    metadata?: Record<string, unknown> | null;
+    /**
+     * True when the event is a purchase. A purchase may move the
+     * subscription to the Stripe rail; a routine state update may not.
+     */
+    allowsRailSwitch?: boolean;
+  },
+): Promise<{ userId: string; planId: string }> {
+  const target = await resolveStripeSubscriptionTarget({
+    providerSubscriptionId,
+    ...hints,
+  });
+  const claim = await subscriptionLifecycle.claim(target);
+  const authoritative = await stripe.subscriptions.retrieve(providerSubscriptionId);
+  const providerUserId = authoritative.metadata.userId;
+  if (providerUserId && providerUserId !== target.userId) {
+    throw new Error(`Stripe subscription ${providerSubscriptionId} provider ownership changed`);
+  }
+  const period = stripeSubscriptionPeriod(authoritative);
+  const status =
+    outcome?.status ??
+    (outcome?.paymentStatus
+      ? stripeCheckoutSubscriptionStatus(outcome.paymentStatus, authoritative.status)
+      : stripeProviderSubscriptionStatus(authoritative.status));
+  const applied = await subscriptionLifecycle.applyProviderState({
+    claim,
+    allowsRailSwitch: outcome?.allowsRailSwitch === true,
+    state: {
+      userId: target.userId,
+      planId: target.planId,
+      provider: "stripe",
+      providerSubscriptionId,
+      status,
+      periodStart: outcome?.periodStart ?? period.start,
+      periodEnd: outcome?.periodEnd ?? period.end,
+      // Stripe charges the customer again by itself, so it renews unless the
+      // customer asked to stop at the end of the period.
+      autoRenew: outcome?.autoRenew ?? !authoritative.cancel_at_period_end,
+      cancelAtPeriodEnd: outcome?.cancelAtPeriodEnd ?? authoritative.cancel_at_period_end,
+      trialEnd:
+        outcome?.trialEnd ??
+        (authoritative.trial_end ? new Date(authoritative.trial_end * 1000) : null),
+      metadata: outcome?.metadata ?? authoritative.metadata,
+      providerEventAt,
+    },
+  });
+  if (applied.outcome === "superseded") {
+    throw new Error(`Stripe subscription ${providerSubscriptionId} reconciliation was superseded`);
+  }
+  if (applied.outcome === "skipped") {
+    logger.info(`[stripe webhook] skipped ${providerSubscriptionId}: ${applied.reason}`);
+  }
+  return target;
+}
+
+/**
+ * Apply a cancellation without reading Stripe again.
+ *
+ * A canceled subscription is not always retrievable, so the event payload is
+ * the authority for this transition.
+ */
+async function cancelStripeSubscription(
+  providerSubscriptionId: string,
+  providerEventAt: Date,
+  hints: {
+    userId?: string | null;
+    planId?: string | null;
+    providerPriceId?: string | null;
+    periodStart?: Date;
+    periodEnd?: Date;
+    metadata?: Record<string, unknown> | null;
+  },
+): Promise<void> {
+  const target = await resolveStripeSubscriptionTarget({
+    providerSubscriptionId,
+    ...hints,
+  });
+  const claim = await subscriptionLifecycle.claim(target);
+  const applied = await subscriptionLifecycle.applyProviderState({
+    claim,
+    state: {
+      userId: target.userId,
+      planId: target.planId,
+      provider: "stripe",
+      providerSubscriptionId,
+      status: "canceled",
+      periodStart: hints.periodStart ?? claim?.periodStart ?? providerEventAt,
+      periodEnd: hints.periodEnd ?? claim?.periodEnd ?? providerEventAt,
+      autoRenew: false,
+      cancelAtPeriodEnd: false,
+      trialEnd: null,
+      metadata: hints.metadata ?? null,
+      providerEventAt,
+    },
+  });
+  if (applied.outcome === "superseded") {
+    throw new Error(`Stripe subscription ${providerSubscriptionId} cancellation was superseded`);
+  }
+  if (applied.outcome === "skipped") {
+    logger.info(`[stripe webhook] skipped ${providerSubscriptionId}: ${applied.reason}`);
+  }
 }
 
 function stripeInvoiceValues(
@@ -449,32 +556,26 @@ async function synchronizeStripeCheckoutSession(
       });
   }
   if (!subscriptionId || !userId) return;
-  const stateClaim = await claimStripeSubscriptionState(subscriptionId);
-  const authoritativeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const subscriptionStatus = stripeCheckoutSubscriptionStatus(
-    paymentStatus,
-    authoritativeSubscription.status,
-  );
-  const currentPeriodEnd = subscriptionPeriodEnd(authoritativeSubscription);
-  const trialEnd = authoritativeSubscription.trial_end
-    ? new Date(authoritativeSubscription.trial_end * 1000)
-    : null;
-  const authoritativeUserId = authoritativeSubscription.metadata.userId;
-  if (authoritativeUserId && authoritativeUserId !== userId)
-    throw new Error(`Stripe subscription ${subscriptionId} provider ownership changed`);
-  const state = {
-    status: subscriptionStatus,
-    currentPeriodEnd,
-    trialEnd,
-    metadata: authoritativeSubscription.metadata,
-  };
-  if (stateClaim) {
-    if (stateClaim.userId !== userId)
-      throw new Error(`Stripe subscription ${subscriptionId} belongs to another actor`);
-    await commitStripeSubscriptionState(subscriptionId, stateClaim, state);
-  } else {
-    await createStripeSubscriptionState(subscriptionId, userId, { ...state, providerEventAt });
+  // Only a completed payment may touch the subscription of record. A
+  // checkout that needs more authentication has not bought anything, and it
+  // must not take over a live subscription the customer already pays for.
+  const paid = paymentStatus === "paid" || paymentStatus === "no_payment_required";
+  if (!paid) {
+    logger.info(
+      `[stripe webhook] checkout ${session.id} has not completed (${paymentStatus}); the subscription of record is untouched`,
+    );
+    return;
   }
+  await synchronizeStripeSubscription(
+    stripe,
+    subscriptionId,
+    providerEventAt,
+    {
+      userId,
+      planId: session.metadata?.planId ?? null,
+    },
+    { paymentStatus, allowsRailSwitch: true },
+  );
 }
 
 export async function POST(req: Request): Promise<Response> {
@@ -566,26 +667,17 @@ export async function POST(req: Request): Promise<Response> {
           throw new Error(`Stripe invoice ${invoice.id} did not include a subscription`);
         // Claim a monotonic fence before the remote read. A concurrent delete
         // claims a newer version, so this response cannot resurrect access.
-        const stateClaim = await claimStripeSubscriptionState(subscriptionId);
-        const authoritativeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-        const providerUserId = authoritativeSubscription.metadata.userId;
-        const userId = stateClaim?.userId ?? providerUserId;
-        if (!userId)
-          throw new Error(
-            `Stripe invoice ${invoice.id} subscription did not include actor ownership`,
-          );
-        if (providerUserId && providerUserId !== userId)
-          throw new Error(`Stripe subscription ${subscriptionId} provider ownership changed`);
-        if (stateClaim)
-          await commitStripeSubscriptionState(subscriptionId, stateClaim, {
-            status: stripeProviderSubscriptionStatus(authoritativeSubscription.status),
-            currentPeriodEnd: subscriptionPeriodEnd(authoritativeSubscription),
-            trialEnd: authoritativeSubscription.trial_end
-              ? new Date(authoritativeSubscription.trial_end * 1000)
-              : null,
-            metadata: authoritativeSubscription.metadata,
-          });
-        await storeStripeInvoice(invoice, providerEventAt, userId);
+        const target = await synchronizeStripeSubscription(
+          stripe,
+          subscriptionId,
+          providerEventAt,
+          {
+            userId: invoice.metadata?.userId ?? null,
+            planId: invoice.metadata?.planId ?? null,
+          },
+          { allowsRailSwitch: false },
+        );
+        await storeStripeInvoice(invoice, providerEventAt, target.userId);
         break;
       }
       case "invoice.payment_succeeded": {
@@ -593,8 +685,12 @@ export async function POST(req: Request): Promise<Response> {
         const subscriptionId = expandableId(invoice.parent?.subscription_details?.subscription);
         if (!subscriptionId)
           throw new Error(`Stripe invoice ${invoice.id} did not include a subscription`);
-        const authoritativeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-        const userId = authoritativeSubscription.metadata.userId;
+        const existing = await billingSubscriptionRepository.findByProviderReference({
+          provider: "stripe",
+          providerSubscriptionId: subscriptionId,
+        });
+        const userId =
+          existing?.userId ?? (await stripe.subscriptions.retrieve(subscriptionId)).metadata.userId;
         if (!userId)
           throw new Error(
             `Stripe invoice ${invoice.id} subscription did not include actor ownership`,
@@ -619,42 +715,25 @@ export async function POST(req: Request): Promise<Response> {
       case "customer.subscription.updated": {
         const subscription = event.data.object;
         // Fence before fetching so concurrent cancellation invalidates this reader.
-        const stateClaim = await claimStripeSubscriptionState(subscription.id);
-        const authoritativeSubscription = await stripe.subscriptions.retrieve(subscription.id);
-        if (stateClaim) {
-          const providerUserId = authoritativeSubscription.metadata.userId;
-          if (providerUserId && providerUserId !== stateClaim.userId)
-            throw new Error(`Stripe subscription ${subscription.id} provider ownership changed`);
-          await commitStripeSubscriptionState(subscription.id, stateClaim, {
-            status: stripeProviderSubscriptionStatus(authoritativeSubscription.status),
-            currentPeriodEnd: subscriptionPeriodEnd(authoritativeSubscription),
-            trialEnd: authoritativeSubscription.trial_end
-              ? new Date(authoritativeSubscription.trial_end * 1000)
-              : null,
-            metadata: authoritativeSubscription.metadata,
-          });
-        }
+        await synchronizeStripeSubscription(stripe, subscription.id, providerEventAt, {
+          userId: subscription.metadata?.userId ?? null,
+          planId: subscription.metadata?.planId ?? null,
+          providerPriceId: stripeSubscriptionPriceId(subscription),
+        });
         break;
       }
       case "customer.subscription.deleted": {
         const subscription = event.data.object;
-        const stateClaim = await claimStripeSubscriptionState(subscription.id);
-        const providerUserId = subscription.metadata?.userId;
-        if (stateClaim) {
-          if (providerUserId && providerUserId !== stateClaim.userId)
-            throw new Error(`Stripe subscription ${subscription.id} provider ownership changed`);
-          await commitStripeSubscriptionState(subscription.id, stateClaim, {
-            status: "canceled",
-            metadata: subscription.metadata,
-            providerEventAt,
-          });
-        } else if (providerUserId) {
-          await createStripeSubscriptionState(subscription.id, providerUserId, {
-            status: "canceled",
-            metadata: subscription.metadata,
-            providerEventAt,
-          });
-        }
+        const period =
+          subscription.items.data.length > 0 ? stripeSubscriptionPeriod(subscription) : null;
+        await cancelStripeSubscription(subscription.id, providerEventAt, {
+          userId: subscription.metadata?.userId ?? null,
+          planId: subscription.metadata?.planId ?? null,
+          providerPriceId: stripeSubscriptionPriceId(subscription),
+          periodStart: period?.start,
+          periodEnd: period?.end,
+          metadata: subscription.metadata,
+        });
         break;
       }
       default:

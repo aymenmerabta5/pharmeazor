@@ -19,7 +19,7 @@ const contract = {
     })
     .input(
       z.object({
-        provider: z.enum(["stripe", "chargily", "paddle", "polar"]),
+        provider: z.literal("stripe"),
         returnUrl: z.string().url(),
       }),
     )

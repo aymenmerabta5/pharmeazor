@@ -20,7 +20,7 @@ export function BillingTabs({
   const t = useSurfaceTranslations("billing");
   const list = providers.length > 0 ? providers : (["stripe", "chargily"] as string[]);
   const hasChargily = list.includes("chargily");
-  const hasGlobal = list.some((p) => ["stripe", "paddle", "polar"].includes(p));
+  const hasGlobal = list.includes("stripe");
   if (list.length === 1) {
     const only = list[0];
     const isChargilyAlone = hasChargily && list.length === 1;

@@ -1,8 +1,14 @@
 # syntax=docker/dockerfile:1
 FROM oven/bun:1.4.4 AS bun-runtime
 
+# The agent runs its sandbox in a sibling container, so the image needs the
+# Docker CLI. The official CLI image ships a statically linked binary that
+# runs on this Debian-based runtime.
+FROM docker:29.9.3-cli AS docker-cli
+
 FROM node:24.19.0-bookworm-slim AS base
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /app
 
 # Stable Dockerfile syntax deliberately copies the complete workspace before
@@ -11,31 +17,30 @@ WORKDIR /app
 COPY . .
 RUN bun scripts/require-bun-lock.mjs
 RUN bun run audit:lock
-RUN bun install --frozen-lockfile
-
-RUN --mount=type=secret,id=ghostinit_env,required=false \
-    --mount=type=secret,id=ghostinit_env_b64,required=false \
-    set -eu; \
-    build_env=/tmp/ghostinit-build.env; \
-    trap 'rm -f "$build_env"' EXIT; \
-    if [ -s /run/secrets/ghostinit_env ]; then \
-      bun --env-file=/run/secrets/ghostinit_env scripts/build-deployment.mjs; \
-    elif [ -s /run/secrets/ghostinit_env_b64 ]; then \
-      bun -e 'await Bun.write(process.argv[1], Buffer.from(await Bun.file(process.argv[2]).text(), "base64"))' "$build_env" /run/secrets/ghostinit_env_b64; \
-      bun --env-file="$build_env" scripts/build-deployment.mjs; \
-    else \
-      echo "Build secret ghostinit_env (or ghostinit_env_b64 on Fly) is required" >&2; \
+# The application artifacts are built outside the image. The agent sandbox
+# prepares its template against the Docker daemon, and the daemon binds the
+# project path of the machine that runs the build, so a build inside the image
+# can never reach the daemon's view of the project.
+RUN test -f apps/web/.next/BUILD_ID || { \
+      echo "The web application was not built." >&2; \
+      echo "Run 'bun --env-file=.env.local scripts/build-deployment.mjs' before building the image." >&2; \
       exit 1; \
-    fi
-# The build install contains every workspace so Turbo can compile the selected graph.
-# Recreate node_modules from the frozen production graph: Bun does not remove
-# already-installed dev or excluded-workspace packages when --production is rerun.
-RUN rm -rf node_modules apps/*/node_modules packages/*/node_modules tooling/*/node_modules
+    }; \
+    test -f apps/eve/.output/server/index.mjs || { \
+      echo "The Eve agent was not built." >&2; \
+      echo "Run 'bun --env-file=.env.local scripts/build-deployment.mjs' before building the image." >&2; \
+      exit 1; \
+    }
 # Husky is a root development prepare hook. Remove only that hook so Bun can
-# still run trusted production dependency lifecycle scripts during the reinstall.
+# still run trusted production dependency lifecycle scripts during the install.
 RUN bun pm pkg delete scripts.prepare
-RUN bun run audit:lock
-RUN bun install --production --frozen-lockfile --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
+# Peer packages are not part of the runtime graph. The shared auth server
+# registers the Better Auth Expo plugin so the mobile client can authenticate
+# against the deployed API, and that plugin declares the Expo client runtime as
+# optional peers. Installing peers would pull the whole Expo and React Native
+# toolchain into the web runtime image, so the pruned install omits them.
+RUN bun install --production --frozen-lockfile --omit=peer \
+    --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
 RUN bun scripts/assert-web-runtime-boundary.mjs
 # Native clients are separate deliverables and never belong in the web runtime image.
 RUN rm -rf apps/mobile
@@ -43,6 +48,7 @@ RUN rm -rf apps/mobile
 
 FROM node:24.19.0-bookworm-slim
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

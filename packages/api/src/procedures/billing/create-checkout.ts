@@ -17,21 +17,28 @@ const contract = {
     })
     .input(
       z.object({
-        provider: z.enum(["stripe", "chargily", "paddle", "polar"]),
-        planId: z.literal("pro"),
+        provider: z.enum(["stripe", "chargily"]),
+        planId: z.string().min(1).max(64),
         successUrl: z.string().url(),
         failureUrl: z.string().url().optional(),
         cancelUrl: z.string().url().optional(),
         quantity: z.number().int().min(1).max(1_000).optional(),
         requestKey: z.string().uuid(),
+        currency: z
+          .string()
+          .trim()
+          .length(3)
+          .regex(/^[A-Za-z]{3}$/)
+          .optional(),
       }),
     )
     .output(
       z.object({
         id: z.string(),
         url: z.string(),
-        provider: z.enum(["stripe", "chargily", "paddle", "polar"]),
+        provider: z.enum(["stripe", "chargily"]),
         status: z.string(),
+        planId: z.string(),
       }),
     ),
 };

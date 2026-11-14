@@ -42,33 +42,38 @@ export interface BillingSnapshotDto {
   readonly invoices: readonly PublicRecord[];
   readonly usageEvents: readonly PublicRecord[];
   readonly licenseKeys: readonly PublicRecord[];
+  readonly plans: readonly PublicRecord[];
 }
 
 export interface BillingCheckoutInput {
-  readonly provider: "stripe" | "chargily" | "paddle" | "polar";
-  readonly planId: "pro";
+  readonly provider: "stripe" | "chargily";
+  readonly planId: string;
   readonly successUrl: string;
   readonly failureUrl?: string;
   readonly cancelUrl?: string;
   readonly quantity?: number;
   readonly requestKey: string;
+  readonly currency?: string;
 }
 
 export interface BillingCheckoutDto {
   readonly id: string;
   readonly url: string;
-  readonly provider: "stripe" | "chargily" | "paddle" | "polar";
+  readonly provider: "stripe" | "chargily";
   readonly status: string;
+  readonly planId: string;
 }
 
 export interface BillingPortalInput {
-  readonly provider: "stripe" | "chargily" | "paddle" | "polar";
+  readonly provider: "stripe";
   readonly returnUrl: string;
 }
 
 export interface BillingPaymentLinkInput {
-  readonly provider: "stripe" | "chargily" | "paddle" | "polar";
+  readonly provider: "chargily";
+  /** The plan the link sells. */
+  readonly planId: string;
   readonly name: string;
-  readonly items: readonly { readonly price: string; readonly quantity: number }[];
+  readonly quantity?: number;
   readonly afterCompletionMessage?: string;
 }

@@ -6,6 +6,8 @@ export interface BillingSnapshot {
   invoices: Array<Record<string, unknown>>;
   usageEvents: Array<Record<string, unknown>>;
   licenseKeys: Array<Record<string, unknown>>;
+  /** The plans on offer, each with its price per rail. */
+  plans: Array<Record<string, unknown>>;
 }
 export interface BillingSnapshotRepositoryPort {
   findSnapshot(userId: string): Promise<BillingSnapshot>;

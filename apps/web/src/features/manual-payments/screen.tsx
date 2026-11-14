@@ -12,8 +12,9 @@ import { ManualReviewQueue } from "./components/review-queue";
 import { ManualReviewRow } from "./payment-review";
 import { ManualReceiptPreview } from "./receipt-preview";
 import { useManualOwnerGeneration, useManualPayments } from "./use-manual-payments";
+import type { ManualPlan } from "./model";
 
-function ManualPaymentsScreen(): React.JSX.Element {
+function ManualPaymentsScreen({ plans }: { plans: ManualPlan[] }): React.JSX.Element {
   const t = useSurfaceTranslations("billing");
   const locale = useSurfaceLocale();
   const { summary, history, queue, refresh } = useManualPayments();
@@ -59,7 +60,7 @@ function ManualPaymentsScreen(): React.JSX.Element {
                 </strong>
                 <p className="text-sm text-muted-foreground">{t("manualBalanceHelp")}</p>
               </div>
-              <ManualPaymentForm summary={summary.data} />
+              <ManualPaymentForm summary={summary.data} plans={plans} />
             </>
           ) : null}
         </CardContent>
@@ -106,7 +107,7 @@ function ManualPaymentsScreen(): React.JSX.Element {
     </section>
   );
 }
-export function ManualBillingPanel(): React.JSX.Element {
+export function ManualBillingPanel({ plans }: { plans: ManualPlan[] }): React.JSX.Element {
   const generation = useManualOwnerGeneration();
-  return <ManualPaymentsScreen key={generation} />;
+  return <ManualPaymentsScreen key={generation} plans={plans} />;
 }

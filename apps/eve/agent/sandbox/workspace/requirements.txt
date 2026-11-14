@@ -1,0 +1,32 @@
+# Python packages available inside the pharmeazor agent sandbox.
+#
+# The sandbox runtime is deliberately small: CPython plus the libraries needed
+# to read the document formats a regulated pharmacy workflow produces. No
+# numerical, scientific, cheminformatics, or machine-learning stack is
+# installed, because the agent analyses documents rather than running models.
+#
+# Every distribution is pinned, including transitive dependencies, so a rebuilt
+# sandbox image contains exactly the reviewed set of packages. The test in
+# `apps/eve/tests/sandbox-contract.test.ts` fails when this file and the
+# runtime contract in `agent/lib/sandbox-contract.ts` disagree.
+#
+# Update a pin, then rebuild the sandbox image before relying on the change.
+
+# PDF text extraction. pypdf is pure Python; pdfminer.six is the fallback for
+# documents whose text layer pypdf cannot recover.
+pypdf==6.9.2
+pdfminer.six==20260107
+charset-normalizer==3.5.2
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.12
+
+# Word and spreadsheet reading for specifications, protocols, and batch records.
+python-docx==1.2.0
+lxml==6.1.3
+openpyxl==3.1.5
+et-xmlfile==2.0.0
+
+# pypdf and python-docx declare typing-extensions for interpreters older than
+# 3.11; pinning it keeps the resolved set identical on every Python version.
+typing-extensions==4.16.0

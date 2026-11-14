@@ -17,7 +17,9 @@ export function BillingClientScreen({
     <BillingTabs
       providers={providers}
       billing={billing}
-      paymentLink={<BillingPaymentLinkForm allowed={billing.canCreatePaymentLinks} />}
+      paymentLink={
+        <BillingPaymentLinkForm allowed={billing.canCreatePaymentLinks} plans={billing.plans} />
+      }
     />
   );
 }

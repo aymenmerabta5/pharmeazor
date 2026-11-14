@@ -3,11 +3,13 @@ set -euo pipefail
 
 # start-database.sh — GhostInit quick Postgres starter (alternative to docker compose --env-file .env.local up -d)
 # Container: ${PROJECT}_postgres by default, sanitized project name pharmeazor_postgres
+# Image: Postgres 18.7 with pgvector 0.8.7, built from docker/postgres/Dockerfile
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT="pharmeazor"
 ENV_FILE="$SCRIPT_DIR/.env.local"
 CONTAINER="${PROJECT}_postgres"
+IMAGE="${PROJECT}/postgres-pgvector:18.7-0.8.7"
 
 # Load env safely — parse KEY=VALUE without executing command substitution
 SAFE_ENV_KEYS="POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB POSTGRES_PORT DATABASE_URL"
@@ -75,6 +77,13 @@ fi
 
 echo "Creating and starting $CONTAINER on port $DB_PORT (DB: $DB_NAME, user: $DB_USER)..."
 
+# Build the pgvector image on first use. The image is pinned to Postgres 18.7
+# and pgvector 0.8.7; see docker/postgres/Dockerfile.
+if ! $ENGINE image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "Building $IMAGE from docker/postgres/Dockerfile..."
+  $ENGINE build -f "$SCRIPT_DIR/docker/postgres/Dockerfile" -t "$IMAGE" "$SCRIPT_DIR/docker/postgres"
+fi
+
 # Postgres 18+ owns a versioned PGDATA below /var/lib/postgresql.
 # Mount the parent so image upgrades preserve the intended layout.
 $ENGINE run -d \
@@ -84,7 +93,8 @@ $ENGINE run -d \
   -e POSTGRES_DB="$DB_NAME" \
   -p "127.0.0.1:$DB_PORT:5432" \
   -v "${PROJECT}_postgres_data:/var/lib/postgresql" \
-  postgres:18.6
+  -v "$SCRIPT_DIR/docker/postgres/init:/docker-entrypoint-initdb.d:ro" \
+  "$IMAGE"
 
 echo "$CONTAINER created and started."
 echo "DATABASE_URL=postgresql://$DB_USER:****@localhost:$DB_PORT/$DB_NAME"

@@ -2,13 +2,21 @@ import "server-only";
 import type { Result } from "@repo/kernel";
 import { err } from "@repo/kernel";
 import { ServiceError } from "../errors";
-export type BillingProviderName = "stripe" | "chargily" | "paddle" | "polar";
+import type { BillingPortalProviderName } from "@repo/billing";
+export type { BillingPortalProviderName };
+export type BillingProviderName = BillingPortalProviderName;
 export type BillingPortalErrorCode =
   | "NOT_SUPPORTED"
   | "CUSTOMER_NOT_FOUND"
   | "PORTAL_FAILED"
   | "INVALID_REDIRECT";
-const PORTAL_PROVIDERS: readonly BillingProviderName[] = ["stripe", "paddle", "polar"];
+/**
+ * Rails that host a self-service portal.
+ *
+ * Stripe is the only one. Chargily is checkout-only and manual transfer has
+ * no provider at all, so neither can offer a portal.
+ */
+const PORTAL_PROVIDERS: readonly BillingPortalProviderName[] = ["stripe"];
 export interface PortalSessionRecord {
   url: string;
 }

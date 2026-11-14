@@ -11,6 +11,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { users } from "./auth";
+import { plans } from "./tables/plans";
 
 /** Receipts belong only to this table. No public storage-object row or URL is created. */
 export const manualPayments = pgTable(
@@ -20,6 +21,10 @@ export const manualPayments = pgTable(
     ownerId: text("owner_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
+    /** The plan this payment buys. Approving it grants that plan's period. */
+    planId: text("plan_id")
+      .notNull()
+      .references(() => plans.id, { onDelete: "restrict" }),
     amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
     currency: text("currency").notNull().default("DZD"),
     status: text("status").notNull().default("uploading"),
@@ -34,6 +39,14 @@ export const manualPayments = pgTable(
     receiptByteSize: integer("receipt_byte_size").notNull(),
     reviewerId: text("reviewer_id").references(() => users.id, { onDelete: "restrict" }),
     reason: text("reason"),
+    /**
+     * Set when the approval granted the plan's period.
+     *
+     * The grant itself runs inside the review transaction, so it commits with
+     * the credit or not at all. This column records that it happened, so a
+     * payment that was approved without a grant is visible.
+     */
+    subscriptionGrantedAt: timestamp("subscription_granted_at"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   },

@@ -37,6 +37,13 @@ export function useTwoFactorMutation() {
     if (input.kind === "enable") {
       const result = await identityClient.enableTwoFactor({ password: input.password });
       if (result.error || !result.data) throw identityFailure(result.error);
+      // better-auth returns a discriminated union: it either hands back the
+      // TOTP enrolment payload or delegates the challenge to an OTP channel.
+      // The server only enables TOTP, so anything else is a configuration
+      // change the settings screen cannot complete yet.
+      if (result.data.method !== "totp") {
+        throw new Error("Two-factor enrolment did not return a TOTP challenge");
+      }
       return {
         kind: "challenge" as const,
         totpUri: result.data.totpURI,

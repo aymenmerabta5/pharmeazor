@@ -12,7 +12,7 @@ export const license_keys = pgTable(
     }),
     key: text("key").notNull(),
     status: licenseKeyStatusEnum("status").notNull().default("active"),
-    provider: billingProviderEnum("provider").notNull().default("polar"),
+    provider: billingProviderEnum("provider").notNull().default("stripe"),
     metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

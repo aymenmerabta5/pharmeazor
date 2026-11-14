@@ -1,16 +1,16 @@
 import "server-only";
-import { createManualPaymentService } from "./applications/manual-payment-service";
-import { postgresManualPaymentRepository } from "./adapters/manual/repository";
-import { manualPaymentConfig } from "./manual-payment-config";
-
-export const manualPaymentService = createManualPaymentService(
+export { createManualPaymentService } from "./applications/manual-payment-service";
+export {
+  createManualPaymentRepository,
   postgresManualPaymentRepository,
-  manualPaymentConfig,
-);
+} from "./adapters/manual/repository";
+export { manualPaymentConfig } from "./manual-payment-config";
 export { ManualPaymentError } from "./domain/manual-payment";
 export type {
   ManualPayment,
   ManualPaymentActor,
+  ManualPaymentExecutor,
+  ManualPaymentReviewHooks,
   ManualPaymentSubmitInput,
   ManualPaymentReviewInput,
   ManualPaymentReceipt,

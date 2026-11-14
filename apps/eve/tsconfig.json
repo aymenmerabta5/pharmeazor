@@ -9,16 +9,14 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "types": ["node"],
     "paths": {
       "#*": ["./agent/*"],
       "#evals/*": ["./evals/*"],
       "@repo/*": ["../../packages/*/src"]
     },
-    "outDir": "./dist",
     "rootDir": "."
   },
   "include": ["agent/**/*", "lib/**/*"],

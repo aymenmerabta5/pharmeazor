@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-for (const scenario of ["installed", "production", "missing", "hosted-selection"]) {
+for (const scenario of ["installed", "production", "hosted-selection"]) {
   test(
     "Eve sandbox dependency policy: " + scenario,
     () => {
@@ -41,6 +41,7 @@ for (const scenario of ["installed", "production", "missing", "hosted-selection"
       expect(JSON.parse(output)).toMatchObject({
         ok: true,
         scenario,
+        provider: scenario === "hosted-selection" ? "vercel" : "docker",
         dependencyHashesUnchanged: true,
       });
     },

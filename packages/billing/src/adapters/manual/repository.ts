@@ -2,13 +2,18 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db, users, manualPayments, manualCreditLedger } from "@repo/database";
+import { prices } from "@repo/database";
 import { deleteFile, getFile, putFile } from "@repo/storage";
+import { seedBillingCatalog } from "../catalog";
+import { DEFAULT_BILLING_PLANS, DEFAULT_BILLING_PRICES } from "../../domain/plans";
 import {
   ManualPaymentError,
   MAX_MANUAL_PENDING,
   MAX_MANUAL_RECEIPTS_PER_OWNER,
   type ManualPayment,
   type ManualPaymentRepository,
+  type ManualPaymentReviewHooks,
+  type ManualPaymentReviewInput,
   type ValidatedManualPaymentSubmitInput,
 } from "../../domain/manual-payment";
 
@@ -47,6 +52,7 @@ function paymentDto(row: PaymentRow): ManualPayment {
   return {
     id: row.id,
     ownerId: row.ownerId,
+    planId: row.planId,
     amountMinor: row.amountMinor,
     currency: "DZD",
     status: row.status as ManualPayment["status"],
@@ -75,10 +81,62 @@ async function balance(connection: QueryConnection, id: string): Promise<number>
   return Number(value);
 }
 
+/**
+ * The amount a customer has to transfer for a plan.
+ *
+ * The manual rail settles in DZD, so the plan's manual price is the only
+ * accepted amount. Checking it here stops a customer from declaring a plan
+ * they did not pay for.
+ */
+async function assertManualPlanPrice(
+  connection: QueryConnection,
+  input: ValidatedManualPaymentSubmitInput,
+): Promise<void> {
+  await seedManualCatalog();
+  const [price] = await connection
+    .select({ amount: prices.amount, currency: prices.currency })
+    .from(prices)
+    .where(
+      and(
+        eq(prices.planId, input.planId),
+        eq(prices.provider, "manual"),
+        eq(prices.currency, "DZD"),
+      ),
+    )
+    .limit(1);
+  if (!price || price.currency !== "DZD") {
+    throw new ManualPaymentError("INVALID_INPUT", "This plan cannot be paid by transfer");
+  }
+  if (price.amount !== input.amountMinor) {
+    throw new ManualPaymentError(
+      "INVALID_INPUT",
+      "The amount does not match the price of the chosen plan",
+    );
+  }
+}
+
+/**
+ * The seed of the plan catalog.
+ *
+ * It is idempotent, but it is still a write, so it runs once per process.
+ */
+let catalogSeed: Promise<void> | null = null;
+function seedManualCatalog(): Promise<void> {
+  catalogSeed ??= seedBillingCatalog(db, {
+    plans: DEFAULT_BILLING_PLANS,
+    prices: DEFAULT_BILLING_PRICES,
+  }).catch((error: unknown) => {
+    catalogSeed = null;
+    throw error;
+  });
+  return catalogSeed;
+}
+
 async function reserve(id: string, input: ValidatedManualPaymentSubmitInput): Promise<PaymentRow> {
   const receiptHash = hash(input.receipt.data);
   const fingerprint = hash(
     JSON.stringify([
+      input.planId,
       input.amountMinor,
       input.method,
       input.reference,
@@ -89,6 +147,7 @@ async function reserve(id: string, input: ValidatedManualPaymentSubmitInput): Pr
   );
   return await db.transaction(async (transaction) => {
     await requireActor(transaction, id);
+    await assertManualPlanPrice(transaction, input);
     await transaction.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${"manual-owner:" + id}, 0))`,
     );
@@ -141,6 +200,7 @@ async function reserve(id: string, input: ValidatedManualPaymentSubmitInput): Pr
       .insert(manualPayments)
       .values({
         ownerId: id,
+        planId: input.planId,
         amountMinor: input.amountMinor,
         currency: "DZD",
         method: input.method,
@@ -293,39 +353,63 @@ export const postgresManualPaymentRepository: ManualPaymentRepository = {
       throw new ManualPaymentError("NOT_FOUND", "Payment receipt was not found");
     return { data, mimeType: row.receiptMimeType, originalName: row.receiptOriginalName };
   },
-  async review(id, input) {
-    return await db.transaction(async (transaction) => {
-      await requireActor(transaction, id, true);
-      const [payment] = await transaction
-        .select()
-        .from(manualPayments)
-        .where(eq(manualPayments.id, input.id))
-        .limit(1)
-        .for("update");
-      if (!payment || payment.status === "uploading")
-        throw new ManualPaymentError("NOT_FOUND", "Payment was not found");
-      if (payment.ownerId === id)
-        throw new ManualPaymentError("FORBIDDEN", "You cannot review your own payment");
-      if (payment.status !== "pending") {
-        if (payment.status === input.decision) return paymentDto(payment);
-        throw new ManualPaymentError("CONFLICT", "Payment has already been reviewed");
-      }
-      if (input.decision === "approved") {
-        await transaction.execute(
-          sql`select pg_advisory_xact_lock(hashtextextended(${"manual-owner:" + payment.ownerId}, 0))`,
+  async review(id, input, callHooks) {
+    return await reviewManualPayment(id, input, callHooks);
+  },
+};
+
+/**
+ * Review a manual payment.
+ *
+ * The approval, the credit and the subscription the payment buys are one
+ * transaction: a failure to grant rolls the approval back, so a payment is
+ * never approved without the access it paid for.
+ */
+async function reviewManualPayment(
+  id: string,
+  input: ManualPaymentReviewInput,
+  hooks?: ManualPaymentReviewHooks,
+): Promise<ManualPayment> {
+  return await db.transaction(async (transaction) => {
+    await requireActor(transaction, id, true);
+    const [payment] = await transaction
+      .select()
+      .from(manualPayments)
+      .where(eq(manualPayments.id, input.id))
+      .limit(1)
+      .for("update");
+    if (!payment || payment.status === "uploading")
+      throw new ManualPaymentError("NOT_FOUND", "Payment was not found");
+    if (payment.ownerId === id)
+      throw new ManualPaymentError("FORBIDDEN", "You cannot review your own payment");
+    if (payment.status !== "pending") {
+      if (payment.status === input.decision) return paymentDto(payment);
+      throw new ManualPaymentError("CONFLICT", "Payment has already been reviewed");
+    }
+    if (input.decision === "approved") {
+      const onApproved = hooks?.onApproved;
+      if (!onApproved) {
+        throw new ManualPaymentError(
+          "NOT_CONFIGURED",
+          "Manual payments cannot grant a subscription",
         );
-        const currentBalance = await balance(transaction, payment.ownerId);
-        if (!Number.isSafeInteger(currentBalance + payment.amountMinor))
-          throw new ManualPaymentError("LIMIT_EXCEEDED", "Balance exceeds the supported limit");
-        // Unique paymentId plus the locked payment row makes concurrent approvals credit once.
-        await transaction.insert(manualCreditLedger).values({
-          paymentId: payment.id,
-          ownerId: payment.ownerId,
-          amountMinor: payment.amountMinor,
-          currency: "DZD",
-        });
       }
-      const [reviewed] = await transaction
+      await transaction.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${"manual-owner:" + payment.ownerId}, 0))`,
+      );
+      const currentBalance = await balance(transaction, payment.ownerId);
+      if (!Number.isSafeInteger(currentBalance + payment.amountMinor))
+        throw new ManualPaymentError("LIMIT_EXCEEDED", "Balance exceeds the supported limit");
+      // Unique paymentId plus the locked payment row makes concurrent approvals credit once.
+      await transaction.insert(manualCreditLedger).values({
+        paymentId: payment.id,
+        ownerId: payment.ownerId,
+        amountMinor: payment.amountMinor,
+        currency: "DZD",
+      });
+      // The decision is recorded first, so the grant can start from the moment
+      // the payment was approved rather than from the submission.
+      const [approved] = await transaction
         .update(manualPayments)
         .set({
           status: input.decision,
@@ -335,8 +419,45 @@ export const postgresManualPaymentRepository: ManualPaymentRepository = {
         })
         .where(and(eq(manualPayments.id, payment.id), eq(manualPayments.status, "pending")))
         .returning();
-      if (!reviewed) throw new Error("Manual payment review was not committed");
-      return paymentDto(reviewed);
-    });
-  },
-};
+      if (!approved) throw new Error("Manual payment review was not committed");
+      // The subscription the payment buys is written on the same connection,
+      // so the credit and the access commit together. A failure here rolls
+      // the whole approval back.
+      await onApproved(paymentDto(approved), transaction);
+      await transaction
+        .update(manualPayments)
+        .set({ subscriptionGrantedAt: new Date() })
+        .where(eq(manualPayments.id, payment.id));
+      return paymentDto(approved);
+    }
+    const [reviewed] = await transaction
+      .update(manualPayments)
+      .set({
+        status: input.decision,
+        reviewerId: id,
+        reviewedAt: new Date(),
+        reason: input.reason?.trim() || null,
+      })
+      .where(and(eq(manualPayments.id, payment.id), eq(manualPayments.status, "pending")))
+      .returning();
+    if (!reviewed) throw new Error("Manual payment review was not committed");
+    return paymentDto(reviewed);
+  });
+}
+
+/**
+ * The manual payment store.
+ *
+ * The hooks grant the subscription an approval buys. They run inside the
+ * review transaction, so the credit and the access commit together.
+ */
+export function createManualPaymentRepository(
+  hooks?: ManualPaymentReviewHooks,
+): ManualPaymentRepository {
+  const repository: ManualPaymentRepository = {
+    ...postgresManualPaymentRepository,
+    review: async (id, input, callHooks) =>
+      await reviewManualPayment(id, input, callHooks ?? hooks),
+  };
+  return repository;
+}

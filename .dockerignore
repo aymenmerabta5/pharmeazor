@@ -4,10 +4,10 @@ dist
 apps/*/dist
 packages/*/dist
 tooling/*/dist
-.next
-**/.next
-.output
-**/.output
+# The application artifacts are built outside the image, so the build output
+# travels with the context. The Next.js build cache does not belong in a
+# runtime image.
+**/.next/cache
 out
 apps/*/out
 .expo

@@ -17,17 +17,10 @@ const contract = {
     })
     .input(
       z.object({
-        provider: z.enum(["stripe", "chargily", "paddle", "polar"]),
+        provider: z.literal("chargily"),
+        planId: z.string().min(1).max(64),
         name: z.string().min(1).max(120),
-        items: z
-          .array(
-            z.object({
-              price: z.string().min(1).max(200),
-              quantity: z.number().int().min(1).max(1_000),
-            }),
-          )
-          .min(1)
-          .max(20),
+        quantity: z.number().int().min(1).max(1_000).optional(),
         afterCompletionMessage: z.string().max(500).optional(),
       }),
     )

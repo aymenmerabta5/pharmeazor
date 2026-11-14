@@ -1,5 +1,9 @@
 import "server-only";
-import { manualPaymentService } from "@repo/billing/manual";
+import {
+  createManualPaymentRepository,
+  createManualPaymentService,
+  manualPaymentConfig,
+} from "@repo/billing/manual";
 import { auth } from "@repo/auth/server";
 import { createRequestApplication, type BillingApplicationPort } from "./facade";
 import { RequestApplicationError } from "./errors";
@@ -19,13 +23,29 @@ import { getBillingProvider } from "@repo/billing";
 import {
   billingCheckoutRepository,
   billingCustomerRepository,
+  billingPlanCatalog,
   billingSnapshotRepository,
-  createBillingPriceCatalog,
+  assertProviderPriceMatchesCatalog,
   createCheckoutService,
   createPortalSessionService,
   listSubscriptionsService,
   validateBillingRedirectUrl,
+  subscriptionLifecycle,
 } from "../billing/server";
+import { createManualSubscriptionGrantHook } from "../billing/manual-payment-grant";
+
+/**
+ * The manual rail writes to the same subscription as the card rails.
+ *
+ * The grant runs inside the review transaction, so an approved payment always
+ * carries the period it paid for.
+ */
+const manualBillingService = createManualPaymentService(
+  createManualPaymentRepository(
+    createManualSubscriptionGrantHook({ lifecycle: subscriptionLifecycle }),
+  ),
+  manualPaymentConfig,
+);
 
 async function resolvePrincipal(headers: Headers): Promise<RequestPrincipal | null> {
   const session = await auth.api.getSession({
@@ -75,7 +95,6 @@ function unwrap<T>(
   throw new RequestApplicationError("APPLICATION_INTERNAL_ERROR", message, { cause: result.error });
 }
 
-const billingPriceCatalog = createBillingPriceCatalog((name) => process.env[name]);
 const billing: BillingApplicationPort = {
   async subscriptions(userId) {
     return unwrap(
@@ -130,7 +149,7 @@ const billing: BillingApplicationPort = {
           billingProvider: provider,
           customerRepository: billingCustomerRepository,
           checkoutRepository: billingCheckoutRepository,
-          priceCatalog: billingPriceCatalog,
+          priceCatalog: billingPlanCatalog,
         },
       ),
       "Failed to create checkout",
@@ -167,9 +186,36 @@ const billing: BillingApplicationPort = {
       );
     }
     try {
+      // The link is scoped to a plan, so it sells that plan's price on this
+      // rail. The plan is carried in the link metadata, so a payment made
+      // through it can be recognised as a sale of that plan.
+      const price = await billingPlanCatalog.resolvePrice({
+        provider: input.provider,
+        planId: input.planId,
+      });
+      if (!price.providerPriceId) {
+        throw new Error(
+          `BILLING_PRICE_NOT_PROVISIONED: ${input.provider} has no price for plan ${input.planId}.`,
+        );
+      }
+      // A link sells the provider's price, so that price has to be the price
+      // the catalog advertises.
+      await assertProviderPriceMatchesCatalog(
+        provider,
+        input.provider,
+        {
+          providerPriceId: price.providerPriceId,
+          amountMinor: price.amountMinor,
+          currency: price.currency,
+        },
+        input.planId,
+      );
       return await provider.createPaymentLink({
-        ...input,
-        items: input.items.map((item) => ({ ...item })),
+        planId: input.planId,
+        name: input.name,
+        items: [{ price: price.providerPriceId, quantity: input.quantity ?? 1 }],
+        afterCompletionMessage: input.afterCompletionMessage,
+        metadata: { planId: input.planId },
       });
     } catch (error) {
       throw new RequestApplicationError(
@@ -189,6 +235,6 @@ export async function createRequestApplicationForRequest(headers: Headers) {
     admin: createAdminServiceForRequest(headers),
     identity: createIdentityServiceForRequest(),
     billing,
-    manualBilling: manualPaymentService,
+    manualBilling: manualBillingService,
   });
 }

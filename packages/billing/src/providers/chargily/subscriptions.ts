@@ -65,7 +65,12 @@ export async function listChargilySubscriptions(
         listInput?.userId ??
         "",
       status: mapChargilyStatusToDomain(ch.status),
+      planId: optionalString(metadata?.planId) ?? "",
+      currentPeriodStart: null,
       currentPeriodEnd: null,
+      // Chargily cannot charge again without a new customer authorization.
+      autoRenew: false,
+      cancelAtPeriodEnd: false,
       trialEnd: null,
       priceId: optionalString(metadata?.priceId) ?? null,
       productId: optionalString(metadata?.productId) ?? null,

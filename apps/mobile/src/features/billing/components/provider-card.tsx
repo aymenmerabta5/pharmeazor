@@ -12,6 +12,7 @@ export interface ProviderCardProps {
   readonly portalLabel: string;
   readonly onCheckout: () => void;
   readonly onPortal: () => void;
+  readonly planPicker: React.ReactNode;
   readonly paymentLink: React.ReactNode;
 }
 export function ProviderCard({
@@ -22,6 +23,7 @@ export function ProviderCard({
   portalLabel,
   onCheckout,
   onPortal,
+  planPicker,
   paymentLink,
 }: ProviderCardProps): React.JSX.Element {
   return (
@@ -31,6 +33,7 @@ export function ProviderCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="gap-3">
+        {planPicker}
         <View className="flex-row flex-wrap gap-2">
           <Button onPress={onCheckout} disabled={disabled}>
             <Text>{checkoutLabel}</Text>

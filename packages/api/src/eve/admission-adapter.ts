@@ -1,9 +1,10 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { and, eq, gt, gte, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { db } from "@repo/database";
 import { eveAgentAdmissions, eveAgentRuntimeEvents, eveAgentRuntimeSessions } from "@repo/database";
 import { subscriptions } from "@repo/billing";
+import { buildEntitlementPredicate, AGENT_ENTITLED_PLAN_IDS } from "@repo/services/billing";
 import {
   EVE_ADMISSION_LEASE_MS,
   EVE_MAX_CONCURRENT_OPERATIONS,
@@ -36,17 +37,10 @@ export const agentAdmissionPort = {
         .where(
           and(
             eq(subscriptions.userId, input.actor.userId),
-            sql`${subscriptions.metadata}->>'planId' = 'pro'`,
-            or(
-              and(
-                eq(subscriptions.status, "active"),
-                or(isNull(subscriptions.currentPeriodEnd), gt(subscriptions.currentPeriodEnd, now)),
-              ),
-              and(
-                inArray(subscriptions.status, ["trialing", "on_trial"]),
-                or(isNull(subscriptions.trialEnd), gt(subscriptions.trialEnd, now)),
-              ),
-            ),
+            // One predicate for every rail: the subscription is live while its
+            // status grants access and its period has not run out. The period
+            // end is never null, so a lapsed subscription grants nothing.
+            buildEntitlementPredicate(AGENT_ENTITLED_PLAN_IDS, now),
           ),
         )
         .limit(1);

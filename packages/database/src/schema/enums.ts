@@ -1,11 +1,12 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const billingProviderEnum = pgEnum("billing_provider", [
-  "stripe",
-  "chargily",
-  "paddle",
-  "polar",
-]);
+/**
+ * Every payment rail a subscription can be funded by.
+ *
+ * `manual` is a rail like the others even though it has no hosted checkout:
+ * it settles by bank transfer and administrator approval.
+ */
+export const billingProviderEnum = pgEnum("billing_provider", ["stripe", "chargily", "manual"]);
 
 export const subscriptionStatusEnum = pgEnum("billing_subscription_status", [
   "active",

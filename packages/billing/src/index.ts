@@ -18,8 +18,14 @@
 
 // Explicit re-exports from interface (no export *)
 export { BILLING_PROVIDER_NAMES } from "./providers/interface";
+export {
+  BILLING_CHECKOUT_PROVIDER_NAMES,
+  BILLING_PORTAL_PROVIDER_NAMES,
+} from "./providers/interface";
 export type {
   BillingProviderName,
+  BillingCheckoutProviderName,
+  BillingPortalProviderName,
   SubscriptionStatus,
   CheckoutStatus,
   InvoiceStatus,
@@ -63,6 +69,7 @@ export {
   recurringIntervalEnum,
 } from "./schema/billing";
 export { products, prices, productRelations, priceRelations } from "./schema/billing";
+export { plans } from "./schema/billing";
 export { customers } from "./schema/billing";
 export { subscriptions, subscriptionRelations } from "./schema/billing";
 export { checkouts, checkoutRelations } from "./schema/billing";
@@ -71,6 +78,30 @@ export { license_keys, licenseKeyRelations } from "./schema/billing";
 export { usage_events } from "./schema/billing";
 export { webhook_events } from "./schema/billing";
 export { customerRelations } from "./schema/billing";
+
+// Plans — the entitlement contract shared by every payment rail.
+export {
+  BILLING_INTERVALS,
+  BILLING_PLAN_IDS,
+  BILLING_PROVIDER_DEFAULT_CURRENCY,
+  BILLING_USD_DZD_RATE,
+  DEFAULT_BILLING_PLANS,
+  DEFAULT_BILLING_PLAN_PRICES,
+  DEFAULT_BILLING_PRICES,
+  addBillingInterval,
+  billingPeriodRemainingDays,
+  deriveDzdAmountMinor,
+  extendBillingPeriod,
+  isBillingPeriodCovered,
+} from "./domain/plans";
+export type {
+  BillingInterval,
+  BillingPeriod,
+  BillingPlanDefinition,
+  BillingPlanId,
+  BillingPlanPriceSeed,
+  BillingPriceDefinition,
+} from "./domain/plans";
 
 import { BILLING_PROVIDER_NAMES } from "./providers/interface";
 import type {
@@ -82,7 +113,15 @@ import type {
 
 type BillingProviderLoader = () => Promise<BillingProviderFactory>;
 
-const billingProviderLoaders: Partial<Record<BillingProviderName, BillingProviderLoader>> = {
+/**
+ * Lazy loaders for the rails that have a checkout adapter.
+ *
+ * The manual rail is deliberately absent: it settles by bank transfer and
+ * administrator approval, so it never reaches a hosted checkout.
+ */
+const billingProviderLoaders: Partial<
+  Record<keyof BillingProviderRegistry, BillingProviderLoader>
+> = {
   stripe: async () => (await import("./providers/stripe")).createStripeProvider,
   chargily: async () => (await import("./providers/chargily")).createChargilyProvider,
 };
@@ -92,7 +131,7 @@ let registryCache: BillingProviderRegistry | null = null;
 export async function loadBillingRegistry(): Promise<BillingProviderRegistry> {
   if (registryCache) return registryCache;
   const registry: BillingProviderRegistry = {};
-  for (const provider of BILLING_PROVIDER_NAMES) {
+  for (const provider of Object.keys(billingProviderLoaders) as (keyof BillingProviderRegistry)[]) {
     const loadProvider = billingProviderLoaders[provider];
     if (loadProvider) registry[provider] = await loadProvider();
   }
@@ -108,7 +147,8 @@ export async function getBillingProvider(
   const factory = registry[name as keyof BillingProviderRegistry];
   if (!factory) {
     throw new Error(
-      `BILLING_PROVIDER_NOT_REGISTERED: ${name}. Run: ghostinit add billing --provider ${name}`,
+      `BILLING_PROVIDER_NOT_REGISTERED: ${name} has no checkout adapter. ` +
+        `Only a rail with a hosted checkout can be started here.`,
     );
   }
   return factory(config);

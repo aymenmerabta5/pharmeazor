@@ -1,16 +1,28 @@
-export type ProviderName = "stripe" | "chargily" | "paddle" | "polar";
-export interface ProviderOption {
-  id: ProviderName;
-  label: string;
-  checkout: true;
-  portal: boolean;
-  paymentLink: boolean;
-}
+export type ProviderName = "stripe" | "chargily" | "manual";
+/** The rails that can start a hosted checkout. Manual settles by transfer. */
+export type CheckoutProviderName = "stripe" | "chargily";
+export type ProviderOption =
+  | { id: "stripe"; label: string; checkout: true; portal: true; paymentLink: false }
+  | { id: "chargily"; label: string; checkout: true; portal: false; paymentLink: true };
 export interface SubscriptionView {
   id: string;
   provider: string;
   status: string;
+  planId: string;
   currentPeriodEnd?: string;
+  /** True only when the rail charges again without a new authorization. */
+  autoRenew: boolean;
+}
+export interface PlanPriceView {
+  provider: ProviderName;
+  amountMinor: number;
+  currency: string;
+}
+export interface PlanView {
+  id: string;
+  name: string;
+  tier: number;
+  prices: PlanPriceView[];
 }
 export interface InvoiceView {
   id: string;
@@ -45,9 +57,35 @@ export function subscriptionView(value: unknown): SubscriptionView | null {
     id: key,
     provider: value.provider,
     status: value.status,
+    planId: typeof value.planId === "string" ? value.planId : "",
     ...(typeof value.currentPeriodEnd === "string"
       ? { currentPeriodEnd: value.currentPeriodEnd }
       : {}),
+    autoRenew: value.autoRenew === true,
+  };
+}
+export function planView(value: unknown): PlanView | null {
+  if (!record(value)) return null;
+  const key = id(value);
+  if (!key || typeof value.name !== "string") return null;
+  const prices = Array.isArray(value.prices)
+    ? value.prices.flatMap((entry) => {
+        if (!record(entry) || typeof entry.provider !== "string") return [];
+        if (typeof entry.amountMinor !== "number" || typeof entry.currency !== "string") return [];
+        return [
+          {
+            provider: entry.provider as ProviderName,
+            amountMinor: entry.amountMinor,
+            currency: entry.currency,
+          },
+        ];
+      })
+    : [];
+  return {
+    id: key,
+    name: value.name,
+    tier: typeof value.tier === "number" ? value.tier : 0,
+    prices,
   };
 }
 export function invoiceView(value: unknown): InvoiceView | null {

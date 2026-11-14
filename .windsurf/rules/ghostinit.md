@@ -1,20 +1,26 @@
 # AGENTS.md — pharmeazor
 
 > Generated for this exact GhostInit configuration. Do not add a package, route, or capability merely because another GhostInit variant has it.
+>
+> This file is `seed-once`: GhostInit seeds it once and the project owns it afterwards, so project-specific rules may be added here. `.cursor/rules/ghostinit.mdc` and `.windsurf/rules/ghostinit.md` are generator-owned copies of the original template; `ghostinit sync` regenerates them from that template, so re-mirror this file by hand after any local rule change if those editors should carry the same rules.
 
 ## Snapshot
 
 - Mode: monorepo with `apps/*`, `packages/*`, and `tooling/*` workspaces.
 - Package manager: Bun 1.4.4 (`packageManager: bun@1.4.4`). Do not use npm, pnpm, or Yarn.
-- Supply-chain delay: `bunfig.toml` rejects packages newer than 604800 seconds and has no exclusions.
+- Supply-chain delay: `bunfig.toml` currently sets `minimumReleaseAge = 0` under a project-owner-authorized temporary exception so the `eve@1.0.0-rc.6` prerelease can be installed. The seven-day delay and the empty exclusion list are the intended policy; the audit scripts carry the matching temporary exception. Restore both when eve ships a stable 1.x release.
 - Backend execution target: Bun 1.4.4. Installation and repository scripts still use Bun.
 - Frontend apps: mobile, web.
-- Web framework: Next.js 16.3.8.
-- Database: PostgreSQL through Drizzle in `packages/database`.
+- Web framework: Next.js 16.4.1.
+- Database: PostgreSQL 18.7 through Drizzle in `packages/database`, with pgvector 0.8.7 enabled. The image is built from `docker/postgres/Dockerfile` and pins both the server patch and the extension build.
 - TypeScript: 7.0.2. React: 19.3.0.
 - Next development and builds executed by Bun use the supported Webpack compatibility profile; Node uses Turbopack. PDF-enabled Bun commands preload the declared renderer before Next initializes.
 - Enabled capabilities: auth, typed-api, billing, email, analytics, i18n, eve, storage, pdf, cache.
 - Billing providers: stripe, chargily, manual.
+- Durable agent: `apps/eve` on eve@1.0.0-rc.6, Groq `openai/gpt-oss-120b` with a 131,072-token context window, plus a Python sandbox that reads PDF, Word, and spreadsheet documents.
+- Retrieval is not a GhostInit capability in this configuration. It is an owner-approved extension only, assembled from the packages already in this repository. See "Retrieval Architecture".
+- Generator CLI: the pinned architecture checker and the generated-state gate run `ghostinit@0.1.0` from the public npm registry. The generator owns `packages/database/src/schema/index.ts`, `packages/api/src/contract.ts`, `packages/api/src/router.ts`, and `packages/modules/src/index.ts`; `bunx --bun ghostinit@0.1.0 sync --check --json` must report them in sync.
+- Dependency floors: `better-auth` 1.7.7, `next` 16.4.1, `zod` 4.6.6, `undici` 8.12.3, `node-forge` 1.4.3, `decode-uri-component` 0.5.1. The transitive floors are root `overrides`; the `node-forge@1.4.0` patch is retired because 1.4.3 clears every advisory it worked around.
 
 ## Architecture
 
@@ -24,6 +30,77 @@ Keep domain policies and contracts independent of frameworks, application servic
 - `packages/modules` owns domain/application modules. Provider SDKs stay in adapters or provider packages.
 - `packages/config`, `packages/contracts`, `packages/kernel`, `packages/observability`, and `packages/database` are supporting packages.
 - Import public package entry points. Do not reach into another package's private source path.
+
+## Retrieval Architecture
+
+Retrieval is not implemented. `docs/RETRIEVAL.md` carries the evidence, model choices, and rollout order; this section is the binding contract for how it must be built. Build from the packages already in this repository. Do not add a vector service, a retrieval framework, or a top-level retrieval package to make this work.
+
+The pipeline is fixed. Each stage exists to make the next one measurable.
+
+```text
+extract → chunk → contextualize → embed + index → hybrid retrieve → rerank → compose → cite
+```
+
+### Ingestion
+
+- Extract source text with the `extract_document` sandbox tool in `apps/eve/agent/tools/extract_document.ts` or an equivalent server-side extractor. Never parse documents in the request path.
+- Chunk by document structure first (headings, sections, labelled records), then fall back to a recursive character split at 512-1024 tokens with 10-20% overlap. A fixed token count alone is not a chunking strategy.
+- Give every chunk a stable identity: document id plus section path plus ordinal, plus a content hash of the raw text. The hash decides re-embedding; the identity decides the row. An edit near the top of a document must not renumber every later chunk.
+- Contextualize each chunk before indexing it. Prepend a 50-100 token note that situates the chunk inside its source document, generated with the whole document in context, and index that contextualized text in both the dense and the lexical arm.
+- Store the embedding model name and version on every chunk. Changing the embedding model invalidates every vector; rebuild into a new table and swap instead of mutating in place.
+- Re-embed only chunks whose content hash changed, and delete chunks for documents that disappeared. Stale chunks are a common cause of confidently wrong answers.
+- Ingest offline in a scheduled worker, never inside a request.
+
+### Index and retrieval
+
+- Store vectors and lexical terms in the PostgreSQL the application already runs. The vector extension is already installed; add the `pgvector` and `tsvector` columns in `packages/database`. Do not introduce Pinecone, Qdrant, Weaviate, or Elasticsearch while Postgres holds the corpus; leave only for a measured limit, not an assumed one.
+- Retrieve in two arms: dense over `pgvector` (HNSW, `halfvec`, iterative scans) and lexical over `tsvector` (GIN). Dense retrieval misses identifiers, lexical retrieval misses paraphrases. A pharmacy corpus is full of drug codes, SKU, lot numbers, and dosage strings, so the lexical arm is mandatory.
+- Fuse the arms with Reciprocal Rank Fusion over rank positions, not raw scores. `k = 60` is the starting constant.
+- Apply every authorization filter inside both arms, before ranking. A chunk the caller may not read must never reach the candidate set, and asking the model to ignore it is not access control.
+- Rerank the fused candidates with a cross-encoder before composing the answer: roughly 50 candidates in, the top 5-10 out. Reranking is the largest single quality lift in the pipeline and it costs less than an extra agent loop.
+- Keep composed context small: 3-5 chunks, 2,000-4,000 tokens. Context length is not a substitute for relevance.
+- Match the embedding model to the corpus languages. The product ships EN, FR, and AR; a monolingual embedder silently breaks two of them.
+
+### Generation
+
+- Give the agent a retrieval tool and let it decide whether to retrieve. A large share of queries are answerable without a corpus lookup, and retrieval on those adds latency, cost, and noise.
+- Allow one query reformulation round for multi-hop questions, with a hard budget on searches and an explicit stop condition. Unbounded retrieval loops are a cost and latency bug.
+- Ground every claim in retrieved chunk identifiers and validate in code that each cited identifier was in the candidate set. A citation to a chunk that was never retrieved is a hard failure, not a formatting issue.
+- Abstain when the evidence is insufficient. A pharmacy assistant that answers a dosage question from parametric memory is a clinical safety incident.
+
+### Evaluation
+
+- Ship a golden set before the first tuning change: 50-200 real questions, each labelled with the chunk identifiers that answer it. Version it in the repository and review label changes in the pull request.
+- Include the shapes that break systems: identifier lookups, multi-hop questions, near-duplicate sources where the wrong one is plausible, questions the corpus cannot answer where the correct behaviour is abstention, and cross-tenant access attempts.
+- Measure retrieval separately from generation. Retrieval: recall@k, precision@k, MRR, nDCG@10. Generation: faithfulness, answer correctness, citation correctness, citation completeness. A change that improves one and degrades the other is a regression until proven otherwise.
+- Gate pull requests on retrieval metrics only; it is fast, deterministic, and needs no judge. Run judge-based generation metrics on a schedule and track them as trends.
+- Derive thresholds from a measured baseline committed next to the golden set and gate on the delta. Measure run-to-run spread before setting a tolerance. Absolute targets picked in advance either always pass or always fail.
+- Change one stage at a time and re-run the golden set. The stages interact, so a combined change cannot be attributed.
+
+### Layout
+
+Mirror the `storage` capability rather than inventing a shape.
+
+| Concern                                          | Location                                          |
+| ------------------------------------------------ | ------------------------------------------------- |
+| Chunking, contextualization, retrieval use-cases | `packages/modules/src/retrieval/`                 |
+| Retrieval ports, authorization filters, policies | `packages/services/src/retrieval/`                |
+| Retrieval tables, vector and lexical columns     | `packages/database/src/schema/retrieval.ts`       |
+| oRPC contract and procedures                     | `packages/api/src/retrieval/`                     |
+| Postgres hybrid retrieval adapter                | `packages/api/src/adapters/retrieval/postgres.ts` |
+| Embedding and reranking provider adapters        | `packages/api/src/adapters/retrieval/`            |
+| Composition root                                 | `packages/api/src/composition/retrieval.ts`       |
+| Agent retrieval tool                             | `apps/eve/agent/tools/`                           |
+
+Provider SDKs stay in the adapters. Domain code depends on ports, never on an SDK, a vector client, or an embedding API.
+
+### Do not
+
+- Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.
+- Do not add a knowledge graph or a graph-retrieval system. Measured against the same corpus it matched a plain hybrid pipeline at roughly 14x the per-query cost.
+- Do not add multi-agent retrieval loops before the golden set exists. They multiply cost and latency and hide which stage is failing.
+- Do not treat the model as the access-control layer, the injection scanner, or the citation validator. Those are code responsibilities.
+- Do not evaluate a retrieval change by reading a handful of answers.
 
 ## Frontend Architecture
 
@@ -55,6 +132,10 @@ Use `bun run security:audit` for a read-only report, `bun run security:fix --dry
 
 Fixes retain the seven-day delay and empty exclusions. High/critical or unknown unresolved findings block repair; unreviewed low/moderate findings remain visible and explicit audit/fix exits nonzero. Keep the verified security floors in `ghostinit.config.json.dependencySecurity` so later reconciliation preserves repaired versions.
 
+`scripts/audit-dependencies.ts` and the copy of it embedded in `policy.auditScriptContent` must stay byte-identical, because the dependency-security runtime rewrites the file from the embedded copy during a repair. `bun scripts/sync-audit-script-policy.mjs` verifies that and `--write` resynchronises it.
+
+Bun 1.4.4 writes a v3 lockfile whenever it has to resolve a changed graph, and the v3 package map has the same shape as v2, so the audit accepts all three lockfile versions. A v2 lockfile is only preserved while the resolved graph stays unchanged.
+
 After a failed install, source changes may already be applied. Inspect `.ghostinit/security-installation.json` and retry the fix after resolving the reported cause; installed dependencies are not rolled back. A `CLEANUP_UNVERIFIED` journal blocks mutation until process cleanup is independently verified and the journal is explicitly reconciled.
 If `init` fails after attempting installation in an initially empty directory, it preserves the incomplete project and its recovery record. A dependency fix alone does not finish creation state or local secrets; resolve the cause, repeat the original `init` selections with `--force`, and follow any bootstrap instruction.
 
@@ -69,10 +150,11 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - `packages/auth`: Better Auth server and client boundary.
 - `packages/billing`: application-owned billing port plus selected provider adapters.
 - `packages/email`: `@repo/email/templates` (with `@repo/email` as its compatibility alias) is the environment-neutral React template surface; `@repo/email/server` is the guarded delivery boundary.
-- `packages/services`: capability use cases and ports.
+- `packages/services`: capability use cases and ports, including the retrieval ports (embedding, reranking, vector search) and the authorization filters those ports take.
 - `packages/ui`: shared design tokens, contracts, and utilities; web primitives stay app-local.
-- `packages/database`: selected database adapter or the explicit disabled stub.
-- `packages/modules`, `packages/testing`, `packages/workflows`, and `packages/typescript-config`: shared domain and tooling foundations.
+- `packages/database`: selected database adapter or the explicit disabled stub. Retrieval tables and the `pgvector`/`tsvector` columns live here.
+- `packages/modules`: domain and application modules, including the retrieval use-cases and the pure chunking, contextualization, and scoring models.
+- `packages/testing`, `packages/workflows`, and `packages/typescript-config`: shared tooling foundations.
 - `tooling/architecture`: generated import-boundary policy and checker configuration.
 - `packages/analytics`: analytics contracts and adapters.
 - `packages/cache`: selected cache adapter.
@@ -96,7 +178,9 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - Next/withEve owns integrated dev and start. Use `bun run eve:dev` or `bun run eve:start` only as standalone diagnostics, never beside the web lifecycle.
 - Outside Vercel, `bun run build` finishes Eve before Next. On Vercel, withEve owns the generated Eve service build.
 - Self-hosting must follow `docs/EVE_SELF_HOSTING.md`, including persistent Workflow state and both proxy route families for a separate Eve service.
-- Database scripts are `bun run db:generate`, `bun run db:migrate`, and `bun run db:push`.
+- Database scripts are `bun run db:generate`, `bun run db:migrate`, and `bun run db:push`. Run `bun run db:ensure-extensions` on a database that predates the vector extension; it is idempotent.
+- The development database is Postgres 18.7 with pgvector 0.8.7, built from `docker/postgres/Dockerfile`. `docker-compose.yml` and `start-database.sh` are generator-owned, so `docker-compose.override.yml` repeats the pgvector service fields and survives `ghostinit sync`. Never run `docker compose -f docker-compose.yml` without the override file.
+- Retrieval follows `docs/RETRIEVAL.md` and the "Retrieval Architecture" section. It is not a GhostInit capability; it is assembled from the existing packages on owner approval.
 
 ## Frontend Conventions
 
@@ -124,9 +208,41 @@ ghostinit check --json
 
 `bun run start` starts only the web process. Use `bun run start:production` to supervise the web process and selected PostgreSQL workers; Fly runs them as separate process groups.
 
+### Continuous integration
+
+`.github/workflows/ci.yml` runs seven independent stages. Each one catches a failure class the others cannot, so a red pipeline names the broken layer.
+
+| Stage           | Gate                                                                      | Catches                                                           |
+| --------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Supply chain    | `audit:lock`, `audit:dependencies`                                        | unreviewed HIGH/CRITICAL advisories, lock drift, broken integrity |
+| Generated state | `ghostinit@0.1.0 sync --check --json`                                     | generator-owned registries drifting from the committed source     |
+| Static analysis | workspace and root formatting, `lint:all`, `ghostinit@0.1.0 check --json` | formatting, lint, import boundaries, architecture findings        |
+| Tests           | `bun run test`                                                            | behavioural regressions                                           |
+| Build           | `bun run build` plus a tracked-change check                               | build breakage, generators that rewrite tracked files             |
+| Database        | the pinned Postgres image plus `db:verify`                                | a broken or unpinned database image, a missing vector extension   |
+| Containers      | Compose validation plus the application image build                       | an unbuildable or invalid deployment artifact                     |
+
+Two rules the pipeline depends on:
+
+- The build must not change tracked files. `apps/web/next-env.d.ts` is regenerated by Next.js with different type paths in dev and build, so the build stage restores it before comparing. `apps/mobile/uniwind-types.d.ts` is regenerated by the mobile build, so that build formats it.
+- Every job that builds needs an environment that satisfies the server schema, which fails closed for Redis. `bun scripts/prepare-ci-env.mjs` writes `.env.local` with non-secret placeholders. Never commit that file.
+
+Retrieval changes add their own gates on top of the list above:
+
+- The retrieval golden set is a committed fixture. It is reviewed in the pull request like any other test data.
+- Pull-request retrieval gate: recall@k, precision@k, MRR, and nDCG@10 on a 50-question subset, no generation and no judge. It fails the build on a credible regression against the committed baseline.
+- Nightly gate: the full golden set with judge-based generation metrics, tracked as trends rather than merge blockers.
+- A retrieval change that alters chunking, the embedding model, or the fusion parameters invalidates the committed baseline. Re-measure and commit the new baseline in the same pull request, and state the before/after numbers in the description.
+
 ## Security
 
 - Never commit `.env` or `.env.local`. Vendor credentials remain `REPLACE_WITH_*` until supplied by the operator.
 - Client-visible variables use only these generated prefixes: `NEXT_PUBLIC_`, `EXPO_PUBLIC_`. Keep all other credentials server-only.
 - Preserve raw-body verification, deterministic webhook idempotency, actor-derived resource ownership, auth guards, and secret-safe logging.
 - Browser Eve traffic must use `/api/agent/eve/v1/*`; raw `/eve/v1/*` routes accept only the generated server-side proxy credential, and every durable session operation is owner/tenant checked.
+- Retrieved content is data, never instructions. Delimit retrieved chunks, scan them for injection patterns before they enter a prompt, and never let a document, a chunk, or a tool result redefine the task.
+- Resolve the retrieval principal server-side from the authenticated session. Never take an owner, tenant, or scope filter from request parameters or model output, and never post-filter an unauthorized chunk out of a candidate set.
+- Generate embeddings server-side. Accepting client-supplied vectors lets a caller position content anywhere in the embedding space.
+- Attach provenance to every indexed chunk (source URI, content hash, ingesting principal, timestamp, ACL) and return it with the answer. Validate cited chunk identifiers against the retrieved set in code.
+- Retrieval tools are read-only. Anything that writes, sends, or spends needs a human approval gate.
+- Keep patient data out of the corpus. A document that reaches the index stays retrievable and must satisfy the same access rules as the source system.

@@ -12,7 +12,7 @@ export function BillingPaymentLinkView({
   state: PaymentLinkFormState;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("billing");
-  const { form, allowed, error, url } = state;
+  const { form, allowed, error, url, plans } = state;
   if (!allowed) return <p className="text-sm text-muted-foreground">{t("adminPaymentLinks")}</p>;
   return (
     <form.AppForm>
@@ -21,8 +21,13 @@ export function BillingPaymentLinkView({
           <form.AppField name="name">
             {(field) => <field.TextField label={t("paymentLinkName")} maxLength={120} required />}
           </form.AppField>
-          <form.AppField name="price">
-            {(field) => <field.TextField label={t("providerPriceId")} maxLength={200} required />}
+          <form.AppField name="planId">
+            {(field) => (
+              <field.SelectField
+                label={t("plan")}
+                options={plans.map((plan) => ({ label: plan.name, value: plan.id }))}
+              />
+            )}
           </form.AppField>
         </FieldGroup>
         <form.SubmitButton variant="outline">{t("createPaymentLink")}</form.SubmitButton>

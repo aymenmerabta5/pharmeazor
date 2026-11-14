@@ -33,6 +33,14 @@ export const checkouts = pgTable(
     currency: varchar("currency", { length: 10 }),
     metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
     providerEventAt: timestamp("provider_event_at"),
+    /**
+     * Set when the checkout claimed the right to grant its plan's period.
+     *
+     * Chargily can report the same checkout under more than one event type,
+     * so the claim is what stops a duplicate delivery from buying a second
+     * period for one payment.
+     */
+    subscriptionGrantedAt: timestamp("subscription_granted_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

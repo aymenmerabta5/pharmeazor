@@ -29,7 +29,7 @@ const link = new RPCLink({
   url: `${getBaseUrl()}/api/rpc`,
   headers: async (): Promise<Record<string, string>> => {
     if (Platform.OS === "web") return {};
-    const cookie = authClient.getCookie();
+    const cookie = await authClient.getCookie();
     // Non-simple CSRF signal only; the Better Auth cookie still supplies identity.
     const headers: Record<string, string> = { "x-ghostinit-native-client": "expo" };
     if (cookie) headers.cookie = cookie;

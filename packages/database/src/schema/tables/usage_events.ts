@@ -23,7 +23,7 @@ export const usage_events = pgTable(
     externalCustomerId: text("external_customer_id"),
     organizationId: text("organization_id"),
     externalId: text("external_id"),
-    provider: billingProviderEnum("provider").notNull().default("polar"),
+    provider: billingProviderEnum("provider").notNull().default("stripe"),
     metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

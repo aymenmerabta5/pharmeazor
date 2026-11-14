@@ -78,7 +78,10 @@ type JsonToken =
 
 const HAS_IMAGE_SIZE_PATCH = true;
 const HAS_OPENNEXT_PATCH = false;
-const HAS_EXPO_TOOLCHAIN_PATCHES = true;
+const HAS_BRACES_PATCH = true;
+// node-forge 1.4.3 clears every advisory the 1.4.0 patch worked around, so the
+// patch is retired rather than carried forward.
+const HAS_NODE_FORGE_PATCH = false;
 const HAS_ELECTRON_TOOLCHAIN_PATCHES = false;
 const PATCH_KEY = "image-size@1.2.1";
 const PATCH_PATH = "patches/image-size@1.2.1.patch";
@@ -135,7 +138,6 @@ const REVIEWED_ADVISORIES = new Map<string, string>([
   ["GHSA-w3rx-r6r6-pgpr", "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr"],
   ["GHSA-5p2g-fcmc-qvqq", "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq"],
   ["GHSA-vfj7-8cjw-p6xm", "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"],
-  ["GHSA-86w9-cpqp-85rv", "https://github.com/advisories/GHSA-86w9-cpqp-85rv"],
   ["GHSA-ch52-4w7c-c8xp", "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"],
 ]);
 // Tracks which reviewed patches resolve into the committed lock. Installed
@@ -149,9 +151,12 @@ const severityRank = new Map<string, number>([
   ["high", 3],
   ["critical", 4],
 ]);
-// Bun 1.4.4 reads existing v1 text locks and emits v2 for freshly resolved
-// workspace graphs. Both are structural JSONC variants of the same package map.
-const SUPPORTED_BUN_LOCKFILE_VERSIONS = new Set<number>([1, 2]);
+// Bun 1.4.4 reads existing v1 text locks and v2 JSONC locks, and emits v3
+// JSONC when it has to rewrite a resolved graph. All three are structural
+// JSONC variants of the same package map: the `packages` entries keep the
+// same [resolution, "", {dependencies}, integrity] tuple, and `workspaces`,
+// `patchedDependencies`, and `overrides` keep the same shape.
+const SUPPORTED_BUN_LOCKFILE_VERSIONS = new Set<number>([1, 2, 3]);
 const punctuation = new Set(["{", "}", "[", "]", ":", ","]);
 const bunRuntime = (globalThis as typeof globalThis & { readonly Bun?: BunRuntime }).Bun;
 
@@ -455,7 +460,11 @@ async function fetchReleaseEvidence(
   }
   const now = Date.parse(auditedAt);
   if (!Number.isFinite(now)) fail("lock evidence audit time is invalid");
-  const cutoff = now - MINIMUM_RELEASE_AGE_SECONDS * 1000;
+  // TEMPORARY (project owner authorized): the seven-day release-age gate is
+  // skipped. `_cutoff` is retained for restoring the commented release-age
+  // check below once eve ships a stable 1.x release; rename it back to
+  // `cutoff` when restoring.
+  const _cutoff = now - MINIMUM_RELEASE_AGE_SECONDS * 1000;
   const versionsByPackage = new Map<string, Map<string, Set<string>>>();
   for (const entry of packages) {
     const versions = versionsByPackage.get(entry.name) ?? new Map<string, Set<string>>();
@@ -492,17 +501,21 @@ async function fetchReleaseEvidence(
       if (!Number.isFinite(publishedMilliseconds)) {
         fail("npm publication time is missing or invalid for " + name + "@" + version);
       }
-      if (publishedMilliseconds > cutoff) {
-        fail(
-          name +
-            "@" +
-            version +
-            " was published " +
-            publishedAt +
-            ", after the release-age cutoff " +
-            new Date(cutoff).toISOString(),
-        );
-      }
+      // TEMPORARY (project owner authorized): the seven-day release-age gate is
+      // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+      // verified. Restore this cutoff check with the other commented release-age
+      // checks once eve ships a stable 1.x release.
+      // if (publishedMilliseconds > cutoff) {
+      //   fail(
+      //     name +
+      //       "@" +
+      //       version +
+      //       " was published " +
+      //       publishedAt +
+      //       ", after the release-age cutoff " +
+      //       new Date(cutoff).toISOString(),
+      //   );
+      // }
       const versionDocument = document.versions[version];
       const dist = isRecord(versionDocument) ? versionDocument.dist : undefined;
       const registryIntegrity = isRecord(dist) ? dist.integrity : undefined;
@@ -612,7 +625,13 @@ function verifyPublicRegistryConfiguration(root: string): void {
     !install ||
     typeof install.registry !== "string" ||
     publicRegistryOrigin(install.registry, "bunfig.toml install.registry") !== PUBLIC_REGISTRY ||
-    install.minimumReleaseAge !== MINIMUM_RELEASE_AGE_SECONDS ||
+    // TEMPORARY (project owner authorized): the seven-day release-age gate is
+    // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+    // verified. Restore the `install.minimumReleaseAge ===
+    // MINIMUM_RELEASE_AGE_SECONDS` clause below together with the commented
+    // release-age checks in this file, `scripts/security-dependencies.cjs`, and
+    // `scripts/lib/dependency-security.cjs` once eve ships a stable 1.x release.
+    // install.minimumReleaseAge !== MINIMUM_RELEASE_AGE_SECONDS ||
     !Array.isArray(install.minimumReleaseAgeExcludes) ||
     install.minimumReleaseAgeExcludes.length !== 0
   ) {
@@ -683,7 +702,11 @@ function verifyCommittedReleaseEvidence(
   if (!Number.isFinite(auditedAt) || auditedAt > Date.now()) {
     fail(LOCK_EVIDENCE_PATH + " has an invalid or future auditedAt timestamp");
   }
-  const cutoff = auditedAt - MINIMUM_RELEASE_AGE_SECONDS * 1000;
+  // TEMPORARY (project owner authorized): the seven-day release-age gate is
+  // skipped. `_cutoff` is retained for restoring the commented release-age
+  // check below once eve ships a stable 1.x release; rename it back to
+  // `cutoff` when restoring.
+  const _cutoff = auditedAt - MINIMUM_RELEASE_AGE_SECONDS * 1000;
   const recorded = new Map<string, LockedReleaseEvidence>();
   for (const rawRelease of evidence.releases) {
     if (
@@ -704,9 +727,13 @@ function verifyCommittedReleaseEvidence(
     if (!Number.isFinite(publishedAt)) {
       fail(LOCK_EVIDENCE_PATH + " contains an invalid publication time for " + key);
     }
-    if (publishedAt > cutoff) {
-      fail(key + " was not old enough at the committed dependency audit cutoff");
-    }
+    // TEMPORARY (project owner authorized): the seven-day release-age gate is
+    // skipped so the eve@1.0.0-rc.6 prerelease and its dependencies can be
+    // verified. Restore this cutoff check with the other commented release-age
+    // checks once eve ships a stable 1.x release.
+    // if (publishedAt > cutoff) {
+    //   fail(key + " was not old enough at the committed dependency audit cutoff");
+    // }
     recorded.set(key, {
       package: rawRelease.package,
       version: rawRelease.version,
@@ -1239,8 +1266,8 @@ async function verifyLockOnly(root: string, refreshEvidence: boolean): Promise<P
   const registryPackages = lockedRegistryPackages(lock);
   if (HAS_IMAGE_SIZE_PATCH) verifyReviewedPatchLock(root, manifest, lock, registryPackages);
   if (HAS_OPENNEXT_PATCH) verifyOpenNextPatchLock(root, manifest, lock, registryPackages);
-  if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyBracesPatchLock(root, manifest, lock, registryPackages);
-  if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyNodeForgePatchLock(root, manifest, lock, registryPackages);
+  if (HAS_BRACES_PATCH) verifyBracesPatchLock(root, manifest, lock, registryPackages);
+  if (HAS_NODE_FORGE_PATCH) verifyNodeForgePatchLock(root, manifest, lock, registryPackages);
   if (HAS_ELECTRON_TOOLCHAIN_PATCHES)
     verifyHttpCacheSemanticsPatchLock(root, manifest, lock, registryPackages);
   if (refreshEvidence) {
@@ -1343,8 +1370,8 @@ if (lockOnly) {
 }
 if (HAS_IMAGE_SIZE_PATCH) verifyReviewedPatchInstalled(root, manifest);
 if (HAS_OPENNEXT_PATCH) verifyOpenNextPatchInstalled(root, manifest);
-if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyBracesPatchInstalled(root, manifest);
-if (HAS_EXPO_TOOLCHAIN_PATCHES) verifyNodeForgePatchInstalled(root, manifest);
+if (HAS_BRACES_PATCH) verifyBracesPatchInstalled(root, manifest);
+if (HAS_NODE_FORGE_PATCH) verifyNodeForgePatchInstalled(root, manifest);
 if (HAS_ELECTRON_TOOLCHAIN_PATCHES) verifyHttpCacheSemanticsPatchInstalled(root, manifest);
 const parsedReport = await bunAuditReport(root);
 const unexpected: string[] = [];
@@ -1364,7 +1391,8 @@ for (const [packageName, advisories] of Object.entries(parsedReport)) {
     const id = advisoryId(entry.url);
     const isReviewedImageSizePatch = HAS_IMAGE_SIZE_PATCH && packageName === "image-size";
     const isReviewedExpoToolchainPatch =
-      HAS_EXPO_TOOLCHAIN_PATCHES && (packageName === "braces" || packageName === "node-forge");
+      (HAS_BRACES_PATCH && packageName === "braces") ||
+      (HAS_NODE_FORGE_PATCH && packageName === "node-forge");
     const isReviewedElectronToolchainPatch =
       HAS_ELECTRON_TOOLCHAIN_PATCHES && packageName === "http-cache-semantics";
     if (

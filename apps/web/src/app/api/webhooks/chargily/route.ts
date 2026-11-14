@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 import { verifySignature } from "@chargily/chargily-pay";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@repo/database";
-import { webhook_events, checkouts, subscriptions } from "@repo/billing";
+import { webhook_events, checkouts, customers } from "@repo/billing";
+import { subscriptionLifecycle } from "@repo/services/billing/server";
 import { logger } from "@repo/observability";
 
 const MAX_WEBHOOK_BODY_BYTES = 1048576;
@@ -117,17 +118,224 @@ const CHARGILY_COMPLETED_STATUSES = new Set(["paid", "completed"]);
 const CHARGILY_FAILED_STATUSES = new Set(["failed", "canceled", "cancelled", "expired"]);
 
 function isChargilyCompletedEvent(eventType: string, status: string | null): boolean {
-  return (
-    CHARGILY_COMPLETED_EVENTS.has(eventType) &&
-    (status === null || CHARGILY_COMPLETED_STATUSES.has(status))
-  );
+  // The checkout status is the authority. Chargily reports the same checkout
+  // under more than one event type, so the status decides whether the payment
+  // completed rather than the event name.
+  if (status !== null) {
+    if (CHARGILY_COMPLETED_STATUSES.has(status)) return true;
+    if (CHARGILY_FAILED_STATUSES.has(status)) return false;
+  }
+  return CHARGILY_COMPLETED_EVENTS.has(eventType);
 }
 
 function isChargilyFailedEvent(eventType: string, status: string | null): boolean {
-  return (
-    CHARGILY_FAILED_EVENTS.has(eventType) &&
-    (status === null || CHARGILY_FAILED_STATUSES.has(status))
+  // The checkout status is the authority, the same way it is for a completed
+  // checkout.
+  if (status !== null) {
+    if (CHARGILY_FAILED_STATUSES.has(status)) return true;
+    if (CHARGILY_COMPLETED_STATUSES.has(status)) return false;
+  }
+  return CHARGILY_FAILED_EVENTS.has(eventType);
+}
+
+/**
+ * Claim the right to grant this checkout's plan period.
+ *
+ * Chargily reports the same checkout under more than one event type, and a
+ * delivery can be retried, so the claim is what keeps one payment from
+ * buying two periods. The claim is leased: a claim left behind by a process
+ * that died is taken over once the lease has run out, so a crashed delivery
+ * cannot lose the period.
+ */
+async function claimChargilySubscriptionGrant(checkoutId: string): Promise<boolean> {
+  const leaseExpiredBefore = new Date(Date.now() - CHARGILY_GRANT_LEASE_MS);
+  const [claimed] = await db
+    .update(checkouts)
+    .set({ subscriptionGrantedAt: new Date() })
+    .where(
+      and(
+        eq(checkouts.provider, "chargily"),
+        eq(checkouts.providerCheckoutId, checkoutId),
+        or(
+          isNull(checkouts.subscriptionGrantedAt),
+          lt(checkouts.subscriptionGrantedAt, leaseExpiredBefore),
+        ),
+      ),
+    )
+    .returning({ id: checkouts.id });
+  return claimed !== undefined;
+}
+
+/** Release a claim so a retry can still grant the period. */
+async function releaseChargilySubscriptionGrant(checkoutId: string): Promise<void> {
+  await db
+    .update(checkouts)
+    .set({ subscriptionGrantedAt: null })
+    .where(and(eq(checkouts.provider, "chargily"), eq(checkouts.providerCheckoutId, checkoutId)));
+}
+
+/**
+ * Record a Chargily checkout and grant the period it bought.
+ *
+ * The checkout row is the source of truth for what the rail reported, and the
+ * grant claim on that row is what keeps one payment from buying two periods.
+ */
+async function processChargilyCheckout(input: {
+  eventType: string;
+  checkoutId: string;
+  status: string | null;
+  metadata: Record<string, unknown> | undefined;
+  providerCustomerId: string | null;
+  eventOccurredAtMs: number | null;
+  completed: boolean;
+  failed: boolean;
+}): Promise<void> {
+  const { eventType, checkoutId, status, metadata, completed, failed } = input;
+  const existingCheckout = await db.query.checkouts.findFirst({
+    where: and(eq(checkouts.provider, "chargily"), eq(checkouts.providerCheckoutId, checkoutId)),
+  });
+  let userId =
+    nonEmptyString(metadata?.userId) ??
+    nonEmptyString(metadata?.chargily_user_id) ??
+    existingCheckout?.userId ??
+    null;
+  if (!userId) {
+    // A checkout made through a payment link carries no account in its
+    // metadata. The Chargily customer it was paid by still identifies the
+    // account, when that customer is known to this application.
+    const providerCustomerId = nonEmptyString(input.providerCustomerId);
+    if (providerCustomerId) {
+      const [customer] = await db
+        .select({ userId: customers.userId })
+        .from(customers)
+        .where(
+          and(
+            eq(customers.provider, "chargily"),
+            eq(customers.providerCustomerId, providerCustomerId),
+          ),
+        )
+        .limit(1);
+      userId = customer?.userId ?? null;
+    }
+  }
+  if (!userId) {
+    // The checkout was not created by this application, so it is not a
+    // subscription sale. Retrying it forever would never succeed, but the
+    // money was taken, so it is reported as an error an operator can see.
+    logger.error(
+      `[chargily webhook] ${eventType} for checkout ${checkoutId} carries no account; ` +
+        `the payment cannot be granted and needs a refund or a manual grant`,
+    );
+    return;
+  }
+  const requestKey = nonEmptyString(metadata?.requestKey);
+  const providerEventAt = new Date(
+    requireProviderEventMillis(`Chargily ${eventType}`, input.eventOccurredAtMs),
   );
+  const checkoutStatus = completed
+    ? ("completed" as const)
+    : failed
+      ? mapChargilyFailureEvent(eventType)
+      : mapChargilyCheckoutStatus(status ?? "pending");
+  if (requestKey)
+    await db
+      .update(checkouts)
+      .set({
+        providerCheckoutId: checkoutId,
+        status: checkoutStatus,
+        metadata,
+        providerEventAt,
+        creationState: "ready",
+        creationStartedAt: null,
+        creationLeaseToken: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(checkouts.userId, userId),
+          eq(checkouts.provider, "chargily"),
+          eq(checkouts.requestKey, requestKey),
+          eq(checkouts.creationState, "creating"),
+        ),
+      );
+  const [stored] = await db
+    .insert(checkouts)
+    .values({
+      userId,
+      provider: "chargily",
+      providerCheckoutId: checkoutId,
+      requestKey,
+      status: checkoutStatus,
+      metadata,
+      providerEventAt,
+    })
+    .onConflictDoUpdate({
+      target: [checkouts.provider, checkouts.providerCheckoutId],
+      set: {
+        requestKey,
+        status: checkoutStatus,
+        metadata,
+        providerEventAt,
+        creationState: "ready",
+        creationStartedAt: null,
+        creationLeaseToken: null,
+        updatedAt: new Date(),
+      },
+      setWhere: and(
+        eq(checkouts.userId, userId),
+        sql`${checkouts.providerEventAt} IS NULL OR ${checkouts.providerEventAt} <= ${providerEventAt}`,
+      ),
+    })
+    .returning({ id: checkouts.id });
+  if (!stored && existingCheckout?.userId !== userId)
+    throw new Error(`Chargily checkout ${checkoutId} belongs to another actor`);
+  if (!completed && !failed) return;
+  const planId = nonEmptyString(metadata?.planId);
+  if (!planId) {
+    throw new Error(`Chargily ${eventType} event did not include a plan`);
+  }
+  if (!completed) {
+    // A failed or expired checkout grants nothing and cancels nothing.
+    // Coverage a previous payment opened simply runs out on its own.
+    logger.info(`[chargily webhook] ${eventType} for checkout ${checkoutId} granted no coverage`);
+    return;
+  }
+  if (!(await claimChargilySubscriptionGrant(checkoutId))) {
+    // This checkout already bought its period. Chargily reports the same
+    // checkout under more than one event type, and a delivery can be retried,
+    // so one payment must not buy two periods.
+    logger.info(`[chargily webhook] checkout ${checkoutId} already bought its period`);
+    return;
+  }
+  // The plan decides how long a Chargily payment buys. Chargily cannot
+  // charge again on its own, so the period is computed here and the row
+  // records that it does not renew by itself.
+  let applied;
+  try {
+    applied = await subscriptionLifecycle.grantPaidPeriod({
+      userId,
+      planId,
+      provider: "chargily",
+      providerSubscriptionId: checkoutId,
+      paidAt: providerEventAt,
+      metadata,
+      providerEventAt,
+    });
+  } catch (error) {
+    // The claim is released so a retry can still grant the period.
+    await releaseChargilySubscriptionGrant(checkoutId);
+    throw error;
+  }
+  if (applied.outcome === "superseded") {
+    // The claim is released so the retry can still grant the period.
+    await releaseChargilySubscriptionGrant(checkoutId);
+    throw new Error(`Chargily checkout ${checkoutId} was superseded; retry`);
+  }
+  if (applied.outcome === "skipped") {
+    // The grant did not happen, so the claim is released.
+    await releaseChargilySubscriptionGrant(checkoutId);
+    logger.error(`[chargily webhook] checkout ${checkoutId} was not granted: ${applied.reason}`);
+  }
 }
 
 type WebhookPayload = NonNullable<typeof webhook_events.$inferInsert.payload>;
@@ -136,6 +344,8 @@ type ClaimResult =
   | { status: "completed" }
   | { status: "in_flight" };
 const WEBHOOK_LEASE_MS = 5 * 60 * 1_000;
+/** How long a grant claim is held before another delivery may take it over. */
+const CHARGILY_GRANT_LEASE_MS = WEBHOOK_LEASE_MS;
 
 async function claimWebhookDelivery(
   providerEventId: string,
@@ -312,105 +522,16 @@ export async function POST(req: Request): Promise<Response> {
     if ((completed || failed) && !checkoutId)
       throw new Error(`Chargily ${eventType} event did not include data.id`);
     if (checkoutId && (completed || failed || status)) {
-      const metadata = (data.metadata ?? payload.metadata) as Record<string, unknown> | undefined;
-      const existingCheckout = await db.query.checkouts.findFirst({
-        where: and(
-          eq(checkouts.provider, "chargily"),
-          eq(checkouts.providerCheckoutId, checkoutId),
-        ),
+      await processChargilyCheckout({
+        eventType,
+        checkoutId,
+        status,
+        metadata: (data.metadata ?? payload.metadata) as Record<string, unknown> | undefined,
+        providerCustomerId: nonEmptyString(data.customer_id),
+        eventOccurredAtMs: eventOccurredAtMs,
+        completed,
+        failed,
       });
-      const userId =
-        nonEmptyString(metadata?.userId) ??
-        nonEmptyString(metadata?.chargily_user_id) ??
-        existingCheckout?.userId ??
-        null;
-      if (!userId) throw new Error(`Chargily ${eventType} event did not include actor ownership`);
-      const requestKey = nonEmptyString(metadata?.requestKey);
-      const providerEventAt = new Date(
-        requireProviderEventMillis(`Chargily ${eventType}`, eventOccurredAtMs),
-      );
-      const checkoutStatus = completed
-        ? ("completed" as const)
-        : failed
-          ? mapChargilyFailureEvent(eventType)
-          : mapChargilyCheckoutStatus(status ?? "pending");
-      if (requestKey)
-        await db
-          .update(checkouts)
-          .set({
-            providerCheckoutId: checkoutId,
-            status: checkoutStatus,
-            metadata,
-            providerEventAt,
-            creationState: "ready",
-            creationStartedAt: null,
-            creationLeaseToken: null,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(checkouts.userId, userId),
-              eq(checkouts.provider, "chargily"),
-              eq(checkouts.requestKey, requestKey),
-              eq(checkouts.creationState, "creating"),
-            ),
-          );
-      const [stored] = await db
-        .insert(checkouts)
-        .values({
-          userId,
-          provider: "chargily",
-          providerCheckoutId: checkoutId,
-          requestKey,
-          status: checkoutStatus,
-          metadata,
-          providerEventAt,
-        })
-        .onConflictDoUpdate({
-          target: [checkouts.provider, checkouts.providerCheckoutId],
-          set: {
-            requestKey,
-            status: checkoutStatus,
-            metadata,
-            providerEventAt,
-            creationState: "ready",
-            creationStartedAt: null,
-            creationLeaseToken: null,
-            updatedAt: new Date(),
-          },
-          setWhere: and(
-            eq(checkouts.userId, userId),
-            sql`${checkouts.providerEventAt} IS NULL OR ${checkouts.providerEventAt} <= ${providerEventAt}`,
-          ),
-        })
-        .returning({ id: checkouts.id });
-      if (!stored && existingCheckout?.userId !== userId)
-        throw new Error(`Chargily checkout ${checkoutId} belongs to another actor`);
-      if (completed || failed) {
-        const subscriptionStatus = completed
-          ? ("active" as const)
-          : eventType === "checkout.expired"
-            ? ("expired" as const)
-            : ("canceled" as const);
-        await db
-          .insert(subscriptions)
-          .values({
-            userId,
-            provider: "chargily",
-            providerSubscriptionId: checkoutId,
-            status: subscriptionStatus,
-            metadata,
-            providerEventAt,
-          })
-          .onConflictDoUpdate({
-            target: [subscriptions.provider, subscriptions.providerSubscriptionId],
-            set: { status: subscriptionStatus, metadata, providerEventAt, updatedAt: new Date() },
-            setWhere: and(
-              eq(subscriptions.userId, userId),
-              sql`${subscriptions.providerEventAt} IS NULL OR ${subscriptions.providerEventAt} < ${providerEventAt} OR (${subscriptions.providerEventAt} = ${providerEventAt} AND (${subscriptionStatus} IN ('canceled', 'expired') OR ${subscriptions.status} NOT IN ('canceled', 'expired')))`,
-            ),
-          });
-      }
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

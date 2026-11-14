@@ -16,7 +16,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { CopyIcon, CreditCardIcon, ExternalLinkIcon } from "../icons";
 import { StripeInvoices } from "./stripe-invoices";
-import { StripeSubscriptions } from "./stripe-subscriptions";
+import { BillingPlanPicker } from "../plan-picker";
+import { BillingSubscriptionTable } from "../subscription-table";
 import type { BillingPageState } from "../../types";
 
 export function StripePanel({ billing }: { billing: BillingPageState }): React.JSX.Element {
@@ -24,6 +25,9 @@ export function StripePanel({ billing }: { billing: BillingPageState }): React.J
   const {
     subscriptions,
     invoices,
+    plans,
+    selectedPlanId,
+    selectPlan,
     subsLoading,
     isCheckoutLoading,
     pastDue,
@@ -45,8 +49,18 @@ export function StripePanel({ billing }: { billing: BillingPageState }): React.J
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
+        <BillingPlanPicker
+          plans={plans}
+          provider="stripe"
+          selectedPlanId={selectedPlanId}
+          onSelect={selectPlan}
+          disabled={isCheckoutLoading}
+        />
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => void handleCheckout("stripe")} disabled={isCheckoutLoading}>
+          <Button
+            onClick={() => void handleCheckout("stripe", selectedPlanId ?? "")}
+            disabled={isCheckoutLoading || !selectedPlanId}
+          >
             {isCheckoutLoading ? (
               <Spinner data-icon="inline-start" />
             ) : (
@@ -57,7 +71,8 @@ export function StripePanel({ billing }: { billing: BillingPageState }): React.J
           <Button
             variant="outline"
             disabled={isCheckoutLoading}
-            onClick={() => void handlePortal("stripe")}
+            onClick={() => void handlePortal()}
+            hidden={stripeSubs.length === 0}
           >
             <ExternalLinkIcon data-icon="inline-start" />
             {t("customerPortal")}
@@ -75,7 +90,7 @@ export function StripePanel({ billing }: { billing: BillingPageState }): React.J
             </AlertDescription>
           </Alert>
         ) : null}
-        <StripeSubscriptions subscriptions={stripeSubs} loading={subsLoading} />
+        <BillingSubscriptionTable subscriptions={stripeSubs} plans={plans} loading={subsLoading} />
         <Separator />
         <StripeInvoices invoices={stripeInvs} />
       </CardContent>
