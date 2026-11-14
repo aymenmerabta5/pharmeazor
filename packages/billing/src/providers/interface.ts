@@ -1,6 +1,12 @@
-export { BILLING_PROVIDER_NAMES } from "../domain/model";
+export {
+  BILLING_PROVIDER_NAMES,
+  BILLING_CHECKOUT_PROVIDER_NAMES,
+  BILLING_PORTAL_PROVIDER_NAMES,
+} from "../domain/model";
 export type {
   BillingProviderName,
+  BillingCheckoutProviderName,
+  BillingPortalProviderName,
   SubscriptionStatus,
   CheckoutStatus,
   InvoiceStatus,

@@ -12,10 +12,9 @@ const BILLING_ISO_ZERO_DIGITS = new Set(
 const BILLING_ISO_THREE_DIGITS = new Set("BHD IQD JOD KWD LYD OMR TND".split(" "));
 const BILLING_ISO_FOUR_DIGITS = new Set(["CLF", "UYW"]);
 
-// Paddle amounts use ISO currency minor units. Stripe and Polar use their
+// Stripe and Chargily both use ISO currency minor units. Stripe applies its
 // documented zero-decimal set, with two-decimal ISK/UGX API compatibility.
-// Chargily currently emits no invoice amount rows; its Pay checkout amount
-// denomination is not assumed to define a normalized invoice-money contract.
+// Chargily settles in DZD and emits no invoice amount rows today.
 const BILLING_ZERO_DECIMAL_CURRENCIES = new Set([
   "BIF",
   "CLP",
@@ -44,12 +43,7 @@ export function formatBillingInvoiceAmount(
     !/^[a-z]{3}$/i.test(invoice.currency)
   )
     return "—";
-  if (
-    invoice.provider !== "paddle" &&
-    invoice.provider !== "polar" &&
-    invoice.provider !== "stripe"
-  )
-    return "—";
+  if (invoice.provider !== "stripe" && invoice.provider !== "chargily") return "—";
   const currency = invoice.currency.toUpperCase();
   try {
     if (!BILLING_ISO_CURRENCIES.has(currency)) return "—";
@@ -68,15 +62,11 @@ export function formatBillingInvoiceAmount(
       maximumFractionDigits: isoExponent,
     });
     const exponent =
-      invoice.provider === "polar"
-        ? BILLING_ZERO_DECIMAL_CURRENCIES.has(currency)
-          ? 0
-          : 2
-        : invoice.provider === "stripe" && BILLING_ZERO_DECIMAL_CURRENCIES.has(currency)
-          ? 0
-          : invoice.provider === "stripe" && (currency === "ISK" || currency === "UGX")
-            ? 2
-            : isoExponent;
+      invoice.provider === "stripe" && BILLING_ZERO_DECIMAL_CURRENCIES.has(currency)
+        ? 0
+        : invoice.provider === "stripe" && (currency === "ISK" || currency === "UGX")
+          ? 2
+          : isoExponent;
     return format.format(invoice.amount / 10 ** exponent);
   } catch {
     return "—";

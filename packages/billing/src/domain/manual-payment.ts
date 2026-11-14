@@ -26,6 +26,7 @@ export interface ManualPaymentReceipt {
   readonly originalName: string;
 }
 export interface ManualPaymentSubmitInput {
+  readonly planId: string;
   readonly amountMinor: number;
   readonly requestKey: string;
   readonly method?: string;
@@ -33,6 +34,7 @@ export interface ManualPaymentSubmitInput {
   readonly receipt: ManualPaymentReceipt;
 }
 export interface ValidatedManualPaymentSubmitInput extends ManualPaymentSubmitInput {
+  readonly planId: string;
   readonly method: string;
   readonly reference: string;
 }
@@ -44,6 +46,8 @@ export interface ManualPaymentReviewInput {
 export interface ManualPayment {
   readonly id: string;
   readonly ownerId: string;
+  /** The plan this payment buys. Approving it grants that plan's period. */
+  readonly planId: string;
   readonly amountMinor: number;
   readonly currency: "DZD";
   readonly status: "pending" | "approved" | "rejected";
@@ -71,6 +75,26 @@ export class ManualPaymentError extends Error {
   }
 }
 
+/**
+ * The connection a review runs on.
+ *
+ * The manual repository owns the review transaction, so the subscription an
+ * approval buys has to be written on the same connection: either the credit
+ * and the access commit together, or neither does. The shape is opaque on
+ * purpose, because the repository only passes it through.
+ */
+export type ManualPaymentExecutor = unknown;
+
+export interface ManualPaymentReviewHooks {
+  /**
+   * Grants the subscription the approved payment buys.
+   *
+   * It runs inside the review transaction. Throwing rolls the approval back,
+   * so a payment is never approved without the access it paid for.
+   */
+  onApproved?: (payment: ManualPayment, executor: ManualPaymentExecutor) => Promise<void>;
+}
+
 /** Adapters recheck active identity within writes; roles passed by callers are never authority. */
 export interface ManualPaymentRepository {
   requireActor(id: string): Promise<ManualPaymentActor>;
@@ -79,7 +103,11 @@ export interface ManualPaymentRepository {
   reviewQueue(id: string): Promise<ManualPayment[]>;
   submit(id: string, input: ValidatedManualPaymentSubmitInput): Promise<ManualPayment>;
   receipt(id: string, paymentId: string): Promise<ManualPaymentReceipt>;
-  review(id: string, input: ManualPaymentReviewInput): Promise<ManualPayment>;
+  review(
+    id: string,
+    input: ManualPaymentReviewInput,
+    hooks?: ManualPaymentReviewHooks,
+  ): Promise<ManualPayment>;
 }
 
 export function validateManualPaymentReceipt(receipt: ManualPaymentReceipt): void {
@@ -135,6 +163,9 @@ export function validateManualPaymentSubmit(
       "INVALID_INPUT",
       "Amount must be between 1 and 100000000 DZD minor units",
     );
+  }
+  if (typeof input.planId !== "string" || !/^[a-z0-9][a-z0-9_-]{0,48}$/.test(input.planId)) {
+    throw new ManualPaymentError("INVALID_INPUT", "Choose a plan to pay for");
   }
   if (typeof input.requestKey !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(input.requestKey)) {
     throw new ManualPaymentError("INVALID_INPUT", "A valid submission key is required");

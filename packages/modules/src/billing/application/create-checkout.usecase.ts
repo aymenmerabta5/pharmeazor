@@ -1,7 +1,7 @@
 import {
   createCheckoutService,
   validateBillingRedirectUrl,
-  type BillingProviderName,
+  type BillingCheckoutProviderName,
 } from "@repo/services/billing";
 import type { Result } from "@repo/kernel";
 import type {
@@ -15,13 +15,14 @@ import type {
 export interface CreateCheckoutUseCaseInput {
   userId: string;
   customerEmail: string;
-  provider: BillingProviderName;
-  planId: "pro";
+  provider: BillingCheckoutProviderName;
+  planId: string;
   successUrl: string;
   failureUrl?: string;
   cancelUrl?: string;
   quantity?: number;
   requestKey: string;
+  currency?: string;
 }
 
 type UseCaseDeps = {

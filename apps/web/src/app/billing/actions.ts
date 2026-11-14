@@ -4,17 +4,24 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 
-const provider = z.enum(["stripe", "chargily", "paddle", "polar"]);
+const provider = z.enum(["stripe", "chargily"]);
+const portalProvider = z.literal("stripe");
+const paymentLinkProvider = z.literal("chargily");
 const origin = z
   .string()
   .url()
   .transform((value) => new URL(value).origin);
-const checkoutInput = z.object({ provider, origin, requestKey: z.string().uuid() });
-const portalInput = z.object({ provider, origin });
-const paymentLinkInput = z.object({
+const checkoutInput = z.object({
   provider,
+  origin,
+  requestKey: z.string().uuid(),
+  planId: z.string().min(1).max(64),
+});
+const portalInput = z.object({ provider: portalProvider, origin });
+const paymentLinkInput = z.object({
+  provider: paymentLinkProvider,
   name: z.string().trim().min(1).max(120),
-  price: z.string().trim().min(1).max(200),
+  planId: z.string().trim().min(1).max(64),
 });
 
 async function application() {
@@ -28,7 +35,7 @@ export async function createBillingCheckoutAction(input: unknown) {
     await application()
   ).billing.createCheckout({
     provider: parsed.data.provider,
-    planId: "pro",
+    planId: parsed.data.planId,
     successUrl: parsed.data.origin + "/billing/success",
     failureUrl: parsed.data.origin + "/billing/cancel",
     requestKey: parsed.data.requestKey,
@@ -57,7 +64,7 @@ export async function createBillingPaymentLinkAction(input: unknown) {
     await application()
   ).billing.createPaymentLink({
     provider: parsed.data.provider,
+    planId: parsed.data.planId,
     name: parsed.data.name,
-    items: [{ price: parsed.data.price, quantity: 1 }],
   });
 }

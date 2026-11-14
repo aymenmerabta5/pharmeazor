@@ -27,6 +27,7 @@ export function ManualPaymentFormView({
           fileInput={state.fileInput}
           methods={state.methods}
           receiverInstructions={state.receiverInstructions}
+          plans={state.plans}
         />
         {error ? (
           <Alert variant="destructive" role="alert">

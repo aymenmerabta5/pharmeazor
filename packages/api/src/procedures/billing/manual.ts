@@ -22,6 +22,7 @@ const receiptSchema = z
 const paymentSchema = z.object({
   id: z.string(),
   ownerId: z.string(),
+  planId: z.string(),
   amountMinor: z.number().int(),
   currency: z.literal("DZD"),
   status: z.enum(["pending", "approved", "rejected"]),
@@ -65,6 +66,7 @@ export const manualBillingContract = {
     .input(
       z
         .object({
+          planId: z.string().min(1).max(64),
           amountMinor: z.number().int().min(1).max(100_000_000),
           requestKey: z.string().uuid(),
           method: z.string().min(1).max(80).optional(),

@@ -2,12 +2,13 @@
 import * as React from "react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useSurfaceTranslations } from "@/lib/translations";
+import { useSurfaceLocale, useSurfaceTranslations } from "@/lib/translations";
+import { formatManualAmount } from "../model";
 import type { ManualPaymentFormState } from "../types";
 
 type ManualPaymentFieldsProps = Pick<
   ManualPaymentFormState,
-  "form" | "fileInput" | "methods" | "receiverInstructions"
+  "form" | "fileInput" | "methods" | "receiverInstructions" | "plans"
 >;
 
 export function ManualPaymentFields({
@@ -15,8 +16,10 @@ export function ManualPaymentFields({
   fileInput,
   methods,
   receiverInstructions,
+  plans,
 }: ManualPaymentFieldsProps): React.JSX.Element {
   const t = useSurfaceTranslations("billing");
+  const locale = useSurfaceLocale();
   const id = React.useId();
   return (
     <>
@@ -30,18 +33,46 @@ export function ManualPaymentFields({
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(pending) => (
           <>
+            <form.AppField name="planId">
+              {(field) => (
+                <fieldset className="flex flex-col gap-2" aria-label={t("choosePlan")}>
+                  <legend className="text-sm font-medium">{t("choosePlan")}</legend>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {plans.map((plan) => (
+                      <label
+                        key={plan.id}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring ${
+                          field.state.value === plan.id
+                            ? "border-primary bg-primary/[0.04]"
+                            : "border-border"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="manual-plan"
+                          value={plan.id}
+                          checked={field.state.value === plan.id}
+                          disabled={pending}
+                          onBlur={field.handleBlur}
+                          onChange={() => field.handleChange(plan.id)}
+                          className="size-4 accent-primary"
+                        />
+                        <span className="flex flex-col gap-0.5">
+                          <span className="font-medium">{plan.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatManualAmount(plan.priceMinor, locale)}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {field.state.meta.errors.length > 0 ? (
+                    <FieldError>{t("manualAmountInvalid")}</FieldError>
+                  ) : null}
+                </fieldset>
+              )}
+            </form.AppField>
             <div className="grid gap-4 sm:grid-cols-2">
-              <form.AppField name="amount">
-                {(field) => (
-                  <field.TextField
-                    label={t("manualAmount")}
-                    description={t("manualAmountHelp")}
-                    inputMode="decimal"
-                    required
-                    disabled={pending}
-                  />
-                )}
-              </form.AppField>
               <form.AppField name="method">
                 {(field) => (
                   <field.SelectField

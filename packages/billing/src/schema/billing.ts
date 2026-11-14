@@ -16,6 +16,7 @@ export {
   prices,
   productRelations,
   priceRelations,
+  plans,
   customers,
   customerRelations,
   subscriptions,

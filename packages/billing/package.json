@@ -6,6 +6,7 @@
     ".": "./src/index.ts",
     "./manual": "./src/manual.ts",
     "./*": "./src/*/index.ts",
+    "./adapters/*": "./src/adapters/*.ts",
     "./providers/*": "./src/providers/*.ts",
     "./schema/*": "./src/schema/*.ts",
     "./domain/*": "./src/domain/*"

@@ -20,6 +20,7 @@ const contract = {
         invoices: z.array(z.record(z.string(), z.unknown())),
         usageEvents: z.array(z.record(z.string(), z.unknown())),
         licenseKeys: z.array(z.record(z.string(), z.unknown())),
+        plans: z.array(z.record(z.string(), z.unknown())),
       }),
     ),
 };

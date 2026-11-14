@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { useBillingSnapshotQuery, useBillingIdentityQuery } from "./queries";
-import { subscriptionView, invoiceView } from "./model";
+import { subscriptionView, invoiceView, planView } from "./model";
 export function useBillingSnapshot() {
   const { isAuthenticated } = useAuth();
   const identity = useBillingIdentityQuery(isAuthenticated);
@@ -10,6 +10,7 @@ export function useBillingSnapshot() {
   const subscriptions =
     snapshot.data?.subscriptions.flatMap((value) => subscriptionView(value) ?? []) ?? [];
   const invoices = snapshot.data?.invoices.flatMap((value) => invoiceView(value) ?? []) ?? [];
+  const plans = snapshot.data?.plans.flatMap((value) => planView(value) ?? []) ?? [];
   const role = identity.data?.user?.banned ? null : identity.data?.user?.role;
   useEffect(() => {
     const listener = AppState.addEventListener("change", (state) => {
@@ -23,6 +24,7 @@ export function useBillingSnapshot() {
   return {
     subscriptions,
     invoices,
+    plans,
     isAuthenticated,
     isAdmin: role === "admin" || role === "superAdmin",
     isPending: isAuthenticated && snapshot.isPending,

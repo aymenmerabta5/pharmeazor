@@ -1,7 +1,7 @@
 import {
   createPortalSessionService,
   validateBillingRedirectUrl,
-  type BillingProviderName,
+  type BillingPortalProviderName,
   type PortalCustomerRepositoryPort,
   type PortalProviderPort,
   type PortalSessionRecord,
@@ -9,7 +9,7 @@ import {
 } from "@repo/services/billing";
 
 export interface CreatePortalSessionUseCaseInput {
-  provider: BillingProviderName;
+  provider: BillingPortalProviderName;
   actorId: string;
   returnUrl: string;
 }

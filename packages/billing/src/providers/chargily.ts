@@ -44,6 +44,7 @@ import {
 import { createChargilyCheckout } from "./chargily/checkout";
 import { createChargilyCustomer } from "./chargily/customer";
 import { createChargilyPaymentLink } from "./chargily/payment-link";
+import { getChargilyPrice } from "./chargily/price";
 import { verifyChargilyWebhook } from "./chargily/webhook";
 import { listChargilySubscriptions } from "./chargily/subscriptions";
 
@@ -63,6 +64,7 @@ export {
   getChargilyProductPrices,
 } from "./chargily/product";
 export { createChargilyPaymentLink, listChargilyPaymentLinks } from "./chargily/payment-link";
+export { getChargilyPrice } from "./chargily/price";
 export {
   createChargilyCustomer,
   listChargilyCustomers,
@@ -109,6 +111,9 @@ export function createChargilyProvider(
             : null;
       if (!id || !url) throw new Error("Chargily payment-link response is missing id or url");
       return { id, url };
+    },
+    async getPrice(input: { providerPriceId: string }) {
+      return await getChargilyPrice(input.providerPriceId, config);
     },
     verifyWebhook(input: VerifyWebhookInput): Promise<VerifyWebhookOutput> {
       return verifyChargilyWebhook(input, config);

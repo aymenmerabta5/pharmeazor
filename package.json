@@ -19,6 +19,7 @@
     "db:migrate": "turbo run db:migrate",
     "db:push": "turbo run db:push",
     "db:ensure-extensions": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/database/ensure-extensions.ts --ghostinit-database-extension-bootstrap",
+    "db:migrate:billing": "bun --env-file=.env.local packages/database/src/workers/database/migrate-billing-subscriptions.ts --ghostinit-billing-migration",
     "db:verify": "bun --env-file=.env.local packages/database/src/workers/database/verify.ts",
     "dev": "bun --env-file=.env.local run turbo run dev",
     "doctor:fix": "bunx --bun ghostinit@0.1.0 doctor --fix",

@@ -11,8 +11,7 @@ type OrganizationMembership = identityCapability.OrganizationMembership;
 type OrganizationTeam = identityCapability.OrganizationTeam;
 type TeamMembership = identityCapability.TeamMembership;
 
-import type { manualPaymentServiceContract } from "@repo/services";
-type ManualPaymentService = typeof manualPaymentServiceContract;
+import type { ManualPaymentService } from "@repo/services";
 import { RequestApplicationError } from "./errors";
 import type {
   BillingCheckoutDto,
@@ -29,6 +28,7 @@ export interface BillingApplicationPort {
     invoices: readonly unknown[];
     usageEvents: readonly unknown[];
     licenseKeys: readonly unknown[];
+    plans: readonly unknown[];
   }>;
   createCheckout(
     principal: RequestPrincipal,
@@ -428,6 +428,7 @@ export function createRequestApplication(dependencies: RequestApplicationDepende
           invoices: snapshot.invoices.map(publicRecord),
           usageEvents: snapshot.usageEvents.map(publicRecord),
           licenseKeys: snapshot.licenseKeys.map(publicRecord),
+          plans: snapshot.plans.map(publicRecord),
         };
       },
       createCheckout: async (input: BillingCheckoutInput) => {

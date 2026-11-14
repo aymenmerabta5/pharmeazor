@@ -8,14 +8,14 @@ export interface PaymentLinkFormViewProps {
   readonly form: PaymentLinkFormController;
   readonly disabled: boolean;
   readonly nameLabel: string;
-  readonly priceLabel: string;
+  readonly planLabel: string;
   readonly submitLabel: string;
 }
 export function PaymentLinkFormView({
   form,
   disabled,
   nameLabel,
-  priceLabel,
+  planLabel,
   submitLabel,
 }: PaymentLinkFormViewProps): React.JSX.Element {
   return (
@@ -33,14 +33,15 @@ export function PaymentLinkFormView({
           </View>
         )}
       </form.Field>
-      <form.Field name="price">
+      <form.Field name="planId">
         {(field) => (
           <View>
-            <Text className="text-sm font-medium">{priceLabel}</Text>
+            <Text className="text-sm font-medium">{planLabel}</Text>
+            {/* The price comes from the plan, so the plan is read only here. */}
             <Input
-              accessibilityLabel={priceLabel}
+              accessibilityLabel={planLabel}
               value={field.state.value}
-              onChangeText={field.handleChange}
+              editable={false}
               onBlur={field.handleBlur}
               autoCapitalize="none"
             />

@@ -34,6 +34,8 @@ import { createStripeCustomer } from "./stripe/customer";
 import { createStripePortalSession } from "./stripe/portal";
 import { verifyStripeWebhook } from "./stripe/webhook";
 import { listStripeSubscriptions } from "./stripe/subscriptions";
+import { cancelStripeSubscription } from "./stripe/cancel";
+import { getStripePrice } from "./stripe/price";
 
 // Explicit named re-exports (no export *)
 export { STRIPE_API_VERSION, resolveStripeConfig, getStripeClient } from "./stripe/client";
@@ -42,12 +44,15 @@ export {
   mapDomainStatusToStripe,
   resolveStripeStatusFilter,
   mapStripeSubscriptionToDomain,
+  stripeSubscriptionPeriod,
 } from "./stripe/mappers";
 export { createStripeCheckout } from "./stripe/checkout";
 export { createStripeCustomer } from "./stripe/customer";
 export { createStripePortalSession } from "./stripe/portal";
 export { verifyStripeWebhook } from "./stripe/webhook";
 export { listStripeSubscriptions } from "./stripe/subscriptions";
+export { cancelStripeSubscription } from "./stripe/cancel";
+export { getStripePrice } from "./stripe/price";
 
 export function createStripeProvider(config?: Record<string, unknown>): BillingProvider {
   const resolved = resolveStripeConfig(config);
@@ -69,6 +74,15 @@ export function createStripeProvider(config?: Record<string, unknown>): BillingP
     },
     listSubscriptions(input: ListSubscriptionsInput): Promise<Subscription[]> {
       return listStripeSubscriptions(stripe, input);
+    },
+    async cancelSubscription(input: {
+      providerSubscriptionId: string;
+      atPeriodEnd: boolean;
+    }): Promise<void> {
+      await cancelStripeSubscription(stripe, input);
+    },
+    async getPrice(input: { providerPriceId: string }) {
+      return await getStripePrice(stripe, input.providerPriceId);
     },
   };
   return provider;

@@ -16,7 +16,9 @@
     "typecheck": "bun check",
     "lint": "oxlint --deny-warnings .",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "test": "bun test --conditions=react-server",
+    "test:unit": "bun test --conditions=react-server"
   },
   "dependencies": {
     "@repo/auth": "workspace:*",

@@ -1,6 +1,9 @@
 export { BILLING_PROVIDER_NAMES } from "./model";
+export { BILLING_CHECKOUT_PROVIDER_NAMES, BILLING_PORTAL_PROVIDER_NAMES } from "./model";
 export type {
   BillingProviderName,
+  BillingCheckoutProviderName,
+  BillingPortalProviderName,
   CheckoutSession,
   Subscription,
   SubscriptionStatus,

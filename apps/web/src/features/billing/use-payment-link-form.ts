@@ -4,13 +4,14 @@ import { useAppForm } from "@/components/ui/form";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { createPaymentLinkSchema } from "./schema";
 import { useBillingPaymentLinkMutation } from "./mutations";
+import type { Plan } from "./model";
 
-export function usePaymentLinkForm(allowed: boolean) {
+export function usePaymentLinkForm(allowed: boolean, plans: Plan[]) {
   const t = useSurfaceTranslations("billing");
   const mutation = useBillingPaymentLinkMutation();
   const busy = React.useRef(false);
   const form = useAppForm({
-    defaultValues: { name: "", price: "" },
+    defaultValues: { name: "", planId: "" },
     validators: { onSubmit: createPaymentLinkSchema(t("paymentLinkRequired")) },
     onSubmit: async ({ value }) => {
       if (!allowed || busy.current) return;
@@ -19,7 +20,7 @@ export function usePaymentLinkForm(allowed: boolean) {
         await mutation.run({
           provider: "chargily",
           name: value.name.trim(),
-          price: value.price.trim(),
+          planId: value.planId,
         });
       } finally {
         busy.current = false;
@@ -29,6 +30,7 @@ export function usePaymentLinkForm(allowed: boolean) {
   return {
     form,
     allowed,
+    plans,
     error: mutation.error ? t("paymentLinkError") : null,
     url: mutation.data?.url ?? null,
   };

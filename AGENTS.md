@@ -179,6 +179,7 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - Outside Vercel, `bun run build` finishes Eve before Next. On Vercel, withEve owns the generated Eve service build.
 - Self-hosting must follow `docs/EVE_SELF_HOSTING.md`, including persistent Workflow state and both proxy route families for a separate Eve service.
 - Database scripts are `bun run db:generate`, `bun run db:migrate`, and `bun run db:push`. Run `bun run db:ensure-extensions` on a database that predates the vector extension; it is idempotent.
+- A database that already holds subscriptions carries them over with `bun run db:migrate:billing` before `bun run db:push`. The script is idempotent and a no-op on a fresh database. It seeds the plan catalog, backfills the plan and the period of every legacy subscription, and recreates the `billing_provider` enum without the rails this application does not offer. It reports the subscription rows it drops, because a dropped row can be a live provider subscription that keeps charging the customer.
 - The development database is Postgres 18.7 with pgvector 0.8.7, built from `docker/postgres/Dockerfile`. `docker-compose.yml` and `start-database.sh` are generator-owned, so `docker-compose.override.yml` repeats the pgvector service fields and survives `ghostinit sync`. Never run `docker compose -f docker-compose.yml` without the override file.
 - Retrieval follows `docs/RETRIEVAL.md` and the "Retrieval Architecture" section. It is not a GhostInit capability; it is assembled from the existing packages on owner approval.
 

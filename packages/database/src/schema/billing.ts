@@ -12,6 +12,7 @@ export {
 } from "./enums";
 
 export { products, prices, productRelations, priceRelations } from "./tables/products";
+export { plans } from "./tables/plans";
 export { customers } from "./tables/customers";
 export { subscriptions, subscriptionRelations } from "./tables/subscriptions";
 export { checkouts, checkoutRelations } from "./tables/checkouts";

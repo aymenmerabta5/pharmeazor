@@ -14,6 +14,7 @@
     "db:migrate": "bun --env-file=../../.env.local drizzle-kit migrate",
     "db:push": "bun --env-file=../../.env.local drizzle-kit push",
     "db:ensure-extensions": "bun --conditions=react-server --env-file=../../.env.local src/workers/database/ensure-extensions.ts --ghostinit-database-extension-bootstrap",
+    "db:migrate:billing": "bun --env-file=../../.env.local src/workers/database/migrate-billing-subscriptions.ts --ghostinit-billing-migration",
     "db:verify": "bun --env-file=../../.env.local src/workers/database/verify.ts"
   },
   "dependencies": {

@@ -1,18 +1,20 @@
 "use client";
 import { useAuthOwnedMutation } from "@/hooks/use-auth-owned-mutation";
 import { safeBillingProviderUrl } from "./provider-url";
-import type { ProviderName } from "./model";
+import type { CheckoutProviderName } from "./model";
 interface PortalInput {
-  provider: ProviderName;
+  provider: "stripe";
   origin: string;
 }
-interface CheckoutInput extends PortalInput {
+interface CheckoutInput extends Omit<PortalInput, "provider"> {
+  provider: CheckoutProviderName;
+  planId: string;
   requestKey: string;
 }
 interface PaymentLinkInput {
-  provider: ProviderName;
+  provider: "chargily";
   name: string;
-  price: string;
+  planId: string;
 }
 import {
   createBillingCheckoutAction,
