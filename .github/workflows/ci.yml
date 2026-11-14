@@ -263,10 +263,6 @@ jobs:
         run: bun scripts/prepare-ci-env.mjs
       - name: Validate the production Compose contract
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
-      - name: Assert the web runtime boundary
-        # The image build runs this assertion, so running it here covers the
-        # same failure without needing a Docker daemon.
-        run: bun scripts/assert-web-runtime-boundary.mjs
       - name: Build the application image
         run: |
           # The agent sandbox prepares its template through the host Docker
@@ -275,7 +271,7 @@ jobs:
           # runner does not expose its socket to the build. The image build
           # therefore needs a host with an accessible Docker daemon, which is
           # the release path. The production dependency graph and the runtime
-          # boundary are validated above on every host.
+          # boundary are validated below on every host.
           mapfile -t sockets < <(find /run /var/run "$HOME/.docker" -type s -name 'docker.sock' 2>/dev/null | sort -u)
           for socket in "${sockets[@]:-}"; do
             echo "Building with DOCKER_SOCKET=$socket"
@@ -290,8 +286,20 @@ jobs:
           echo "Skipped the application image build: this host has no Docker daemon the build can reach." >&2
       - name: Validate the production dependency graph
         run: |
-          # The image installs the production graph from the frozen lock, so
-          # that resolution is validated here on every host.
+          # The image installs the production graph from the frozen lock into a
+          # clean tree, because Bun does not remove already-installed dev or
+          # excluded-workspace packages when --production is rerun. The tree
+          # is cleared the same way so the result matches the image.
+          rm -rf node_modules apps/*/node_modules packages/*/node_modules tooling/*/node_modules
+          # Husky is a root development prepare hook. The image removes only
+          # that hook so Bun can still run trusted production dependency
+          # lifecycle scripts during the reinstall, and this step performs the
+          # same removal.
+          bun pm pkg delete scripts.prepare
           bun install --production --frozen-lockfile \
             --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
           bun run audit:lock
+      - name: Assert the web runtime boundary
+        # This asserts against the pruned production graph, so it runs after
+        # the production install, exactly as the image build does.
+        run: bun scripts/assert-web-runtime-boundary.mjs

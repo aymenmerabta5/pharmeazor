@@ -3,8 +3,19 @@ import { join } from "node:path";
 
 const ROOT = process.cwd();
 const ROOT_NODE_MODULES = join(ROOT, "node_modules");
+// The native clients are separate deliverables, so the web runtime image must
+// not carry their runtimes: the Expo and React Native packages, the Electron
+// toolchain, and the native styling library the mobile app uses.
+//
+// `@better-auth/expo` is deliberately not in this set. The shared auth server
+// registers the Expo plugin so the mobile client can authenticate against the
+// deployed API, and the server entry of that package is plain JavaScript with
+// no native dependency. Its client entry is the native half, and that half
+// imports `expo-constants`, `expo-linking`, `expo-network`,
+// `expo-secure-store`, `expo-web-browser`, and `react-native`. Those packages
+// stay forbidden by the rules below, so a web runtime that resolved the Expo
+// client would still fail this assertion.
 const NATIVE_ONLY_NAMES = new Set([
-  "@better-auth/expo",
   "electron",
   "electron-builder",
   "electron-store",
