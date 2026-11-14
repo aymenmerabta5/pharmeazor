@@ -296,7 +296,13 @@ jobs:
           # lifecycle scripts during the reinstall, and this step performs the
           # same removal.
           bun pm pkg delete scripts.prepare
-          bun install --production --frozen-lockfile \
+          # Peer packages are not part of the runtime graph. The shared auth
+          # server registers the Better Auth Expo plugin so the mobile client
+          # can authenticate against the deployed API, and that plugin declares
+          # the Expo client runtime as optional peers. Installing peers would
+          # pull the whole Expo and React Native toolchain into the web
+          # runtime image, so the pruned install omits them.
+          bun install --production --frozen-lockfile --omit=peer \
             --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
           bun run audit:lock
       - name: Assert the web runtime boundary

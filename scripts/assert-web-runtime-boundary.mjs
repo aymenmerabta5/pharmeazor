@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
 const ROOT_NODE_MODULES = join(ROOT, "node_modules");
@@ -88,7 +88,7 @@ for (const packageRoot of packageRoots) {
   }
 }
 
-const nativeOnly = new Set();
+const nativeOnly = new Map();
 for (const manifest of manifests) {
   if (!existsSync(manifest)) continue;
   const parsed = JSON.parse(readFileSync(manifest, "utf8"));
@@ -100,13 +100,18 @@ for (const manifest of manifests) {
     NATIVE_ONLY_NAMES.has(name) ||
     NATIVE_ONLY_PREFIXES.some((prefix) => name.startsWith(prefix))
   ) {
-    nativeOnly.add(name);
+    if (!nativeOnly.has(name)) {
+      nativeOnly.set(name, relative(ROOT, manifest));
+    }
   }
 }
 
 if (nativeOnly.size > 0) {
-  fail(
-    "Web runtime dependency boundary contains native-only packages: " +
-      [...nativeOnly].sort().join(", "),
-  );
+  // The location of every offending package is reported, because the question
+  // a failure raises is which install pulled the native runtime in.
+  const report = [...nativeOnly.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, location]) => name + " (" + location + ")")
+    .join(", ");
+  fail("Web runtime dependency boundary contains native-only packages: " + report);
 }

@@ -52,7 +52,13 @@ RUN rm -rf node_modules apps/*/node_modules packages/*/node_modules tooling/*/no
 # still run trusted production dependency lifecycle scripts during the reinstall.
 RUN bun pm pkg delete scripts.prepare
 RUN bun run audit:lock
-RUN bun install --production --frozen-lockfile --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
+# Peer packages are not part of the runtime graph. The shared auth server
+# registers the Better Auth Expo plugin so the mobile client can authenticate
+# against the deployed API, and that plugin declares the Expo client runtime as
+# optional peers. Installing peers would pull the whole Expo and React Native
+# toolchain into the web runtime image, so the pruned install omits them.
+RUN bun install --production --frozen-lockfile --omit=peer \
+    --filter='./' --filter='web...' --filter='@repo/api...' --filter='pharmeazor-eve...'
 RUN bun scripts/assert-web-runtime-boundary.mjs
 # Native clients are separate deliverables and never belong in the web runtime image.
 RUN rm -rf apps/mobile
