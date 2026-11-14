@@ -4,6 +4,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # The image build prepares the agent sandbox template, so it needs a
+        # reachable Docker daemon. BuildKit resolves the source of a bind mount
+        # against the build context, so the daemon is published and addressed
+        # through DOCKER_HOST. Export DOCKER_HOST before building.
+        DOCKER_HOST: "${DOCKER_HOST:-}"
       secrets:
         - ghostinit_env
     restart: unless-stopped

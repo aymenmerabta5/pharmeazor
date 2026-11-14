@@ -22,7 +22,7 @@ The agent runs its shell and file tools in a Docker container that carries a Pyt
 
 - The host needs a reachable Linux Docker daemon while `eve build` prepares the sandbox template and while a session opens its container.
 - The build and the runtime must reach the same daemon, because the prepared template image lives on that daemon. A replica on another host starts a fresh sandbox or fails with `SandboxTemplateNotProvisionedError`.
-- The application image ships the Docker CLI and the production image build mounts the host socket, so the daemon must expose `/var/run/docker.sock`. `compose.production.yml` mounts the same socket at runtime and adds the host docker group through `DOCKER_GID`.
+- The application image ships the Docker CLI and the production image build reaches the daemon through `DOCKER_HOST`, because BuildKit resolves the source of a bind mount against the build context and cannot mount a host socket. Publish the daemon with `node scripts/docker-tcp-proxy.mjs` and build with `--network=host --build-arg DOCKER_HOST=tcp://127.0.0.1:2375`. `compose.production.yml` mounts the host socket at runtime and adds the host docker group through `DOCKER_GID`.
 - Mounting the Docker socket gives the service control of that daemon, which is a root-equivalent privilege on the host. Run the daemon on a dedicated machine, or use a provider every replica can reach instead.
 - Vercel deployments use Vercel Sandbox instead, and the hosted runtime installs the same pinned Python packages while it prepares its snapshot.
 

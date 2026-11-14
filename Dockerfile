@@ -11,10 +11,12 @@ COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /app
 
-# The agent sandbox runs in a sibling container, so the build reaches the host
-# Docker daemon through its socket. Point this argument at a different socket
-# when the daemon does not use the default path.
-ARG DOCKER_SOCKET=/var/run/docker.sock
+# The agent sandbox prepares its template against a Docker daemon, and the
+# build reaches that daemon through DOCKER_HOST. BuildKit resolves the source
+# of a bind mount against the build context, so a host socket cannot be mounted
+# into a build step. The release path and the CI pipeline both publish the
+# daemon and pass this argument.
+ARG DOCKER_HOST
 
 # Stable Dockerfile syntax deliberately copies the complete workspace before
 # installation. This preserves workspace paths and makes Bun read bunfig.toml
@@ -26,15 +28,15 @@ RUN bun install --frozen-lockfile
 
 RUN --mount=type=secret,id=ghostinit_env,required=false \
     --mount=type=secret,id=ghostinit_env_b64,required=false \
-    --mount=type=bind,source=${DOCKER_SOCKET},target=/var/run/docker.sock \
     set -eu; \
-    build_env=/tmp/ghostinit-build.env; \
-    trap 'rm -f "$build_env"' EXIT; \
-    if [ ! -S /var/run/docker.sock ]; then \
-      echo "The agent sandbox runs in a Docker container, so the build needs a reachable Docker daemon." >&2; \
-      echo "Build on a Linux host that exposes /var/run/docker.sock, or point the DOCKER_SOCKET build argument at it." >&2; \
+    if [ -z "${DOCKER_HOST:-}" ]; then unset DOCKER_HOST; fi; \
+    if ! docker info > /dev/null 2>&1; then \
+      echo "The agent sandbox prepares its template against a Docker daemon, so the build needs a reachable daemon." >&2; \
+      echo "Publish the daemon and build with DOCKER_HOST, for example --build-arg DOCKER_HOST=tcp://127.0.0.1:2375." >&2; \
       exit 1; \
     fi; \
+    build_env=/tmp/ghostinit-build.env; \
+    trap 'rm -f "$build_env"' EXIT; \
     if [ -s /run/secrets/ghostinit_env ]; then \
       bun --env-file=/run/secrets/ghostinit_env scripts/build-deployment.mjs; \
     elif [ -s /run/secrets/ghostinit_env_b64 ]; then \

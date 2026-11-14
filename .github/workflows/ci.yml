@@ -265,25 +265,36 @@ jobs:
         run: docker compose --env-file .env.example -f compose.production.yml config --quiet
       - name: Build the application image
         run: |
-          # The agent sandbox prepares its template through the host Docker
-          # daemon, so the image build binds the host socket into the build.
-          # BuildKit resolves that bind on the daemon side, and a hosted
-          # runner does not expose its socket to the build. The image build
-          # therefore needs a host with an accessible Docker daemon, which is
-          # the release path. The production dependency graph and the runtime
-          # boundary are validated below on every host.
-          mapfile -t sockets < <(find /run /var/run "$HOME/.docker" -type s -name 'docker.sock' 2>/dev/null | sort -u)
-          for socket in "${sockets[@]:-}"; do
-            echo "Building with DOCKER_SOCKET=$socket"
-            if docker build \
-              --build-arg DOCKER_SOCKET="$socket" \
-              --secret id=ghostinit_env,src=.env.local \
-              --tag pharmeazor:ci \
-              .; then
-              exit 0
+          # The agent sandbox prepares its template against a Docker daemon, so
+          # the image build needs one. BuildKit resolves the source of a bind
+          # mount against the build context, so a host socket cannot be mounted
+          # into a build step. The daemon is published on the loopback
+          # interface and the build reaches it over TCP on the host network.
+          if ! docker info > /dev/null 2>&1; then
+            echo "Skipped the application image build: this host has no Docker daemon." >&2
+            exit 0
+          fi
+          node scripts/docker-tcp-proxy.mjs &
+          proxy_pid=$!
+          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+          published=false
+          for attempt in $(seq 1 30); do
+            if docker --host tcp://127.0.0.1:2375 info > /dev/null 2>&1; then
+              published=true
+              break
             fi
+            sleep 1
           done
-          echo "Skipped the application image build: this host has no Docker daemon the build can reach." >&2
+          if [ "$published" != true ]; then
+            echo "The Docker daemon was not reachable on the published port." >&2
+            exit 1
+          fi
+          docker build \
+            --network=host \
+            --build-arg DOCKER_HOST=tcp://127.0.0.1:2375 \
+            --secret id=ghostinit_env,src=.env.local \
+            --tag pharmeazor:ci \
+            .
       - name: Validate the production dependency graph
         run: |
           # The image installs the production graph from the frozen lock into a

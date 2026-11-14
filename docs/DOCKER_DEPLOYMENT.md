@@ -67,10 +67,20 @@ distance computation.
 
 ## Standalone Docker
 
+The build prepares the agent sandbox template, so it needs a reachable Docker
+daemon. BuildKit resolves the source of a bind mount against the build
+context, so a host socket cannot be mounted into a build step. Publish the
+daemon on the loopback interface and point the build at it:
+
+```bash
+node scripts/docker-tcp-proxy.mjs &
+docker build --network=host --build-arg DOCKER_HOST=tcp://127.0.0.1:2375 \
+  --secret id=ghostinit_env,src=.env.local -t pharmeazor .
+```
+
 These commands work from PowerShell, cmd, bash, and zsh (enter the `docker run` command on one line where shell continuation differs):
 
 ```bash
-docker build --secret id=ghostinit_env,src=.env.local -t pharmeazor .
 docker run -d --name pharmeazor --env-file .env.local -p 127.0.0.1:3000:3000 \
   --mount type=volume,src=pharmeazor_eve_workflow_data,dst=/app/apps/eve/.eve/.workflow-data \
   --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
@@ -88,9 +98,11 @@ docker stop --time 30 pharmeazor
 The agent runs its tools in a Docker container that carries a Python runtime,
 so the host needs a reachable Docker daemon.
 
-- The image build prepares the sandbox template, so the build mounts the host
-  Docker socket. Build on a Linux host that exposes `/var/run/docker.sock`, or
-  point the build argument at another socket: `docker build --build-arg DOCKER_SOCKET=/run/user/1000/docker.sock ...`.
+- The image build prepares the sandbox template, so the build needs a reachable
+  Docker daemon. BuildKit resolves the source of a bind mount against the build
+  context, so a host socket cannot be mounted into a build step. Publish the
+  daemon and point the build at it: run `node scripts/docker-tcp-proxy.mjs &`
+  and build with `--network=host --build-arg DOCKER_HOST=tcp://127.0.0.1:2375`.
 - The runtime creates the sandbox container on the same daemon, so the running
   container needs the same socket and a process that may use it. The image
   runs as uid 1000, so add the group that owns the host socket with
