@@ -6,57 +6,28 @@ import {
   isMaintenanceSecretConfigured,
   verifyMaintenanceCookie,
 } from "@/lib/maintenance-access";
+import { isMaintenanceExemptPath, isProtectedPath } from "@/lib/protected-paths";
 
-export const MAINTENANCE_EXEMPT_PATHS = [
-  "/login",
-  "/sign-in",
-  "/sign-up",
-  "/reset-password",
-  "/forgot-password",
-  "/verify",
-  "/maintenance",
-] as const;
+export {
+  AUTH_PATHS,
+  DESIGN_PREVIEW_PATHS,
+  MAINTENANCE_EXEMPT_PATHS,
+  PROTECTED_PATHS,
+  PUBLIC_BILLING_PATHS,
+  isAuthPath,
+  isDesignPreviewPath,
+  isMaintenanceExemptPath,
+  isProtectedPath,
+} from "@/lib/protected-paths";
 
-function matchesPath(path: string, base: string): boolean {
-  if (path === base) return true;
-  if (!path.startsWith(base)) return false;
-  const nextChar = path.charAt(base.length);
-  return nextChar === "/" || nextChar === "?" || nextChar === "#";
-}
-
-// `/agent` is intentionally public: the route renders the local demo chat and
-// needs no session. The Eve facade under `/api/agent` still authenticates and
-// authorizes every request server-side, so no protected data is reachable.
-export const PROTECTED_PATHS = [
-  "/dashboard",
-  "/onboarding",
-  "/plans",
-  "/profile",
-  "/admin",
-  "/settings",
-  "/billing",
-] as const;
-export const AUTH_PATHS = [
-  "/login",
-  "/sign-in",
-  "/sign-up",
-  "/reset-password",
-  "/forgot-password",
-] as const;
-export const PUBLIC_BILLING_PATHS: readonly string[] = ["/billing/success", "/billing/cancel"];
-
-export function isProtectedPath(pathname: string): boolean {
-  if (PUBLIC_BILLING_PATHS.some((path) => pathname === path || pathname === path + "/"))
-    return false;
-  return PROTECTED_PATHS.some((path) => matchesPath(pathname, path));
-}
-
-export function isAuthPath(pathname: string): boolean {
-  return AUTH_PATHS.some((path) => matchesPath(pathname, path));
-}
-
-export function isMaintenanceExemptPath(pathname: string): boolean {
-  return MAINTENANCE_EXEMPT_PATHS.some((path) => matchesPath(pathname, path));
+/**
+ * The design prototype on `/agent` renders with no session, so a designer can
+ * reach it without signing in. `NODE_ENV` is `development` for `next dev` and
+ * `production` for every other command, so the bypass never reaches a
+ * production build and the route stays behind the session guard there.
+ */
+function designPreviewEnabled(): boolean {
+  return process.env.NODE_ENV !== "production";
 }
 
 interface MaintenanceStatus {
@@ -93,7 +64,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (isProtectedPath(pathname) && !getSessionCookie(request)) {
+  if (isProtectedPath(pathname, designPreviewEnabled()) && !getSessionCookie(request)) {
     const response = NextResponse.redirect(new URL("/sign-in", request.url));
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     response.headers.set("CDN-Cache-Control", "no-store");
