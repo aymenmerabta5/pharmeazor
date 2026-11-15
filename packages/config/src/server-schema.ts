@@ -1,5 +1,40 @@
 import { z } from "zod";
 
+const redisUrlSchema = z
+  .string()
+  .max(2_048)
+  .url()
+  .refine(
+    (value) => value === value.trim() && !value.startsWith("REPLACE_WITH"),
+    "UPSTASH_REDIS_REST_URL must be configured without surrounding whitespace",
+  );
+
+const redisTokenSchema = z
+  .string()
+  .min(1)
+  .max(4_096)
+  .regex(/^[\x21-\x7e]+$/)
+  .refine(
+    (value) => !value.startsWith("REPLACE_WITH"),
+    "UPSTASH_REDIS_REST_TOKEN must be configured",
+  );
+
+/**
+ * Local development can fall back to the in-process rate-limit bucket when
+ * Upstash is unset. Production still fails closed for Redis.
+ */
+function optionalOutsideProduction<Schema extends z.ZodType>(schema: Schema) {
+  if (process.env.NODE_ENV === "production") return schema;
+  return z.preprocess(
+    (value) =>
+      typeof value === "string" &&
+      (value.trim().length === 0 || value.trim().startsWith("REPLACE_WITH"))
+        ? undefined
+        : value,
+    schema.optional(),
+  );
+}
+
 export const serverSchema = {
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   APP_NAME: z.string().min(1).default("GhostInit App"),
@@ -48,23 +83,8 @@ export const serverSchema = {
     z.string().url().optional(),
   ),
   EVE_NEXT_PRODUCTION_PORT: z.coerce.number().int().min(1).max(65535).default(4274),
-  UPSTASH_REDIS_REST_URL: z
-    .string()
-    .max(2_048)
-    .url()
-    .refine(
-      (value) => value === value.trim() && !value.startsWith("REPLACE_WITH"),
-      "UPSTASH_REDIS_REST_URL must be configured without surrounding whitespace",
-    ),
-  UPSTASH_REDIS_REST_TOKEN: z
-    .string()
-    .min(1)
-    .max(4_096)
-    .regex(/^[\x21-\x7e]+$/)
-    .refine(
-      (value) => !value.startsWith("REPLACE_WITH"),
-      "UPSTASH_REDIS_REST_TOKEN must be configured",
-    ),
+  UPSTASH_REDIS_REST_URL: optionalOutsideProduction(redisUrlSchema),
+  UPSTASH_REDIS_REST_TOKEN: optionalOutsideProduction(redisTokenSchema),
   STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
   STORAGE_BUCKET: z.string().min(1).default("REPLACE_WITH_STORAGE_BUCKET"),
   S3_REGION: z.string().min(1).default("us-east-1"),

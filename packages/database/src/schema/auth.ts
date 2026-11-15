@@ -78,6 +78,7 @@ export const teams = pgTable(
     organizationId: text("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
+    memberCount: integer("member_count").default(0).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -265,12 +266,14 @@ export const teamMembers = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    membershipKey: text("membership_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("team_members_team_idx").on(table.teamId),
     index("team_members_user_idx").on(table.userId),
     uniqueIndex("team_members_team_user_idx").on(table.teamId, table.userId),
+    uniqueIndex("team_members_membership_key_idx").on(table.membershipKey),
   ],
 );
 

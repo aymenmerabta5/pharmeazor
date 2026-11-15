@@ -23,6 +23,7 @@ function toBillingSubscription(value: unknown): BillingSubscription | undefined 
     id,
     provider,
     status,
+    planId: optionalString(value.planId),
     currentPeriodEnd: optionalString(value.currentPeriodEnd),
     priceId: optionalString(value.priceId),
     customerId: optionalString(value.customerId),

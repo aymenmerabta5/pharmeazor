@@ -2,6 +2,7 @@
 import { useAppForm, useStore } from "@/components/ui/form";
 import { useAgentSession } from "./queries";
 import { sendAgentPrompt } from "./mutations";
+import { conversationTitle } from "./model";
 
 export function useAgentConversation() {
   const agent = useAgentSession();
@@ -32,9 +33,17 @@ export function useAgentConversation() {
     submit: () => {
       void form.handleSubmit();
     },
+    draftSuggestion: (question: string) => {
+      form.setFieldValue("input", question);
+    },
+    newChat: () => {
+      agent.newSession();
+      form.reset();
+    },
     busy,
     messages: agent.messages,
     streaming,
     error: agent.error,
+    title: conversationTitle(agent.messages),
   };
 }

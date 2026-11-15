@@ -13,6 +13,10 @@ export function AppShell({ children }: { children: React.ReactNode }): React.JSX
   const t = useSurfaceTranslations("header");
   const workspace = section !== undefined;
   const navigationProps = { pathname, identity };
+  // The assistant owns the full canvas: its rail replaces the workspace chrome.
+  if (pathname === "/agent" || pathname.startsWith("/agent/")) {
+    return <div className="min-h-dvh">{children}</div>;
+  }
   return (
     <div className="min-h-dvh">
       {workspace ? <WorkspaceSidebar {...navigationProps} /> : null}

@@ -2,6 +2,7 @@ export interface BillingSubscription {
   id: string;
   provider: string;
   status: string;
+  planId?: string | null;
   currentPeriodEnd?: string | null;
   priceId?: string | null;
   customerId?: string | null;

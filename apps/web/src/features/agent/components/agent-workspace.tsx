@@ -1,46 +1,40 @@
 "use client";
 import type * as React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AgentHeader } from "./agent-header";
-import { AgentTranscript } from "./agent-transcript";
-import { AgentPrompt } from "./agent-prompt";
-import { useSurfaceTranslations } from "@/lib/translations";
+import type { useAgentAccount } from "../use-agent-account";
 import type { useAgentConversation } from "../use-agent-conversation";
+import type { useAgentRail } from "../use-agent-rail";
+import { AgentChat } from "./agent-chat";
+import { AgentHero } from "./agent-hero";
+import { AgentRail } from "./agent-rail";
+import { AgentTopbar } from "./agent-topbar";
 
 export function AgentWorkspace({
-  messages,
-  streaming,
-  busy,
-  error,
-  input,
-  setInput,
-  submit,
-}: ReturnType<typeof useAgentConversation>): React.JSX.Element {
-  const t = useSurfaceTranslations("agent");
+  conversation,
+  account,
+  rail,
+}: {
+  conversation: ReturnType<typeof useAgentConversation>;
+  account: ReturnType<typeof useAgentAccount>;
+  rail: ReturnType<typeof useAgentRail>;
+}): React.JSX.Element {
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
-      <div className="flex min-w-0 flex-col gap-7">
-        <AgentHeader />
-        <Card className="max-w-4xl">
-          <CardHeader>
-            <CardTitle as="h2">{t("conversationTitle")}</CardTitle>
-            <CardDescription className="max-w-[60ch]">
-              {t("conversationDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <AgentTranscript messages={messages} streaming={streaming} />
-            <AgentPrompt busy={busy} input={input} onInputChange={setInput} onSend={submit} />
-            {error ? (
-              <Alert variant="destructive">
-                <AlertTitle>{t("requestError")}</AlertTitle>
-                <AlertDescription className="break-all text-xs">{String(error)}</AlertDescription>
-              </Alert>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+    <div className="agent-shell flex h-dvh overflow-hidden bg-background text-foreground">
+      {rail.collapsed ? null : (
+        <AgentRail conversation={conversation} account={account} onCollapse={rail.toggle} />
+      )}
+      <main className="flex h-dvh min-w-0 flex-1 flex-col">
+        <AgentTopbar
+          planName={account.planName}
+          planPending={account.planPending}
+          collapsed={rail.collapsed}
+          onExpand={rail.toggle}
+        />
+        {conversation.messages.length > 0 ? (
+          <AgentChat conversation={conversation} />
+        ) : (
+          <AgentHero conversation={conversation} />
+        )}
+      </main>
+    </div>
   );
 }
