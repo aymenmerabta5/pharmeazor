@@ -81,18 +81,21 @@ extract → chunk → contextualize → embed + index → hybrid retrieve → re
 
 Mirror the `storage` capability rather than inventing a shape.
 
-| Concern                                          | Location                                          |
-| ------------------------------------------------ | ------------------------------------------------- |
-| Chunking, contextualization, retrieval use-cases | `packages/modules/src/retrieval/`                 |
-| Retrieval ports, authorization filters, policies | `packages/services/src/retrieval/`                |
-| Retrieval tables, vector and lexical columns     | `packages/database/src/schema/retrieval.ts`       |
-| oRPC contract and procedures                     | `packages/api/src/retrieval/`                     |
-| Postgres hybrid retrieval adapter                | `packages/api/src/adapters/retrieval/postgres.ts` |
-| Embedding and reranking provider adapters        | `packages/api/src/adapters/retrieval/`            |
-| Composition root                                 | `packages/api/src/composition/retrieval.ts`       |
-| Agent retrieval tool                             | `apps/eve/agent/tools/`                           |
+| Concern                                             | Location                                          |
+| --------------------------------------------------- | ------------------------------------------------- |
+| Offline raw-source cleaning (maintainer batch tool) | `tooling/corpus/`                                 |
+| Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                 |
+| Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                |
+| Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`       |
+| oRPC contract and procedures                        | `packages/api/src/retrieval/`                     |
+| Postgres hybrid retrieval adapter                   | `packages/api/src/adapters/retrieval/postgres.ts` |
+| Embedding and reranking provider adapters           | `packages/api/src/adapters/retrieval/`            |
+| Composition root                                    | `packages/api/src/composition/retrieval.ts`       |
+| Agent retrieval tool                                | `apps/eve/agent/tools/`                           |
 
 Provider SDKs stay in the adapters. Domain code depends on ports, never on an SDK, a vector client, or an embedding API.
+
+`tooling/corpus/` prepares the corpus offline: it turns the raw collection into clean Markdown plus an import manifest, and it stops there. It is a maintainer-side batch tool, not a runtime path, so it never parses a document in a request. The chunk table, the chunk identifiers, and the contextualization notes are owned by `packages/modules/src/retrieval/`. The splitter inside the corpus tool is a preview that proves the documents split cleanly; it is not the production chunker.
 
 ### Do not
 
@@ -156,6 +159,7 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - `packages/modules`: domain and application modules, including the retrieval use-cases and the pure chunking, contextualization, and scoring models.
 - `packages/testing`, `packages/workflows`, and `packages/typescript-config`: shared tooling foundations.
 - `tooling/architecture`: generated import-boundary policy and checker configuration.
+- `tooling/corpus`: the offline Python corpus pipeline that turns the raw PHARMEAZOR collection into clean Markdown plus an import manifest. It is a workspace member with no dependencies and no runtime role; the application never imports it. It stops at "clean document"; chunking, contextualization, and indexing stay in the TypeScript packages named by the Retrieval Architecture section.
 - `packages/analytics`: analytics contracts and adapters.
 - `packages/cache`: selected cache adapter.
 - `packages/pdf`: PDF capability boundary.

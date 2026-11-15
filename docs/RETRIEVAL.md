@@ -304,16 +304,24 @@ upgrade will fix the system: the context is simply not coming back.
 
 Mirror the `storage` capability rather than inventing a new shape.
 
-| Concern                                          | Location                                          |
-| ------------------------------------------------ | ------------------------------------------------- |
-| Chunking, contextualization, retrieval use-cases | `packages/modules/src/retrieval/`                 |
-| Retrieval ports, authorization filters, policies | `packages/services/src/retrieval/`                |
-| Retrieval tables, vector and lexical columns     | `packages/database/src/schema/retrieval.ts`       |
-| oRPC contract and procedures                     | `packages/api/src/retrieval/`                     |
-| Postgres hybrid retrieval adapter                | `packages/api/src/adapters/retrieval/postgres.ts` |
-| Embedding and reranking provider adapters        | `packages/api/src/adapters/retrieval/`            |
-| Composition root                                 | `packages/api/src/composition/retrieval.ts`       |
-| Agent retrieval tool                             | `apps/eve/agent/tools/`                           |
+| Concern                                             | Location                                          |
+| --------------------------------------------------- | ------------------------------------------------- |
+| Offline raw-source cleaning (maintainer batch tool) | `tooling/corpus/`                                 |
+| Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                 |
+| Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                |
+| Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`       |
+| oRPC contract and procedures                        | `packages/api/src/retrieval/`                     |
+| Postgres hybrid retrieval adapter                   | `packages/api/src/adapters/retrieval/postgres.ts` |
+| Embedding and reranking provider adapters           | `packages/api/src/adapters/retrieval/`            |
+| Composition root                                    | `packages/api/src/composition/retrieval.ts`       |
+| Agent retrieval tool                                | `apps/eve/agent/tools/`                           |
+
+`tooling/corpus/` prepares the corpus offline: it turns the raw collection into
+clean Markdown plus an import manifest and stops there. It is not a runtime
+path, so it never parses a document in a request. The chunk table, the chunk
+identifiers and the contextualization notes are owned by
+`packages/modules/src/retrieval/`; the Python splitter inside the corpus tool is
+a preview that proves the documents split cleanly, not the production chunker.
 
 Provider SDKs stay in the adapters. Domain code depends on ports, never on an
 SDK, a vector client, or an embedding API.

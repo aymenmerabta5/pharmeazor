@@ -3,10 +3,20 @@
 This folder turns the raw PHARMEAZOR collection into a normalized corpus that is
 ready to insert into PostgreSQL and later chunk + embed with **BGE-M3**.
 
-The raw collection is never modified. The pipeline reads
-`C:/Users/roume/Downloads/PHARMEAZOR/PHARMEAZOR`, writes everything under
-`clean_data/output/`, and keeps a complete trail from every output back to the
-source file, SHA-256, source rank and collection date.
+It is an **offline** tool. It runs on a maintainer's machine, reads the raw
+collection, and writes clean Markdown plus an import manifest. It is not part of
+the application runtime, and it is not a workspace package.
+
+The raw collection is never modified. The pipeline reads the raw collection
+root, writes everything under `tooling/corpus/output/`, and keeps a complete
+trail from every output back to the source file, SHA-256, source rank and
+collection date.
+
+The raw root is resolved in this order:
+
+1. `--data-root "<path>"` on the command line
+2. the `PHARMEAZOR_DATA_ROOT` environment variable
+3. `data_root` in `config.yaml`, resolved relative to that file
 
 `output/` is generated and is ignored by Git by default. It is fully
 reproducible with `python run.py`; remove that line from `.gitignore` only if
@@ -249,7 +259,7 @@ Panel`, repeated `Product Information` blocks).
 ## 6. Output layout
 
 ```text
-clean_data/
+tooling/corpus/
   config.yaml                 # data path, source ranks, splitter settings
   run.py                      # one-command entry point
   requirements.txt
@@ -310,7 +320,7 @@ combination-product document can legitimately map to several medicines.
 
 ## 7. Running it
 
-From `clean_data/`:
+From `tooling/corpus/`:
 
 ```powershell
 # one-time
@@ -328,9 +338,9 @@ python run.py --no-chunks
 python run.py --only-med MED031 --no-chunks
 ```
 
-The default `data_root` is in `config.yaml`; override it with
-`--data-root "D:\path\to\PHARMEAZOR"`. `output_root` defaults to `./output` and
-can be overridden with `--output-root`.
+The `data_root` is resolved from `--data-root`, then `PHARMEAZOR_DATA_ROOT`,
+then `config.yaml`. `output_root` defaults to `./output` and can be overridden
+with `--output-root`.
 
 The validator is run automatically after every clean. It checks:
 

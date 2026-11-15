@@ -11,7 +11,7 @@ from typing import Any
 import pandas as pd
 import yaml
 
-from .clean_corpus import BASE_DIR, DEFAULT_CONFIG
+from .clean_corpus import BASE_DIR, DEFAULT_CONFIG, resolve_data_root
 from .sections import KEY_CODES
 from .text_utils import sha256_text
 
@@ -59,7 +59,7 @@ def validate(
     output_root: str | Path | None = None,
 ) -> dict[str, Any]:
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    data_root = Path(config["data_root"]).resolve()
+    data_root = resolve_data_root(config_path, None, config["data_root"])
     root = Path(output_root or (BASE_DIR / config["output_root"])).resolve()
     reports_dir = root / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)

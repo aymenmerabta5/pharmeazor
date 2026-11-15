@@ -1,6 +1,6 @@
 """Build the clean PHARMEAZOR corpus.
 
-Usage (from ``clean_data/``):
+Usage (from ``tooling/corpus/``):
 
     python run.py                 # clean + preview chunks + validate
     python run.py --no-chunks     # clean + validate only
@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import re
 import shutil
 import sys
@@ -54,6 +55,21 @@ STRENGTH_RE = re.compile(
     r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
     re.IGNORECASE,
 )
+
+
+def resolve_data_root(config_path: Path, override: str | None, configured: str) -> Path:
+    """Resolve the raw collection root.
+
+    Precedence is the CLI flag, then the ``PHARMEAZOR_DATA_ROOT`` environment
+    variable, then the configured value. A relative configured value resolves
+    against the config file's directory, so the committed default never has to
+    carry a machine-specific home directory.
+    """
+    raw = override or os.environ.get("PHARMEAZOR_DATA_ROOT") or configured
+    candidate = Path(raw).expanduser()
+    if not candidate.is_absolute():
+        candidate = config_path.resolve().parent / candidate
+    return candidate.resolve()
 
 
 def extract_strengths(*values: str | None) -> list[str]:
@@ -530,7 +546,7 @@ def run(
     no_dedupe: bool = False,
 ) -> dict[str, Any]:
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    data_root = Path(data_root_override or config["data_root"]).resolve()
+    data_root = resolve_data_root(config_path, data_root_override, config["data_root"])
     output_root = Path(output_root_override or (BASE_DIR / config["output_root"])).resolve()
     reset_output(output_root)
     documents_dir = output_root / "documents"

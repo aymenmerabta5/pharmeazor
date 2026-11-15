@@ -3,8 +3,16 @@
 # =============================================================================
 # The raw corpus is owned by the data-collection project and is never modified.
 # This pipeline reads it and writes a new, normalized corpus under ./output.
+#
+# `data_root` must point at the raw PHARMEAZOR collection. It is resolved in this
+# order:
+#   1. the --data-root CLI flag
+#   2. the PHARMEAZOR_DATA_ROOT environment variable
+#   3. the value below, resolved relative to this file
+# The committed default is deliberately relative so no machine-specific home
+# directory is baked into the repository.
 
-data_root: "C:/Users/roume/Downloads/PHARMEAZOR/PHARMEAZOR"
+data_root: "../../../PHARMEAZOR/PHARMEAZOR"
 output_root: "output"
 
 paths:

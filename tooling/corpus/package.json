@@ -1,0 +1,14 @@
+{
+  "name": "@tooling/corpus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline pipeline that turns the raw PHARMEAZOR collection into a clean corpus.",
+  "scripts": {
+    "clean": "python run.py",
+    "clean:no-chunks": "python run.py --no-chunks",
+    "clean:one": "python run.py --only-med",
+    "check:python": "python -m compileall -q pipeline run.py",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  }
+}
