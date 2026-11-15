@@ -1439,5 +1439,119 @@
     "upgradeToPro": "Passer à Pro",
     "yearly": "Annuel · économisez",
     "included": "Inclus"
+  },
+  "welcome": {
+    "title": "Que souhaitez-vous vérifier aujourd'hui ?",
+    "description": "Posez une question sur un médicament, une interaction ou un équivalent. Chaque réponse cite sa source.",
+    "inputPlaceholder": "Poser une question sur un médicament, une interaction, un équivalent…",
+    "inputLabel": "Poser une question",
+    "send": "Envoyer",
+    "sending": "Envoi en cours…",
+    "freePlan": "Plan gratuit",
+    "upgrade": "Mettre à niveau",
+    "navNewQuestion": "Nouvelle question",
+    "navHistory": "Historique",
+    "navLibrary": "Bibliothèque",
+    "navAssistant": "Assistant",
+    "disclaimer": "Pharmeazor trouve et vérifie des informations. Il ne prescrit ni ne diagnostique jamais.",
+    "suggestions": {
+      "interactions": {
+        "label": "Interactions",
+        "question": "Puis-je combiner deux médicaments, et quel est le niveau d'interaction ?"
+      },
+      "equivalents": {
+        "label": "Équivalents",
+        "question": "Quels équivalents homologués existent si un médicament est en rupture de stock ?"
+      },
+      "dosage": {
+        "label": "Dosage",
+        "question": "Que dit la notice sur la posologie et les dosages disponibles ?"
+      },
+      "safety": {
+        "label": "Sécurité",
+        "question": "Quelles précautions s'appliquent pour un profil patient spécifique ?"
+      }
+    }
+  },
+  "chat": {
+    "title": "pharmeazor",
+    "newQuestion": "Nouvelle question",
+    "today": "Aujourd'hui",
+    "earlier": "Plus tôt",
+    "freePlan": "Plan gratuit",
+    "seePlans": "Voir les plans",
+    "upgradeTitle": "Passer à Pro",
+    "upgradeDescription": "Plus de questions, historique complet des sources et exports.",
+    "inputPlaceholder": "Poser une question sur un médicament, une interaction, un équivalent…",
+    "inputLabel": "Poser une question",
+    "send": "Envoyer",
+    "sending": "Envoi en cours…",
+    "streaming": "Pharmeazor vérifie…",
+    "copyAnswer": "Copier la réponse",
+    "markHelpful": "Marquer comme utile",
+    "regenerate": "Régénérer",
+    "followUpHeading": "Questions de suivi",
+    "sourcesHeading": "Sources",
+    "sourceCount": "Sources · {count}",
+    "sourceOfficial": "Officielle",
+    "sourceForeign": "Étrangère",
+    "sourceDiffers": "Diverge",
+    "sourceRetained": "non retenu",
+    "patientContext": "Le contexte patient n'a pas été évalué. La décision vous appartient.",
+    "userRole": "Pharmacien",
+    "disclaimer": "Pharmeazor trouve et vérifie des informations. Il ne prescrit ni ne diagnostique jamais.",
+    "conversationLabel": "Conversation",
+    "emptyTitle": "Aucune conversation pour l'instant",
+    "emptyDescription": "Posez votre première question ci-dessus."
+  },
+  "pricing": {
+    "eyebrow": "Offres",
+    "title": "Des réponses vérifiées, adaptées à votre pharmacie",
+    "description": "Chaque réponse cite sa source. Choisissez l'offre qui correspond à votre façon de travailler.",
+    "monthly": "Mensuel",
+    "yearly": "Annuel · économies",
+    "mostPopular": "Le plus populaire",
+    "currentPlan": "Plan actuel",
+    "upgradeToPro": "Passer à Pro",
+    "contactUs": "Nous contacter",
+    "perMonth": "/ mois",
+    "disclaimer": "Les prix indiqués sont provisoires. Pharmeazor trouve et vérifie des informations ; il ne prescrit ni ne diagnostique jamais.",
+    "backToChat": "Retour au chat",
+    "plans": {
+      "free": {
+        "name": "Gratuit",
+        "description": "Pour les étudiants qui débutent",
+        "price": "0 DA",
+        "features": {
+          "citations": "Questions directes avec citations",
+          "dailyLimit": "Limite de questions quotidiennes",
+          "sources": "Sources officielles et secondaires",
+          "scope": "Refus hors périmètre"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Pour les pharmaciens au comptoir",
+        "price": "1 500 DA",
+        "features": {
+          "unlimited": "Questions illimitées",
+          "crossSource": "Réponses croisées et contexte patient",
+          "disagreement": "Détection des divergences entre sources",
+          "prescription": "Vérification d'ordonnance",
+          "export": "Exportation des réponses avec sources"
+        }
+      },
+      "pharmacy": {
+        "name": "Pharmacie",
+        "description": "Pour les équipes et établissements",
+        "price": "Sur mesure",
+        "features": {
+          "everything": "Tout ce qui est inclus dans Pro",
+          "seats": "Plusieurs sièges d'équipe",
+          "noticeTracking": "Suivi des versions de notices",
+          "support": "Assistance prioritaire"
+        }
+      }
+    }
   }
 }

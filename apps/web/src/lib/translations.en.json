@@ -1439,5 +1439,119 @@
     "upgradeToPro": "Upgrade to Pro",
     "yearly": "Yearly · save",
     "included": "Included"
+  },
+  "welcome": {
+    "title": "What would you like to verify today?",
+    "description": "Ask about a drug, an interaction or an equivalent. Every answer cites its source.",
+    "inputPlaceholder": "Ask about a drug, an interaction, an equivalent…",
+    "inputLabel": "Ask a question",
+    "send": "Send",
+    "sending": "Sending…",
+    "freePlan": "Free plan",
+    "upgrade": "Upgrade",
+    "navNewQuestion": "New question",
+    "navHistory": "History",
+    "navLibrary": "Library",
+    "navAssistant": "Assistant",
+    "disclaimer": "Pharmeazor finds and checks information. It never prescribes or diagnoses.",
+    "suggestions": {
+      "interactions": {
+        "label": "Interactions",
+        "question": "Can I combine two drugs, and what is the level?"
+      },
+      "equivalents": {
+        "label": "Equivalents",
+        "question": "Which registered equivalents exist if a drug is out of stock?"
+      },
+      "dosage": {
+        "label": "Dosage",
+        "question": "What does the leaflet say about dose and available strengths?"
+      },
+      "safety": {
+        "label": "Safety",
+        "question": "What precautions apply for a specific patient profile?"
+      }
+    }
+  },
+  "chat": {
+    "title": "pharmeazor",
+    "newQuestion": "New question",
+    "today": "Today",
+    "earlier": "Earlier",
+    "freePlan": "Free plan",
+    "seePlans": "See plans",
+    "upgradeTitle": "Upgrade to Pro",
+    "upgradeDescription": "More questions, full source history and exports.",
+    "inputPlaceholder": "Ask about a drug, an interaction, an equivalent…",
+    "inputLabel": "Ask a question",
+    "send": "Send",
+    "sending": "Sending…",
+    "streaming": "Pharmeazor is verifying…",
+    "copyAnswer": "Copy answer",
+    "markHelpful": "Mark as helpful",
+    "regenerate": "Regenerate",
+    "followUpHeading": "Follow-up questions",
+    "sourcesHeading": "Sources",
+    "sourceCount": "Sources · {count}",
+    "sourceOfficial": "Official",
+    "sourceForeign": "Foreign",
+    "sourceDiffers": "Differs",
+    "sourceRetained": "not retained",
+    "patientContext": "Patient context not assessed. The decision remains yours.",
+    "userRole": "Pharmacist",
+    "disclaimer": "Pharmeazor finds and checks information. It never prescribes or diagnoses.",
+    "conversationLabel": "Conversation",
+    "emptyTitle": "No conversation yet",
+    "emptyDescription": "Ask your first question above."
+  },
+  "pricing": {
+    "eyebrow": "Plans",
+    "title": "Verified answers, sized to your pharmacy",
+    "description": "Every answer cites its source. Pick the plan that fits how you work.",
+    "monthly": "Monthly",
+    "yearly": "Yearly · save",
+    "mostPopular": "Most popular",
+    "currentPlan": "Current plan",
+    "upgradeToPro": "Upgrade to Pro",
+    "contactUs": "Contact us",
+    "perMonth": "/ month",
+    "disclaimer": "Prices shown are placeholders. Pharmeazor finds and checks information; it never prescribes or diagnoses.",
+    "backToChat": "Back to chat",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "For students getting started",
+        "price": "0 DA",
+        "features": {
+          "citations": "Direct questions with citations",
+          "dailyLimit": "Daily question limit",
+          "sources": "Official and secondary sources",
+          "scope": "Refusal outside scope"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For pharmacists at the counter",
+        "price": "1 500 DA",
+        "features": {
+          "unlimited": "Unlimited questions",
+          "crossSource": "Cross-source and patient-context answers",
+          "disagreement": "Disagreement detection between sources",
+          "prescription": "Prescription review",
+          "export": "Export answers with sources"
+        }
+      },
+      "pharmacy": {
+        "name": "Pharmacy",
+        "description": "For teams and institutions",
+        "price": "Custom",
+        "features": {
+          "everything": "Everything in Pro",
+          "seats": "Multiple team seats",
+          "noticeTracking": "Notice version tracking",
+          "support": "Priority support"
+        }
+      }
+    }
   }
 }

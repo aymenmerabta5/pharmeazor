@@ -754,65 +754,118 @@
     "fr": "French",
     "ar": "Arabic"
   },
-  "marketing": {
-    "heroSubtitle": "A clear foundation for your next application, with shared design and the capabilities you choose.",
-    "ctaSignUp": "Sign up",
-    "ctaSignIn": "Sign in",
-    "hero": {
-      "eyebrow": "Your application starts here",
-      "title": "Your next idea,",
-      "titleAccent": "with a head start.",
-      "descriptionNext": "A Next.js foundation with the tools your project needs, ready for you to make it your own.",
-      "descriptionTanstack": "A TanStack Start foundation with the tools your project needs, ready for you to make it your own.",
-      "primaryCta": "Sign up",
-      "secondaryCta": "View source"
-    },
-    "preview": {
-      "title": "Your project, at a glance",
-      "routes": "Routes",
-      "components": "Components",
-      "design": "Design system",
-      "server": "Server code",
-      "database": "Data schema",
-      "agent": "Agent",
-      "source": "The source is yours to shape.",
-      "canvas": "Canvas",
-      "surface": "Surface",
-      "accent": "Accent",
-      "footerNavigation": "Footer navigation"
-    },
-    "features": {
-      "title": "A foundation you can build on.",
-      "description": "Clear structure, considered details, and room to grow. Make the next part yours.",
-      "architectureTitle": "Everything has its place",
-      "architectureDescription": "Applications, shared packages, and business rules have clear responsibilities, with checks that help keep them separate.",
-      "scaffoldTitle": "A place to begin",
-      "apiTitle": "Connected, with confidence",
-      "apiDescriptionNext": "Typed oRPC calls connect your interface to application operations.",
-      "apiDescriptionTanstack": "Typed oRPC calls connect your interface to application operations.",
-      "billingTitle": "Billing that fits",
-      "billingDescription": "Your selected payment providers share consistent checkout and account workflows."
-    },
-    "footer": {
-      "tagline": "Made with pharmeazor. Make it your own.",
-      "signIn": "Sign in",
-      "billing": "Billing"
-    },
-    "single": {
-      "signIn": "Sign in",
-      "flatTitle": "One project, clear structure",
-      "flatDescriptionNext": "Routes, reusable components, and selected server modules have a clear place in one source tree.",
-      "flatDescriptionTanstack": "Routes, reusable components, and selected server modules have a clear place in one source tree.",
-      "authTitle": "An account that feels familiar",
-      "authDescriptionNext": "Sign in, manage your profile, and keep your account secure.",
-      "authDescriptionTanstack": "Sign in, manage your profile, and keep your account secure.",
-      "billingTitle": "Billing that fits",
-      "billingDescription": "Your selected payment providers share consistent checkout and account workflows.",
-      "tokensTitle": "One design, down to the details",
-      "tokensDescription": "Shared colors, typography, and controls bring every screen together. Light and dark, from the start.",
-      "quickStartTitle": "Quick start",
-      "quickStartDescriptionNext": "Open your project, install its dependencies, and start building.",
-      "quickStartServices": "Your README explains how to configure the services you selected."
+  "welcome": {
+    "title": "What would you like to verify today?",
+    "description": "Ask about a drug, an interaction or an equivalent. Every answer cites its source.",
+    "inputLabel": "Your question",
+    "inputPlaceholder": "Ask about a drug, an interaction, an equivalent...",
+    "send": "Send",
+    "sending": "Sending",
+    "freePlan": "Free plan",
+    "upgrade": "Upgrade",
+    "disclaimer": "Pharmeazor finds and checks information. It never prescribes or diagnoses.",
+    "navLibrary": "Library",
+    "navNewQuestion": "New question",
+    "navHistory": "History",
+    "navAssistant": "Assistant",
+    "suggestions": {
+      "interactions": {
+        "label": "Interactions",
+        "question": "Can I combine two drugs, and what is the level?"
+      },
+      "equivalents": {
+        "label": "Equivalents",
+        "question": "Which registered equivalents exist if a drug is out of stock?"
+      },
+      "dosage": {
+        "label": "Dosage",
+        "question": "What does the leaflet say about dose and available strengths?"
+      },
+      "safety": {
+        "label": "Safety",
+        "question": "What precautions apply for a specific patient profile?"
+      }
+    }
+  },
+  "chat": {
+    "title": "Verification chat",
+    "conversationLabel": "Conversation",
+    "newQuestion": "New question",
+    "today": "Today",
+    "earlier": "Earlier",
+    "upgradeTitle": "Upgrade to Pro",
+    "upgradeDescription": "More questions, full source history and exports.",
+    "seePlans": "See plans",
+    "freePlan": "Free plan",
+    "userRole": "Pharmacist",
+    "sourcesHeading": "Sources",
+    "sourceCount": "Sources · {count}",
+    "sourceOfficial": "Official",
+    "sourceForeign": "Foreign",
+    "sourceDiffers": "Differs",
+    "sourceRetained": "not retained",
+    "patientContext": "Patient context not assessed. The decision remains yours.",
+    "followUpHeading": "Follow-up questions",
+    "copyAnswer": "Copy answer",
+    "markHelpful": "Mark as helpful",
+    "regenerate": "Regenerate answer",
+    "disclaimer": "Pharmeazor finds and checks information. It never prescribes or diagnoses.",
+    "inputLabel": "Your question",
+    "inputPlaceholder": "Ask about a drug, an interaction, an equivalent...",
+    "send": "Send",
+    "sending": "Sending",
+    "streaming": "Checking sources...",
+    "emptyTitle": "What would you like to verify today?",
+    "emptyDescription": "Ask about a drug, an interaction or an equivalent. Every answer cites its source."
+  },
+  "pricing": {
+    "eyebrow": "Plans",
+    "title": "Verified answers, sized to your pharmacy",
+    "description": "Every answer cites its source. Pick the plan that fits how you work.",
+    "monthly": "Monthly",
+    "yearly": "Yearly · save",
+    "currentPlan": "Current plan",
+    "upgradeToPro": "Upgrade to Pro",
+    "contactUs": "Contact us",
+    "mostPopular": "Most popular",
+    "disclaimer": "Prices shown are placeholders. Pharmeazor finds and checks information; it never prescribes or diagnoses.",
+    "backToChat": "Back to chat",
+    "perMonth": "/ month",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "For students getting started",
+        "price": "0 DA",
+        "features": {
+          "citations": "Direct questions with citations",
+          "dailyLimit": "Daily question limit",
+          "sources": "Official and secondary sources",
+          "scope": "Refusal outside scope"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For pharmacists at the counter",
+        "price": "1 500 DA",
+        "features": {
+          "unlimited": "Unlimited questions",
+          "crossSource": "Cross-source and patient-context answers",
+          "disagreement": "Disagreement detection between sources",
+          "prescription": "Prescription review",
+          "export": "Export answers with sources"
+        }
+      },
+      "pharmacy": {
+        "name": "Pharmacy",
+        "description": "For teams and institutions",
+        "price": "Custom",
+        "features": {
+          "everything": "Everything in Pro",
+          "seats": "Multiple team seats",
+          "noticeTracking": "Notice version tracking",
+          "support": "Priority support"
+        }
+      }
     }
   },
   "settings": {
@@ -1074,14 +1127,14 @@
     }
   },
   "metadata": {
-    "siteTitle": "pharmeazor",
-    "siteDescription": "A clear foundation for your next application.",
-    "marketingTitle": "pharmeazor - Your next application",
-    "marketingDescription": "A clear project structure, a shared design, and the capabilities you choose.",
+    "siteTitle": "Pharmeazor",
+    "siteDescription": "Verified answers for your pharmacy.",
+    "marketingTitle": "Pharmeazor - verified answers for your pharmacy",
+    "marketingDescription": "Ask about a drug, an interaction or an equivalent. Every answer cites its source.",
     "signInTitle": "Sign in",
-    "signInDescription": "Sign in to your pharmeazor account.",
+    "signInDescription": "Sign in to your Pharmeazor account.",
     "signUpTitle": "Create account",
-    "signUpDescription": "Create your pharmeazor account.",
+    "signUpDescription": "Create your Pharmeazor account.",
     "twoFactorTitle": "Two-factor authentication",
     "twoFactorDescription": "Verify your identity with a TOTP code.",
     "forgotPasswordTitle": "Forgot password",
@@ -1089,16 +1142,16 @@
     "resetPasswordTitle": "Reset password",
     "resetPasswordDescription": "Choose a new password for your account.",
     "dashboardTitle": "Dashboard",
-    "dashboardDescription": "Manage your pharmeazor workspace.",
+    "dashboardDescription": "Manage your Pharmeazor workspace.",
     "settingsTitle": "Settings",
     "settingsDescription": "Manage your account, security, and active sessions.",
     "notFoundTitle": "Page not found",
     "errorTitle": "Application error",
     "maintenanceTitle": "Maintenance",
-    "maintenanceDescription": "pharmeazor is temporarily unavailable while changes are applied.",
-    "manifestName": "pharmeazor",
-    "manifestShortName": "pharmeazor",
-    "manifestDescription": "Your opinionated modular monolith."
+    "maintenanceDescription": "Pharmeazor is temporarily unavailable while changes are applied.",
+    "manifestName": "Pharmeazor",
+    "manifestShortName": "Pharmeazor",
+    "manifestDescription": "Verified answers for your pharmacy."
   },
   "billing": {
     "subscriptionStatusActive": "Active",

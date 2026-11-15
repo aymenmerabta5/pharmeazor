@@ -69,5 +69,5 @@ if (
   configuredDesignSystemAdapter?.version !== 1 ||
   configuredDesignSystemAdapter?.status !== "applicable"
 ) {
-  throw new Error("GhostInit design-system invariant: web/next/v1");
+  throw new Error("Pharmeazor design-system invariant: web/next/v1");
 }

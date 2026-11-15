@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "pharmeazor",
     short_name: "pharmeazor",
-    description: "Your opinionated modular monolith",
+    description: "Verified answers for your pharmacy",
     start_url: "/",
     display: "standalone",
     background_color: "#f7f5f0",

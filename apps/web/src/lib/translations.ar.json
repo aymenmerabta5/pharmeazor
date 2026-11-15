@@ -1439,5 +1439,119 @@
     "upgradeToPro": "الترقية إلى Pro",
     "yearly": "سنوي · وفّر",
     "included": "مشمول"
+  },
+  "welcome": {
+    "title": "ماذا تريد التحقق منه اليوم؟",
+    "description": "اسأل عن دواء أو تفاعل أو بديل. كل إجابة تستشهد بمصدرها.",
+    "inputPlaceholder": "اسأل عن دواء أو تفاعل أو بديل…",
+    "inputLabel": "طرح سؤال",
+    "send": "إرسال",
+    "sending": "جارٍ الإرسال…",
+    "freePlan": "الخطة المجانية",
+    "upgrade": "الترقية",
+    "navNewQuestion": "سؤال جديد",
+    "navHistory": "السجل",
+    "navLibrary": "المكتبة",
+    "navAssistant": "المساعد",
+    "disclaimer": "يبحث pharmeazor في المعلومات ويتحقق منها. ولا يصف أو يشخص أبداً.",
+    "suggestions": {
+      "interactions": {
+        "label": "التفاعلات",
+        "question": "هل يمكنني الجمع بين دواءين، وما مستوى التفاعل؟"
+      },
+      "equivalents": {
+        "label": "البدائل",
+        "question": "ما البدائل المسجلة المتاحة عند نفاد دواء من السوق؟"
+      },
+      "dosage": {
+        "label": "الجرعة",
+        "question": "ماذا تقول النشرة عن الجرعة والتركيزات المتاحة؟"
+      },
+      "safety": {
+        "label": "السلامة",
+        "question": "ما الاحتياطات الواجبة لملف مريض بعينه؟"
+      }
+    }
+  },
+  "chat": {
+    "title": "pharmeazor",
+    "newQuestion": "سؤال جديد",
+    "today": "اليوم",
+    "earlier": "سابقاً",
+    "freePlan": "الخطة المجانية",
+    "seePlans": "عرض الخطط",
+    "upgradeTitle": "الترقية إلى Pro",
+    "upgradeDescription": "مزيد من الأسئلة وسجل المصادر الكامل والتصدير.",
+    "inputPlaceholder": "اسأل عن دواء أو تفاعل أو بديل…",
+    "inputLabel": "طرح سؤال",
+    "send": "إرسال",
+    "sending": "جارٍ الإرسال…",
+    "streaming": "pharmeazor يتحقق…",
+    "copyAnswer": "نسخ الإجابة",
+    "markHelpful": "تمييز كمفيد",
+    "regenerate": "إعادة توليد",
+    "followUpHeading": "أسئلة متابعة",
+    "sourcesHeading": "المصادر",
+    "sourceCount": "المصادر · {count}",
+    "sourceOfficial": "رسمي",
+    "sourceForeign": "أجنبي",
+    "sourceDiffers": "يختلف",
+    "sourceRetained": "غير مُبقى",
+    "patientContext": "لم يُقيَّم سياق المريض. القرار يعود إليك.",
+    "userRole": "صيدلاني",
+    "disclaimer": "يبحث pharmeazor في المعلومات ويتحقق منها. ولا يصف أو يشخص أبداً.",
+    "conversationLabel": "محادثة",
+    "emptyTitle": "لا توجد محادثة بعد",
+    "emptyDescription": "اطرح سؤالك الأول أعلاه."
+  },
+  "pricing": {
+    "eyebrow": "الخطط",
+    "title": "إجابات موثقة بحجم صيدليتك",
+    "description": "كل إجابة تستشهد بمصدرها. اختر الخطة المناسبة لطريقة عملك.",
+    "monthly": "شهري",
+    "yearly": "سنوي · وفّر",
+    "mostPopular": "الأكثر شيوعاً",
+    "currentPlan": "الخطة الحالية",
+    "upgradeToPro": "الترقية إلى Pro",
+    "contactUs": "تواصل معنا",
+    "perMonth": "/ شهر",
+    "disclaimer": "الأسعار المعروضة تقريبية. يبحث pharmeazor في المعلومات ويتحقق منها؛ ولا يصف أو يشخص أبداً.",
+    "backToChat": "العودة إلى المحادثة",
+    "plans": {
+      "free": {
+        "name": "مجاني",
+        "description": "للطلاب في بداية مسيرتهم",
+        "price": "0 دج",
+        "features": {
+          "citations": "أسئلة مباشرة مع استشهادات",
+          "dailyLimit": "حد يومي للأسئلة",
+          "sources": "مصادر رسمية وثانوية",
+          "scope": "رفض الأسئلة خارج النطاق"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "للصيادلة عند الكاونتر",
+        "price": "1500 دج",
+        "features": {
+          "unlimited": "أسئلة غير محدودة",
+          "crossSource": "إجابات متقاطعة المصادر وسياق المريض",
+          "disagreement": "كشف التعارض بين المصادر",
+          "prescription": "مراجعة الوصفة الطبية",
+          "export": "تصدير الإجابات مع المصادر"
+        }
+      },
+      "pharmacy": {
+        "name": "الصيدلية",
+        "description": "للفرق والمؤسسات",
+        "price": "مخصص",
+        "features": {
+          "everything": "كل ما في خطة Pro",
+          "seats": "مقاعد متعددة للفريق",
+          "noticeTracking": "تتبع إصدارات النشرات",
+          "support": "دعم ذو أولوية"
+        }
+      }
+    }
   }
 }

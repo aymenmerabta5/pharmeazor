@@ -24,8 +24,10 @@ function matchesPath(path: string, base: string): boolean {
   return nextChar === "/" || nextChar === "?" || nextChar === "#";
 }
 
+// `/agent` is intentionally public: the route renders the local demo chat and
+// needs no session. The Eve facade under `/api/agent` still authenticates and
+// authorizes every request server-side, so no protected data is reachable.
 export const PROTECTED_PATHS = [
-  "/agent",
   "/dashboard",
   "/onboarding",
   "/plans",

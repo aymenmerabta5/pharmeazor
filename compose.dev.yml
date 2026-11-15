@@ -1,0 +1,35 @@
+# Local development infrastructure that the application expects from Docker.
+#
+# The Postgres service lives in docker-compose.yml and is started with:
+#   docker compose --env-file .env.local up -d postgres
+#
+# This file provides the shared cache/rate-limit tier. The application talks to
+# it through the Upstash-compatible Redis REST protocol, so the local serverless
+# Redis HTTP proxy fronts a normal Redis instance.
+#
+# Usage:
+#   docker compose --env-file .env.local -f compose.dev.yml up -d
+#   docker compose -f compose.dev.yml ps
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    stop_grace_period: 30s
+    volumes:
+      - redis_data:/data
+  redis-http:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      - redis
+    environment:
+      SRH_MODE: env
+      # Must match UPSTASH_REDIS_REST_TOKEN in .env.local.
+      SRH_TOKEN: "${UPSTASH_REDIS_REST_TOKEN:?UPSTASH_REDIS_REST_TOKEN is required}"
+      SRH_CONNECTION_STRING: redis://redis:6379
+      SRH_PORT: "8080"
+    ports:
+      - "127.0.0.1:${REDIS_HTTP_PORT:-8080}:8080"
+volumes:
+  redis_data:

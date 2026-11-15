@@ -34,7 +34,7 @@ export function samplePdfData(
       invoiceNumber: "INV-DEMO-001",
       issuedAt: now.toISOString(),
       dueDate: new Date(now.getTime() + 14 * 86_400_000).toISOString(),
-      from: { name: "GhostInit Studio", email: "billing@example.com" },
+      from: { name: "Pharmeazor", email: "billing@example.com" },
       to: { name: translate("sample.customer"), email: "customer@example.com" },
       items: [{ description: translate("sample.invoiceItem"), quantity: 1, unitPrice: 49 }],
       currency: "USD",
@@ -45,20 +45,20 @@ export function samplePdfData(
     return {
       recipientName: translate("sample.recipient"),
       recipientEmail: "recipient@example.com",
-      issuerName: "GhostInit Academy",
+      issuerName: "Pharmeazor Pharmacy",
       reason: translate("sample.certificateReason"),
       issuedAt: now.toISOString(),
     };
   }
   return {
     title: translate("sample.agreementTitle"),
-    subtitle: "GhostInit",
+    subtitle: "Pharmeazor",
     parties: [
       {
-        name: "GhostInit Studio",
+        name: "Pharmeazor",
         email: "legal@example.com",
         roleLabel: translate("sample.provider"),
-        color: "#2563eb",
+        color: "#56703a",
       },
       {
         name: translate("sample.customer"),

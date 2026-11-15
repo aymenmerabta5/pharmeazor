@@ -754,65 +754,118 @@
     "fr": "الفرنسية",
     "ar": "العربية"
   },
-  "marketing": {
-    "heroSubtitle": "أساس واضح لتطبيقك القادم، بتصميم مشترك والإمكانات التي تختارها.",
-    "ctaSignUp": "إنشاء حساب",
-    "ctaSignIn": "تسجيل الدخول",
-    "hero": {
-      "eyebrow": "تطبيقك يبدأ من هنا",
-      "title": "فكرتك القادمة،",
-      "titleAccent": "بانطلاقة أسرع.",
-      "descriptionNext": "أساس Next.js بالأدوات التي يحتاجها مشروعك، جاهز لتضيف إليه رؤيتك.",
-      "descriptionTanstack": "أساس TanStack Start بالأدوات التي يحتاجها مشروعك، جاهز لتضيف إليه رؤيتك.",
-      "primaryCta": "إنشاء حساب",
-      "secondaryCta": "عرض المصدر"
-    },
-    "preview": {
-      "title": "مشروعك في لمحة",
-      "routes": "المسارات",
-      "components": "المكونات",
-      "design": "نظام التصميم",
-      "server": "شيفرة الخادم",
-      "database": "مخطط البيانات",
-      "agent": "الوكيل",
-      "source": "المصدر بين يديك لتشكّله كما تريد.",
-      "canvas": "الخلفية",
-      "surface": "السطح",
-      "accent": "اللون الرئيسي",
-      "footerNavigation": "روابط التذييل"
-    },
-    "features": {
-      "title": "أساس تبني عليه أفكارك.",
-      "description": "بنية واضحة وتفاصيل مدروسة ومساحة للنمو. الخطوة القادمة لك.",
-      "architectureTitle": "لكل جزء مكانه",
-      "architectureDescription": "للتطبيقات والحزم المشتركة وقواعد العمل مسؤوليات واضحة، مع فحوص تساعد على الحفاظ على حدودها.",
-      "scaffoldTitle": "نقطة بداية",
-      "apiTitle": "اتصال واضح وموثوق",
-      "apiDescriptionNext": "تربط استدعاءات oRPC محددة الأنواع واجهتك بعمليات التطبيق.",
-      "apiDescriptionTanstack": "تربط استدعاءات oRPC محددة الأنواع واجهتك بعمليات التطبيق.",
-      "billingTitle": "فوترة تناسب مشروعك",
-      "billingDescription": "يشترك مزودو الدفع الذين اخترتهم في مسارات متناسقة للدفع وإدارة الحساب."
-    },
-    "footer": {
-      "tagline": "أُنشئ باستخدام pharmeazor. أضف إليه لمستك.",
-      "signIn": "تسجيل الدخول",
-      "billing": "الفوترة"
-    },
-    "single": {
-      "signIn": "تسجيل الدخول",
-      "flatTitle": "مشروع واحد وبنية واضحة",
-      "flatDescriptionNext": "للمسارات والمكونات القابلة لإعادة الاستخدام ووحدات الخادم المختارة مكان واضح في شجرة مصدر واحدة.",
-      "flatDescriptionTanstack": "للمسارات والمكونات القابلة لإعادة الاستخدام ووحدات الخادم المختارة مكان واضح في شجرة مصدر واحدة.",
-      "authTitle": "حساب مألوف وسهل الاستخدام",
-      "authDescriptionNext": "سجّل الدخول وأدر ملفك الشخصي وحافظ على أمان حسابك.",
-      "authDescriptionTanstack": "سجّل الدخول وأدر ملفك الشخصي وحافظ على أمان حسابك.",
-      "billingTitle": "فوترة تناسب مشروعك",
-      "billingDescription": "يشترك مزودو الدفع الذين اخترتهم في مسارات متناسقة للدفع وإدارة الحساب.",
-      "tokensTitle": "تصميم متناسق في كل التفاصيل",
-      "tokensDescription": "ألوان وخطوط وعناصر تحكم مشتركة توحّد كل الشاشات، بالوضعين الفاتح والداكن منذ البداية.",
-      "quickStartTitle": "بدء سريع",
-      "quickStartDescriptionNext": "افتح مشروعك وثبّت اعتمادياته وابدأ البناء.",
-      "quickStartServices": "يوضح ملف README كيفية إعداد الخدمات التي اخترتها."
+  "welcome": {
+    "title": "ما الذي تريد التحقق منه اليوم؟",
+    "description": "اسأل عن دواء أو تفاعل أو بديل. كل إجابة تستشهد بمصدرها.",
+    "inputLabel": "سؤالك",
+    "inputPlaceholder": "اسأل عن دواء أو تفاعل أو بديل...",
+    "send": "إرسال",
+    "sending": "جارٍ الإرسال",
+    "freePlan": "الخطة المجانية",
+    "upgrade": "ترقية",
+    "disclaimer": "يبحث Pharmeazor ويتحقق من المعلومات. لا يصف الدواء ولا يشخّص الأمراض.",
+    "navLibrary": "المكتبة",
+    "navNewQuestion": "سؤال جديد",
+    "navHistory": "السجل",
+    "navAssistant": "المساعد",
+    "suggestions": {
+      "interactions": {
+        "label": "التفاعلات",
+        "question": "هل يمكنني الجمع بين دواءين، وما مستوى التفاعل؟"
+      },
+      "equivalents": {
+        "label": "البدائل",
+        "question": "ما البدائل المسجلة المتوفرة إذا كان الدواء غير متوفر؟"
+      },
+      "dosage": {
+        "label": "الجرعات",
+        "question": "ماذا تذكر النشرة عن الجرعات والتركيزات المتاحة؟"
+      },
+      "safety": {
+        "label": "السلامة",
+        "question": "ما الاحتياطات التي تنطبق على ملف مريض بعينه؟"
+      }
+    }
+  },
+  "chat": {
+    "title": "محادثة التحقق",
+    "conversationLabel": "المحادثة",
+    "newQuestion": "سؤال جديد",
+    "today": "اليوم",
+    "earlier": "في وقت سابق",
+    "upgradeTitle": "الترقية إلى Pro",
+    "upgradeDescription": "مزيد من الأسئلة وسجل المصادر الكامل والتصدير.",
+    "seePlans": "عرض الخطط",
+    "freePlan": "الخطة المجانية",
+    "userRole": "صيدلي",
+    "sourcesHeading": "المصادر",
+    "sourceCount": "المصادر · {count}",
+    "sourceOfficial": "رسمي",
+    "sourceForeign": "أجنبي",
+    "sourceDiffers": "مختلف",
+    "sourceRetained": "لم يُعتمد",
+    "patientContext": "لم يُقيَّم سياق المريض. القرار يبقى لك.",
+    "followUpHeading": "أسئلة متابعة",
+    "copyAnswer": "نسخ الإجابة",
+    "markHelpful": "تعليم كمرhelpful",
+    "regenerate": "إعادة توليد الإجابة",
+    "disclaimer": "يبحث Pharmeazor ويتحقق من المعلومات. لا يصف الدواء ولا يشخّص الأمراض.",
+    "inputLabel": "سؤالك",
+    "inputPlaceholder": "اسأل عن دواء أو تفاعل أو بديل...",
+    "send": "إرسال",
+    "sending": "جارٍ الإرسال",
+    "streaming": "جارٍ التحقق من المصادر…",
+    "emptyTitle": "ما الذي تريد التحقق منه اليوم؟",
+    "emptyDescription": "اسأل عن دواء أو تفاعل أو بديل. كل إجابة تستشهد بمصدرها."
+  },
+  "pricing": {
+    "eyebrow": "الخطط",
+    "title": "إجابات موثّقة بحجم يناسب صيدليتك",
+    "description": "كل إجابة تستشهد بمصدرها. اختر الخطة التي تناسب طريقة عملك.",
+    "monthly": "شهري",
+    "yearly": "سنوي · وفّر",
+    "currentPlan": "خطتك الحالية",
+    "upgradeToPro": "الترقية إلى Pro",
+    "contactUs": "اتصل بنا",
+    "mostPopular": "الأكثر شيوعًا",
+    "disclaimer": "الأسعار المعروضة استرشادية. يبحث Pharmeazor ويتحقق من المعلومات؛ لا يصف الدواء ولا يشخّص الأمراض.",
+    "backToChat": "العودة إلى المحادثة",
+    "perMonth": "/ شهريًا",
+    "plans": {
+      "free": {
+        "name": "مجاني",
+        "description": "للطلاب الذين يبدأون",
+        "price": "0 دج",
+        "features": {
+          "citations": "أسئلة مباشرة مع استشهادات",
+          "dailyLimit": "حد يومي للأسئلة",
+          "sources": "مصادر رسمية وثانوية",
+          "scope": "رفض ما هو خارج النطاق"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "لصيادلة العدّاد",
+        "price": "1 500 دج",
+        "features": {
+          "unlimited": "أسئلة غير محدودة",
+          "crossSource": "إجابات متعددة المصادر ومرتبطة بحالة المريض",
+          "disagreement": "كشف الخلاف بين المصادر",
+          "prescription": "مراجعة الوصفة الطبية",
+          "export": "تصدير الإجابات مع مصادرها"
+        }
+      },
+      "pharmacy": {
+        "name": "الصيدلية",
+        "description": "للفرق والمؤسسات",
+        "price": "مخصص",
+        "features": {
+          "everything": "كل ما في Pro",
+          "seats": "مقاعد متعددة للفريق",
+          "noticeTracking": "تتبع إصدارات النشرات",
+          "support": "دعم ذو أولوية"
+        }
+      }
     }
   },
   "settings": {
@@ -1074,14 +1127,14 @@
     }
   },
   "metadata": {
-    "siteTitle": "تطبيق pharmeazor",
-    "siteDescription": "أساس واضح لتطبيقك القادم.",
-    "marketingTitle": "pharmeazor - تطبيقك القادم",
-    "marketingDescription": "بنية واضحة وتصميم مشترك والإمكانات التي تختارها.",
+    "siteTitle": "Pharmeazor",
+    "siteDescription": "إجابات موثّقة لصيدليتك.",
+    "marketingTitle": "Pharmeazor - إجابات موثّقة لصيدليتك",
+    "marketingDescription": "اسأل عن دواء أو تفاعل أو بديل. كل إجابة تستشهد بمصدرها.",
     "signInTitle": "تسجيل الدخول",
-    "signInDescription": "سجّل الدخول إلى حساب pharmeazor.",
+    "signInDescription": "سجّل الدخول إلى حسابك في Pharmeazor.",
     "signUpTitle": "إنشاء حساب",
-    "signUpDescription": "أنشئ حساب pharmeazor.",
+    "signUpDescription": "أنشئ حسابك في Pharmeazor.",
     "twoFactorTitle": "المصادقة الثنائية",
     "twoFactorDescription": "تحقّق من هويتك باستخدام رمز TOTP.",
     "forgotPasswordTitle": "نسيت كلمة المرور",
@@ -1089,16 +1142,16 @@
     "resetPasswordTitle": "إعادة تعيين كلمة المرور",
     "resetPasswordDescription": "اختر كلمة مرور جديدة لحسابك.",
     "dashboardTitle": "لوحة التحكم",
-    "dashboardDescription": "أدر مساحة عمل pharmeazor.",
+    "dashboardDescription": "أدر مساحة عملك في Pharmeazor.",
     "settingsTitle": "الإعدادات",
     "settingsDescription": "أدر حسابك والأمان والجلسات النشطة.",
     "notFoundTitle": "الصفحة غير موجودة",
     "errorTitle": "خطأ في التطبيق",
     "maintenanceTitle": "الصيانة",
-    "maintenanceDescription": "pharmeazor غير متاح مؤقتاً أثناء تطبيق التغييرات.",
-    "manifestName": "تطبيق pharmeazor",
-    "manifestShortName": "pharmeazor",
-    "manifestDescription": "نظامك الأحادي المعياري المنظم."
+    "maintenanceDescription": "Pharmeazor غير متاح مؤقتًا أثناء تطبيق التغييرات.",
+    "manifestName": "Pharmeazor",
+    "manifestShortName": "Pharmeazor",
+    "manifestDescription": "إجابات موثّقة لصيدليتك."
   },
   "billing": {
     "subscriptionStatusActive": "نشط",

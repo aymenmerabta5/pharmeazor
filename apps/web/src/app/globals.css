@@ -104,3 +104,1256 @@
     0 1px 2px oklch(0.1 0.02 120 / 0.3),
     0 22px 45px -30px oklch(0.1 0.02 120 / 0.65);
 }
+/* ─── Pharmeazor immersive-surface design tokens ─────────────────────────── */
+/* Used by chat-welcome, chat, and pricing pages only. Scoped to .ph-surface  */
+/* so the workspace shell theme is not affected.                               */
+
+.ph-surface {
+  --ph-bg: #f5f2eb;
+  --ph-bg-card: #ffffff;
+  --ph-bg-sidebar: #efebe2;
+  --ph-bg-sidebar-hover: #e5e0d4;
+  --ph-bg-sidebar-active: #ddd8cc;
+  --ph-green: #3d5a27;
+  --ph-green-dark: #2f4620;
+  --ph-green-hover: #4a6b30;
+  --ph-green-light: #e8eddf;
+  --ph-green-pill: #e6ecdb;
+  --ph-text: #1a1a14;
+  --ph-text-muted: #6b6b5a;
+  --ph-text-sidebar: #3a3a2e;
+  --ph-border: #ddd8cc;
+  --ph-border-card: #e8e4dc;
+  --ph-badge-official: #3d5a27;
+  --ph-badge-foreign: #8a8a78;
+  --ph-badge-differs: #a0603a;
+  --ph-radius-card: 14px;
+  --ph-radius-pill: 999px;
+  background-color: var(--ph-bg);
+  color: var(--ph-text);
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  min-height: 100dvh;
+}
+
+/* Smooth focus rings for pharmeazor inputs */
+.ph-surface *:focus-visible {
+  outline: 2px solid var(--ph-green);
+  outline-offset: 2px;
+}
+
+/* The prompt bars wrap their text field in a pill that already shows focus
+   through :focus-within, so the inner field must not draw a second outline
+   (a dark rectangle) inside the pill. */
+.ph-surface .ph-welcome-input:focus-visible,
+.ph-surface .ph-chat-input:focus-visible {
+  outline: none;
+}
+
+/* Shimmer animation for streaming indicator */
+@keyframes ph-shimmer {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.ph-shimmer {
+  animation: ph-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ─── Pharmeazor leaf logo icons ──────────────────────────────────────── */
+
+/* Small leaf: rounded-square green bg used in the left rail */
+.ph-leaf-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--ph-green);
+  flex-shrink: 0;
+}
+
+/* Large leaf: bigger rounded-square used in page center */
+.ph-leaf-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--ph-green);
+  flex-shrink: 0;
+}
+
+/* User avatar circle (bottom of left rail) */
+.ph-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ph-green);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+/* ─── Welcome page — two-column layout ───────────────────────────────── */
+
+/* Root grid: narrow left rail + right content column */
+.ph-welcome-layout {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  min-height: 100dvh;
+}
+
+/* Open state: the history sidebar takes over the left edge, so the rail is
+   hidden and its column is replaced by the sidebar column. */
+.ph-welcome-layout--open {
+  grid-template-columns: 210px 1fr;
+}
+
+/* ── Left rail ── */
+.ph-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  background: var(--ph-bg-sidebar);
+  border-right: 1px solid var(--ph-border);
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  width: 56px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* The rail and the history sidebar are the two states of the same panel, so
+   the rail leaves the flow while the sidebar is open. */
+.ph-rail[hidden] {
+  display: none;
+}
+.ph-rail-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ph-rail-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* Logo button in rail (green rounded-square) */
+.ph-rail-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+.ph-rail-logo:hover {
+  opacity: 0.85;
+}
+
+/* Generic icon button in rail */
+.ph-rail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ph-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  padding: 0;
+}
+.ph-rail-btn:hover {
+  background: var(--ph-bg-sidebar-active);
+  color: var(--ph-text);
+}
+
+/* New-question button gets a slightly elevated style */
+.ph-rail-btn-new {
+  color: var(--ph-green);
+}
+.ph-rail-btn-new:hover {
+  background: var(--ph-green-pill);
+  color: var(--ph-green-dark);
+}
+
+/* ── Right column ── */
+.ph-welcome-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* Top bar — only the pill + upgrade button, flush right */
+.ph-welcome-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.875rem 1.5rem;
+}
+.ph-welcome-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* The top-bar toggle closes the history sidebar, so it sits at the inline
+   start while the plan actions stay flush to the end. */
+.ph-welcome-topbar .ph-chat-topbar-toggle {
+  margin-inline-end: auto;
+}
+
+/* Free plan pill */
+.ph-badge-free {
+  padding: 0.3rem 0.875rem;
+  border-radius: var(--ph-radius-pill);
+  border: 1px solid var(--ph-border);
+  font-size: 0.775rem;
+  color: var(--ph-text-muted);
+  background: var(--ph-bg-card);
+  font-weight: 500;
+}
+
+/* Upgrade button */
+.ph-btn-upgrade {
+  padding: 0.4rem 1.125rem;
+  border-radius: var(--ph-radius-pill);
+  border: none;
+  background: var(--ph-green);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.ph-btn-upgrade:hover {
+  background: var(--ph-green-hover);
+}
+
+/* Center content — vertically centered, takes remaining space */
+.ph-welcome-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem 2rem;
+}
+.ph-welcome-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+}
+.ph-welcome-logo-wrap {
+  margin-bottom: 1.5rem;
+}
+.ph-welcome-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+  color: var(--ph-text);
+}
+.ph-welcome-description {
+  font-size: 0.925rem;
+  color: var(--ph-text-muted);
+  margin: 0 0 1.75rem;
+  line-height: 1.55;
+  max-width: 400px;
+}
+
+/* ── Prompt bar ── */
+.ph-welcome-prompt-wrap {
+  width: 100%;
+  max-width: 560px;
+  margin-bottom: 1.25rem;
+}
+.ph-welcome-prompt-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ph-bg-card);
+  border: 1px solid var(--ph-border-card);
+  border-radius: var(--ph-radius-pill);
+  padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.ph-welcome-prompt-inner:focus-within {
+  border-color: var(--ph-green);
+  box-shadow: 0 0 0 3px rgba(61, 90, 39, 0.08);
+}
+.ph-welcome-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--ph-text);
+  font-family: inherit;
+  min-width: 0;
+}
+.ph-welcome-input::placeholder {
+  color: var(--ph-text-muted);
+}
+.ph-welcome-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ph-green);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  padding: 0;
+}
+.ph-welcome-send:hover:not(:disabled) {
+  background: var(--ph-green-hover);
+}
+.ph-welcome-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Suggestion cards 2×2 grid ── */
+.ph-suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 560px;
+}
+@media (max-width: 520px) {
+  .ph-suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.ph-suggestion-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ph-border-card);
+  border-radius: var(--ph-radius-card);
+  background: var(--ph-bg-card);
+  cursor: pointer;
+  text-align: start;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  font-family: inherit;
+}
+.ph-suggestion-card:hover {
+  border-color: var(--ph-green-pill);
+  box-shadow: 0 2px 8px rgba(61, 90, 39, 0.06);
+}
+.ph-suggestion-label {
+  font-size: 0.675rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ph-green);
+}
+.ph-suggestion-question {
+  font-size: 0.83rem;
+  color: var(--ph-text);
+  line-height: 1.45;
+}
+
+/* ── Footer disclaimer ── */
+.ph-welcome-footer {
+  padding: 0.75rem 1.5rem 1rem;
+  text-align: center;
+}
+.ph-welcome-disclaimer {
+  font-size: 0.7rem;
+  color: var(--ph-text-muted);
+  margin: 0;
+}
+
+/* ─── Pricing page ─────────────────────────────────────────────────────── */
+
+.ph-pricing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ph-bg);
+}
+.ph-pricing-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.ph-pricing-brand {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ph-text);
+}
+.ph-pricing-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.85rem;
+  color: var(--ph-text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.ph-pricing-back:hover {
+  color: var(--ph-text);
+}
+
+.ph-pricing-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.25rem 4rem;
+  text-align: center;
+}
+.ph-pricing-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ph-text-muted);
+  margin-bottom: 0.75rem;
+}
+.ph-pricing-title {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ph-text);
+  margin: 0 0 0.75rem;
+  max-width: 540px;
+}
+.ph-pricing-description {
+  font-size: 0.95rem;
+  color: var(--ph-text-muted);
+  margin: 0 0 2rem;
+  line-height: 1.5;
+  max-width: 460px;
+}
+
+/* Interval toggle */
+.ph-pricing-toggle {
+  display: inline-flex;
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius-pill);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  background: var(--ph-bg);
+}
+.ph-pricing-toggle-btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--ph-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  font-family: inherit;
+}
+.ph-pricing-toggle-active {
+  background: var(--ph-bg-card);
+  color: var(--ph-text);
+  font-weight: 600;
+}
+
+/* Plan cards grid */
+.ph-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 900px;
+}
+@media (max-width: 768px) {
+  .ph-pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 380px;
+  }
+}
+.ph-plan-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ph-border-card);
+  border-radius: var(--ph-radius-card);
+  background: var(--ph-bg-card);
+  padding: 1.5rem;
+  text-align: start;
+}
+.ph-plan-popular {
+  background: var(--ph-green);
+  color: #fff;
+  border-color: var(--ph-green);
+}
+.ph-plan-header {
+  margin-bottom: 1.25rem;
+}
+.ph-plan-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.ph-plan-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+.ph-plan-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--ph-radius-pill);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.ph-plan-description {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  margin: 0 0 0.75rem;
+}
+.ph-plan-price {
+  margin: 0;
+}
+.ph-plan-price-amount {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+.ph-plan-price-period {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* CTA */
+.ph-plan-cta {
+  width: 100%;
+  padding: 0.65rem;
+  border-radius: var(--ph-radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--ph-border);
+  background: transparent;
+  color: var(--ph-text);
+  font-family: inherit;
+}
+.ph-plan-cta:hover {
+  background: var(--ph-bg-sidebar-hover);
+}
+.ph-plan-cta-primary {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: #fff;
+  color: var(--ph-green);
+}
+.ph-plan-cta-primary:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Feature list */
+.ph-plan-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ph-plan-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.ph-plan-check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ph-plan-popular .ph-plan-check {
+  color: #fff;
+}
+
+/* Pricing footer */
+.ph-pricing-footer {
+  text-align: center;
+  padding: 1rem 1.25rem 2rem;
+  font-size: 0.7rem;
+  color: var(--ph-text-muted);
+}
+
+/* ─── Accessibility & reduced motion ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ph-shimmer {
+    animation: none;
+  }
+  .ph-surface * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Chat page ────────────────────────────────────────────────────────── */
+
+/* Root layout: sidebar + main */
+.ph-chat-layout {
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* ── Sidebar ── */
+.ph-chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 210px;
+  flex-shrink: 0;
+  background: var(--ph-bg-sidebar);
+  border-right: 1px solid var(--ph-border);
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+/* The closed panel stays mounted so a host toggle's `aria-controls` resolves,
+   but leaves the layout flow so the closed state keeps its own grid. */
+.ph-chat-sidebar[hidden] {
+  display: none;
+}
+
+/* Empty-history message shown until something has been searched for */
+.ph-sidebar-empty {
+  margin: 0;
+  padding: 0 0.375rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ph-text-muted);
+}
+
+.ph-chat-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.875rem 0.75rem;
+}
+.ph-chat-brand {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ph-text);
+}
+.ph-new-question-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 0.75rem 1rem;
+  padding: 0.55rem 1rem;
+  background: var(--ph-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--ph-radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.ph-new-question-btn:hover {
+  background: var(--ph-green-hover);
+}
+
+.ph-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0.5rem;
+}
+.ph-sidebar-group {
+  margin-bottom: 1rem;
+}
+.ph-sidebar-group-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ph-text-muted);
+  padding: 0 0.375rem 0.375rem;
+}
+.ph-sidebar-convo {
+  display: block;
+  width: 100%;
+  text-align: start;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  color: var(--ph-text-sidebar);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.ph-sidebar-convo:hover {
+  background: var(--ph-bg-sidebar-hover);
+}
+.ph-sidebar-convo-active {
+  background: var(--ph-bg-sidebar-active);
+  font-weight: 500;
+}
+
+/* Upgrade card */
+.ph-upgrade-card {
+  margin: 0.75rem 0.75rem 0;
+  padding: 0.875rem;
+  background: var(--ph-bg-card);
+  border-radius: var(--ph-radius-card);
+  border: 1px solid var(--ph-border-card);
+}
+.ph-upgrade-card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ph-text);
+  margin: 0 0 0.25rem;
+}
+.ph-upgrade-card-desc {
+  font-size: 0.72rem;
+  color: var(--ph-text-muted);
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+.ph-upgrade-card-btn {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--ph-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--ph-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.ph-upgrade-card-btn:hover {
+  background: var(--ph-green-hover);
+}
+
+/* User row */
+.ph-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 0.875rem 0;
+  margin-top: 0.75rem;
+}
+.ph-user-avatar-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ph-green);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.ph-sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+}
+.ph-sidebar-user-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ph-text);
+}
+.ph-sidebar-user-plan {
+  font-size: 0.65rem;
+  color: var(--ph-text-muted);
+}
+
+/* ── Main chat panel ── */
+.ph-chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-width: 0;
+  background: var(--ph-bg);
+}
+
+/* Top bar */
+.ph-chat-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  border-bottom: 1px solid var(--ph-border-card);
+  background: var(--ph-bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.ph-chat-topbar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ph-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.12s,
+    color 0.12s;
+  padding: 0;
+}
+.ph-chat-topbar-toggle:hover {
+  background: var(--ph-bg-sidebar-hover);
+  color: var(--ph-text);
+}
+.ph-chat-topbar-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ph-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Messages scroll area */
+.ph-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+@media (max-width: 640px) {
+  .ph-chat-messages {
+    padding: 1rem 1rem 0.75rem;
+  }
+}
+
+/* Empty state */
+.ph-chat-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 4rem 1rem;
+}
+.ph-chat-empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ph-text);
+  margin: 0;
+}
+.ph-chat-empty-desc {
+  font-size: 0.85rem;
+  color: var(--ph-text-muted);
+  margin: 0;
+}
+
+/* User bubble */
+.ph-msg-user-row {
+  display: flex;
+  justify-content: flex-end;
+}
+.ph-msg-user-bubble {
+  max-width: 72%;
+  background: var(--ph-bg-card);
+  border: 1px solid var(--ph-border-card);
+  border-radius: 18px 18px 4px 18px;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ph-text);
+  line-height: 1.5;
+}
+
+/* Assistant message */
+.ph-msg-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Answer headline */
+.ph-answer-headline {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.ph-answer-dot {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.ph-answer-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ph-text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Tags row */
+.ph-answer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ph-answer-tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--ph-radius-pill);
+  border: 1px solid var(--ph-border);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ph-text-muted);
+  background: var(--ph-bg-card);
+}
+
+/* Body text */
+.ph-answer-body {
+  font-size: 0.875rem;
+  color: var(--ph-text);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Sources */
+.ph-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ph-sources-heading {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ph-text-muted);
+  margin: 0;
+}
+.ph-sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--ph-border-card);
+  border-radius: var(--ph-radius-card);
+  overflow: hidden;
+  background: var(--ph-bg-card);
+}
+.ph-source-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.875rem;
+  border-bottom: 1px solid var(--ph-border-card);
+  font-size: 0.8rem;
+}
+.ph-source-row:last-child {
+  border-bottom: none;
+}
+.ph-source-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--ph-border);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--ph-text-muted);
+  flex-shrink: 0;
+}
+.ph-source-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.ph-source-name {
+  font-weight: 600;
+  color: var(--ph-text);
+  font-size: 0.8rem;
+}
+.ph-source-excerpt {
+  font-size: 0.72rem;
+  color: var(--ph-text-muted);
+}
+.ph-source-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.ph-source-not-retained {
+  font-size: 0.65rem;
+  color: var(--ph-text-muted);
+}
+.ph-source-date {
+  font-size: 0.65rem;
+  color: var(--ph-text-muted);
+}
+
+/* Source tag badges */
+.ph-source-tag {
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.ph-source-tag-official {
+  background: var(--ph-green);
+  color: #fff;
+}
+.ph-source-tag-foreign {
+  background: #e8e8e0;
+  color: var(--ph-text-muted);
+}
+.ph-source-tag-differs {
+  background: #f3e8e0;
+  color: var(--ph-badge-differs);
+}
+
+/* Patient context */
+.ph-patient-context {
+  font-size: 0.75rem;
+  color: var(--ph-text-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Action buttons */
+.ph-answer-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+.ph-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ph-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.ph-action-btn:hover {
+  background: var(--ph-bg-sidebar-hover);
+  color: var(--ph-text);
+}
+
+/* Follow-up questions */
+.ph-followups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ph-followups-heading {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ph-text-muted);
+  margin: 0;
+}
+.ph-followup-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--ph-border-card);
+  border-radius: var(--ph-radius-card);
+  background: var(--ph-bg-card);
+  font-size: 0.82rem;
+  color: var(--ph-text);
+  cursor: pointer;
+  text-align: start;
+  font-family: inherit;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.ph-followup-btn:hover {
+  border-color: var(--ph-green-pill);
+  box-shadow: 0 1px 4px rgba(61, 90, 39, 0.05);
+}
+
+/* Streaming indicator */
+.ph-streaming {
+  font-size: 0.8rem;
+  color: var(--ph-text-muted);
+  padding: 0.5rem 0;
+}
+
+/* ── Input area (bottom) ── */
+.ph-chat-input-area {
+  padding: 0.875rem 2.5rem 1rem;
+  background: var(--ph-bg);
+  border-top: 1px solid var(--ph-border-card);
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+@media (max-width: 640px) {
+  .ph-chat-input-area {
+    padding: 0.75rem 1rem;
+  }
+}
+.ph-chat-input-wrap {
+  width: 100%;
+}
+.ph-chat-input-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ph-bg-card);
+  border: 1px solid var(--ph-border-card);
+  border-radius: var(--ph-radius-pill);
+  padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.ph-chat-input-inner:focus-within {
+  border-color: var(--ph-green);
+  box-shadow: 0 0 0 3px rgba(61, 90, 39, 0.08);
+}
+.ph-chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: var(--ph-text);
+  font-family: inherit;
+  min-width: 0;
+}
+.ph-chat-input::placeholder {
+  color: var(--ph-text-muted);
+}
+.ph-chat-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ph-green);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  padding: 0;
+}
+.ph-chat-send:hover:not(:disabled) {
+  background: var(--ph-green-hover);
+}
+.ph-chat-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ph-chat-disclaimer {
+  font-size: 0.65rem;
+  color: var(--ph-text-muted);
+  text-align: center;
+  margin: 0.5rem 0 0;
+}
