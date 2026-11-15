@@ -7,21 +7,17 @@ import { WorkspaceSidebar } from "@/components/workspace-sidebar";
 import { WorkspaceNavigationTrigger } from "@/components/workspace-navigation-trigger";
 
 import { useAppShell } from "./use-app-shell";
+import { appShellMode } from "./shell-mode";
 
 export function AppShell({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { identity, pathname, section, onNavigate, onSignOut } = useAppShell();
   const t = useSurfaceTranslations("header");
   const workspace = section !== undefined;
   const navigationProps = { pathname, identity };
-  // The assistant and plans surfaces own the full canvas.
-  if (
-    pathname === "/agent" ||
-    pathname.startsWith("/agent/") ||
-    pathname === "/plans" ||
-    pathname.startsWith("/plans/")
-  ) {
-    return <div className="min-h-dvh">{children}</div>;
+  if (appShellMode(pathname) === "immersive") {
+    return <div className="min-h-dvh bg-background text-foreground">{children}</div>;
   }
+
   return (
     <div className="min-h-dvh">
       {workspace ? <WorkspaceSidebar {...navigationProps} /> : null}

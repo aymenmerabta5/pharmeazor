@@ -754,65 +754,118 @@
     "fr": "Français",
     "ar": "Arabe"
   },
-  "marketing": {
-    "heroSubtitle": "Un socle clair pour votre prochaine application, avec un design commun et les fonctionnalités de votre choix.",
-    "ctaSignUp": "S'inscrire",
-    "ctaSignIn": "Se connecter",
-    "hero": {
-      "eyebrow": "Votre application commence ici",
-      "title": "Votre prochaine idée,",
-      "titleAccent": "déjà bien partie.",
-      "descriptionNext": "Un socle Next.js avec les outils nécessaires à votre projet, prêt à devenir le vôtre.",
-      "descriptionTanstack": "Un socle TanStack Start avec les outils nécessaires à votre projet, prêt à devenir le vôtre.",
-      "primaryCta": "S'inscrire",
-      "secondaryCta": "Voir le code"
-    },
-    "preview": {
-      "title": "Votre projet en un regard",
-      "routes": "Routes",
-      "components": "Composants",
-      "design": "Système de design",
-      "server": "Code serveur",
-      "database": "Schéma de données",
-      "agent": "Agent",
-      "source": "Le code est à vous. À vous de le façonner.",
-      "canvas": "Fond",
-      "surface": "Surface",
-      "accent": "Accent",
-      "footerNavigation": "Navigation de pied de page"
-    },
-    "features": {
-      "title": "Un socle pour aller plus loin.",
-      "description": "Une structure claire, des détails soignés et de la place pour évoluer. La suite vous appartient.",
-      "architectureTitle": "Chaque chose à sa place",
-      "architectureDescription": "Applications, paquets partagés et règles métier ont leurs responsabilités, avec des contrôles pour maintenir leurs limites.",
-      "scaffoldTitle": "Un point de départ",
-      "apiTitle": "Des échanges bien définis",
-      "apiDescriptionNext": "Les appels oRPC typés relient votre interface aux opérations de l’application.",
-      "apiDescriptionTanstack": "Les appels oRPC typés relient votre interface aux opérations de l’application.",
-      "billingTitle": "Une facturation adaptée",
-      "billingDescription": "Vos prestataires sélectionnés partagent des parcours cohérents de paiement et de gestion du compte."
-    },
-    "footer": {
-      "tagline": "Créé avec pharmeazor. À vous de le façonner.",
-      "signIn": "Se connecter",
-      "billing": "Facturation"
-    },
-    "single": {
-      "signIn": "Se connecter",
-      "flatTitle": "Un projet, une structure claire",
-      "flatDescriptionNext": "Routes, composants réutilisables et modules serveur sélectionnés trouvent leur place dans une seule arborescence.",
-      "flatDescriptionTanstack": "Routes, composants réutilisables et modules serveur sélectionnés trouvent leur place dans une seule arborescence.",
-      "authTitle": "Un compte facile à prendre en main",
-      "authDescriptionNext": "Connectez-vous, gérez votre profil et protégez votre compte.",
-      "authDescriptionTanstack": "Connectez-vous, gérez votre profil et protégez votre compte.",
-      "billingTitle": "Une facturation adaptée",
-      "billingDescription": "Vos prestataires sélectionnés partagent des parcours cohérents de paiement et de gestion du compte.",
-      "tokensTitle": "Un design cohérent, dans chaque détail",
-      "tokensDescription": "Couleurs, typographie et contrôles communs relient tous les écrans. En mode clair comme en mode sombre.",
-      "quickStartTitle": "Démarrage rapide",
-      "quickStartDescriptionNext": "Ouvrez votre projet, installez ses dépendances et commencez à créer.",
-      "quickStartServices": "Votre README explique comment configurer les services sélectionnés."
+  "welcome": {
+    "title": "Que souhaitez-vous vérifier aujourd'hui ?",
+    "description": "Posez une question sur un médicament, une interaction ou un équivalent. Chaque réponse cite sa source.",
+    "inputLabel": "Votre question",
+    "inputPlaceholder": "Posez une question sur un médicament, une interaction, un équivalent…",
+    "send": "Envoyer",
+    "sending": "Envoi en cours",
+    "freePlan": "Offre gratuite",
+    "upgrade": "Mettre à niveau",
+    "disclaimer": "Pharmeazor recherche et vérifie les informations. Il ne prescrit ni ne diagnostique.",
+    "navLibrary": "Bibliothèque",
+    "navNewQuestion": "Nouvelle question",
+    "navHistory": "Historique",
+    "navAssistant": "Assistant",
+    "suggestions": {
+      "interactions": {
+        "label": "Interactions",
+        "question": "Puis-je associer deux médicaments, et quel est le niveau ?"
+      },
+      "equivalents": {
+        "label": "Équivalents",
+        "question": "Quels équivalents enregistrés existent si un médicament est indisponible ?"
+      },
+      "dosage": {
+        "label": "Posologie",
+        "question": "Que dit la notice sur la posologie et les dosages disponibles ?"
+      },
+      "safety": {
+        "label": "Sécurité",
+        "question": "Quelles précautions s'appliquent à un profil patient donné ?"
+      }
+    }
+  },
+  "chat": {
+    "title": "Conversation de vérification",
+    "conversationLabel": "Conversation",
+    "newQuestion": "Nouvelle question",
+    "today": "Aujourd'hui",
+    "earlier": "Plus tôt",
+    "upgradeTitle": "Passer à Pro",
+    "upgradeDescription": "Plus de questions, l'historique complet des sources et les exports.",
+    "seePlans": "Voir les offres",
+    "freePlan": "Offre gratuite",
+    "userRole": "Pharmacien",
+    "sourcesHeading": "Sources",
+    "sourceCount": "Sources · {count}",
+    "sourceOfficial": "Officielle",
+    "sourceForeign": "Étrangère",
+    "sourceDiffers": "Différente",
+    "sourceRetained": "non retenue",
+    "patientContext": "Contexte patient non évalué. La décision reste la vôtre.",
+    "followUpHeading": "Questions de suivi",
+    "copyAnswer": "Copier la réponse",
+    "markHelpful": "Marquer comme utile",
+    "regenerate": "Régénérer la réponse",
+    "disclaimer": "Pharmeazor recherche et vérifie les informations. Il ne prescrit ni ne diagnostique.",
+    "inputLabel": "Votre question",
+    "inputPlaceholder": "Posez une question sur un médicament, une interaction, un équivalent…",
+    "send": "Envoyer",
+    "sending": "Envoi en cours",
+    "streaming": "Vérification des sources…",
+    "emptyTitle": "Que souhaitez-vous vérifier aujourd'hui ?",
+    "emptyDescription": "Posez une question sur un médicament, une interaction ou un équivalent. Chaque réponse cite sa source."
+  },
+  "pricing": {
+    "eyebrow": "Offres",
+    "title": "Des réponses vérifiées, à la mesure de votre pharmacie",
+    "description": "Chaque réponse cite sa source. Choisissez l'offre qui correspond à votre façon de travailler.",
+    "monthly": "Mensuel",
+    "yearly": "Annuel · économies",
+    "currentPlan": "Offre actuelle",
+    "upgradeToPro": "Passer à Pro",
+    "contactUs": "Nous contacter",
+    "mostPopular": "La plus populaire",
+    "disclaimer": "Les prix affichés sont des exemples. Pharmeazor recherche et vérifie les informations ; il ne prescrit ni ne diagnostique.",
+    "backToChat": "Retour à la conversation",
+    "perMonth": "/ mois",
+    "plans": {
+      "free": {
+        "name": "Gratuit",
+        "description": "Pour les étudiants qui débutent",
+        "price": "0 DA",
+        "features": {
+          "citations": "Questions directes avec citations",
+          "dailyLimit": "Limite de questions quotidiennes",
+          "sources": "Sources officielles et secondaires",
+          "scope": "Refus hors périmètre"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Pour les pharmaciens en officine",
+        "price": "1 500 DA",
+        "features": {
+          "unlimited": "Questions illimitées",
+          "crossSource": "Réponses multi-sources et selon le patient",
+          "disagreement": "Détection des désaccords entre sources",
+          "prescription": "Revue d'ordonnance",
+          "export": "Export des réponses avec leurs sources"
+        }
+      },
+      "pharmacy": {
+        "name": "Pharmacie",
+        "description": "Pour les équipes et les établissements",
+        "price": "Sur mesure",
+        "features": {
+          "everything": "Tout le plan Pro",
+          "seats": "Plusieurs postes",
+          "noticeTracking": "Suivi des versions de notices",
+          "support": "Support prioritaire"
+        }
+      }
     }
   },
   "settings": {
@@ -1074,14 +1127,14 @@
     }
   },
   "metadata": {
-    "siteTitle": "Application pharmeazor",
-    "siteDescription": "Un socle clair pour votre prochaine application.",
-    "marketingTitle": "pharmeazor - Votre prochaine application",
-    "marketingDescription": "Une structure claire, un design commun et les fonctionnalités de votre choix.",
+    "siteTitle": "Pharmeazor",
+    "siteDescription": "Des réponses vérifiées pour votre pharmacie.",
+    "marketingTitle": "Pharmeazor - des réponses vérifiées pour votre pharmacie",
+    "marketingDescription": "Posez une question sur un médicament, une interaction ou un équivalent. Chaque réponse cite sa source.",
     "signInTitle": "Se connecter",
-    "signInDescription": "Connectez-vous à votre compte pharmeazor.",
+    "signInDescription": "Connectez-vous à votre compte Pharmeazor.",
     "signUpTitle": "Créer un compte",
-    "signUpDescription": "Créez votre compte pharmeazor.",
+    "signUpDescription": "Créez votre compte Pharmeazor.",
     "twoFactorTitle": "Authentification à deux facteurs",
     "twoFactorDescription": "Vérifiez votre identité avec un code TOTP.",
     "forgotPasswordTitle": "Mot de passe oublié",
@@ -1089,16 +1142,16 @@
     "resetPasswordTitle": "Réinitialiser le mot de passe",
     "resetPasswordDescription": "Choisissez un nouveau mot de passe pour votre compte.",
     "dashboardTitle": "Tableau de bord",
-    "dashboardDescription": "Gérez votre espace de travail pharmeazor.",
+    "dashboardDescription": "Gérez votre espace de travail Pharmeazor.",
     "settingsTitle": "Paramètres",
     "settingsDescription": "Gérez votre compte, la sécurité et les sessions actives.",
     "notFoundTitle": "Page introuvable",
     "errorTitle": "Erreur de l'application",
     "maintenanceTitle": "Maintenance",
-    "maintenanceDescription": "pharmeazor est temporairement indisponible pendant l'application de modifications.",
-    "manifestName": "Application pharmeazor",
-    "manifestShortName": "pharmeazor",
-    "manifestDescription": "Votre monolithe modulaire structuré."
+    "maintenanceDescription": "Pharmeazor est temporairement indisponible pendant l'application des changements.",
+    "manifestName": "Pharmeazor",
+    "manifestShortName": "Pharmeazor",
+    "manifestDescription": "Des réponses vérifiées pour votre pharmacie."
   },
   "billing": {
     "subscriptionStatusActive": "Actif",
