@@ -2,7 +2,7 @@
 import { useAppForm, useStore } from "@/components/ui/form";
 import { useAgentSession } from "./queries";
 import { sendAgentPrompt } from "./mutations";
-import { conversationTitle } from "./model";
+import { conversationTitle, lastUserText } from "./model";
 
 export function useAgentConversation() {
   const agent = useAgentSession();
@@ -10,6 +10,15 @@ export function useAgentConversation() {
   // assistant message Eve is still streaming.
   const busy = agent.status !== "idle";
   const streaming = agent.messages.some((message) => message.metadata?.status === "streaming");
+  const send = async (text: string): Promise<void> => {
+    const trimmed = text.trim();
+    if (!trimmed || busy) return;
+    try {
+      await sendAgentPrompt(agent, trimmed);
+    } catch {
+      /* Eve owns the stream error shown by the feature. */
+    }
+  };
   const form = useAppForm({
     defaultValues: { input: "" },
     onSubmit: async ({ value }): Promise<void> => {
@@ -35,6 +44,14 @@ export function useAgentConversation() {
     },
     draftSuggestion: (question: string) => {
       form.setFieldValue("input", question);
+    },
+    ask: (question: string) => {
+      form.reset();
+      void send(question);
+    },
+    retry: () => {
+      const question = lastUserText(agent.messages);
+      if (question) void send(question);
     },
     newChat: () => {
       agent.newSession();

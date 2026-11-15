@@ -36,7 +36,17 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>{t("signIn.errorTitle")}</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}{" "}
+              {state.needsVerification ? (
+                <Link
+                  href="/verify-email"
+                  className="font-medium underline underline-offset-4 hover:text-destructive/80"
+                >
+                  {t("signIn.verifyEmail")}
+                </Link>
+              ) : null}
+            </AlertDescription>
           </Alert>
         ) : null}
         <SignInMethods state={methods} />

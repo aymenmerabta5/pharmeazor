@@ -13,8 +13,13 @@ export function AppShell({ children }: { children: React.ReactNode }): React.JSX
   const t = useSurfaceTranslations("header");
   const workspace = section !== undefined;
   const navigationProps = { pathname, identity };
-  // The assistant owns the full canvas: its rail replaces the workspace chrome.
-  if (pathname === "/agent" || pathname.startsWith("/agent/")) {
+  // The assistant and plans surfaces own the full canvas.
+  if (
+    pathname === "/agent" ||
+    pathname.startsWith("/agent/") ||
+    pathname === "/plans" ||
+    pathname.startsWith("/plans/")
+  ) {
     return <div className="min-h-dvh">{children}</div>;
   }
   return (

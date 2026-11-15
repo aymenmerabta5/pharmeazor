@@ -16,6 +16,7 @@ export function useAgentAccount() {
   const planId = active?.planId ?? null;
   return {
     initials: accountInitials(auth.user),
+    name: auth.user?.name ?? auth.user?.email ?? null,
     planName: planDisplayName(planId),
     planPending: auth.isPending || billing.isLoading,
   };

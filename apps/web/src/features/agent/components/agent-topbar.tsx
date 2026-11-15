@@ -40,7 +40,7 @@ export function AgentTopbar({
       </Link>
       <Button
         className="h-10 rounded-xl px-5 text-sm font-semibold"
-        render={<Link href="/billing" />}
+        render={<Link href="/plans" />}
         nativeButton={false}
       >
         {planName ? t("managePlan") : t("upgrade")}

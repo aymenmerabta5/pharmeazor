@@ -8,3 +8,8 @@ export function isIdentityRecentAuthenticationError(error: unknown): boolean {
   const code = Reflect.get(error, "code");
   return code === "SESSION_NOT_FRESH" || code === "SESSION_EXPIRED";
 }
+
+export function isEmailNotVerifiedError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  return Reflect.get(error, "code") === "EMAIL_NOT_VERIFIED";
+}

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useAppForm } from "@/components/ui/form";
 import { createSignInSchema } from "@/lib/auth-validation";
+import { isEmailNotVerifiedError } from "@/lib/auth-model";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { signInWithEmail } from "./mutations";
 import { useAuthIntent } from "./use-auth-intent";
@@ -13,6 +14,7 @@ export function useSignInForm() {
   const navigation = useAuthNavigation();
   const t = useSurfaceTranslations("auth");
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const methods = useAuthMethods(intent, "signIn", () => setError(null));
   const form = useAppForm({
     defaultValues: { email: "", password: "" },
@@ -28,12 +30,18 @@ export function useSignInForm() {
       const ticket = intent.begin();
       if (!ticket) return;
       setError(null);
+      setNeedsVerification(false);
       methods.reset();
       try {
         const result = await signInWithEmail(value);
         if (!ticket.isCurrent()) return;
         if (result.error) {
-          setError(t("signIn.genericError"));
+          if (isEmailNotVerifiedError(result.error)) {
+            setNeedsVerification(true);
+            setError(t("signIn.emailNotVerified"));
+          } else {
+            setError(t("signIn.genericError"));
+          }
           return;
         }
         const data = result.data;
@@ -50,5 +58,5 @@ export function useSignInForm() {
       }
     },
   });
-  return { form, error, methods };
+  return { form, error, needsVerification, methods };
 }

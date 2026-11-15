@@ -28,6 +28,7 @@ export const PROTECTED_PATHS = [
   "/agent",
   "/dashboard",
   "/onboarding",
+  "/plans",
   "/profile",
   "/admin",
   "/settings",

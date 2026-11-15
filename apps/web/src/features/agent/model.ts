@@ -71,6 +71,72 @@ export function messageText(message: AgentMessageLike): string {
     .trim();
 }
 
+export interface AgentSource {
+  readonly key: string;
+  readonly label: string;
+  readonly url: string;
+  readonly host: string;
+}
+
+const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
+const bareUrlPattern = /https?:\/\/[^\s<>()"']+/g;
+
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+/** Extract the links an answer cites, without inventing provenance. */
+export function extractSources(text: string): AgentSource[] {
+  const sources = new Map<string, AgentSource>();
+  for (const match of text.matchAll(markdownLinkPattern)) {
+    const url = match[2];
+    if (!url || sources.has(url)) continue;
+    const label = match[1]?.trim() || sourceHost(url);
+    sources.set(url, { key: url, label, url, host: sourceHost(url) });
+  }
+  for (const url of text.match(bareUrlPattern) ?? []) {
+    if (sources.has(url)) continue;
+    sources.set(url, { key: url, label: sourceHost(url), url, host: sourceHost(url) });
+  }
+  return [...sources.values()].slice(0, 8);
+}
+
+/** Hide raw Markdown links and bare URLs; the source list carries those links. */
+export function answerDisplayText(text: string): string {
+  return text
+    .replace(markdownLinkPattern, "$1")
+    .replace(bareUrlPattern, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+/** Split an answer into the headline sentence and the supporting text. */
+export function answerSections(text: string): { headline: string; body: string } {
+  const display = answerDisplayText(text);
+  if (!display) return { headline: "", body: "" };
+  const firstParagraph = display.split(/\n{2,}/)[0]?.trim() ?? display;
+  const sentence = firstParagraph.match(/^(.{1,120}?[.!?])(?:\s|$)/)?.[1];
+  const headline =
+    sentence ??
+    (firstParagraph.length > 120 ? firstParagraph.slice(0, 117).trimEnd() + "…" : firstParagraph);
+  const body = display.startsWith(headline) ? display.slice(headline.length).trim() : display;
+  return { headline, body };
+}
+
+export function userMessages(messages: readonly AgentMessageLike[]): AgentMessageLike[] {
+  return messages.filter((message) => message.role === "user");
+}
+
+export function lastUserText(messages: readonly AgentMessageLike[]): string | null {
+  const users = userMessages(messages);
+  const text = users.length > 0 ? messageText(users[users.length - 1]!) : "";
+  return text || null;
+}
+
 /** The first user question, shortened for the conversation history entry. */
 export function conversationTitle(
   messages: readonly AgentMessageLike[],
@@ -80,5 +146,6 @@ export function conversationTitle(
   if (!question) return null;
   const text = messageText(question).replace(/\s+/g, " ").trim();
   if (!text) return null;
-  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trimEnd()}…` : text;
+  const sentence = text.match(/^(.{1,80}?[.!?])(?:\s|$)/)?.[1] ?? text;
+  return sentence.length > maxLength ? `${sentence.slice(0, maxLength - 1).trimEnd()}…` : sentence;
 }
