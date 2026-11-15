@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+tmp_inspect*.py
+
+# Generated corpus. It is reproducible with `python run.py`; remove this line
+# if you deliberately want to commit the 40 MB deliverable.
+output/
