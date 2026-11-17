@@ -44,6 +44,7 @@ const sheetVariants = cva(
         start:
           "inset-y-0 start-0 h-full w-3/4 border-e data-[closed]:slide-out-to-left data-[open]:slide-in-from-left rtl:data-[closed]:slide-out-to-right rtl:data-[open]:slide-in-from-right sm:max-w-sm",
         end: "inset-y-0 end-0 h-full w-3/4 border-s data-[closed]:slide-out-to-right data-[open]:slide-in-from-right rtl:data-[closed]:slide-out-to-left rtl:data-[open]:slide-in-from-left sm:max-w-sm",
+        full: "inset-0 h-full w-full border-0 data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:slide-out-to-bottom-6 data-[open]:slide-in-from-bottom-6",
       },
     },
     defaultVariants: {

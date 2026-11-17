@@ -203,7 +203,7 @@ they are different jurisdictions.
 - Removes the DailyMed highlights summary and the full-PI contents block, keeping
   one copy of the full PI.
 - Cuts the DailyMed packaging tail (`Package Description`, `Principal Display
-Panel`, repeated `Product Information` blocks).
+  Panel`, repeated `Product Information` blocks).
 - Rejoins PDF hyphenation and hard-wrapped lines into paragraphs.
 - Repairs BDPM drop caps (`C hez` → `Chez`, `I nsuffisance` → `Insuffisance`)
   without treating a leading `I`/`C` as a Roman section number.

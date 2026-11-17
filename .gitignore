@@ -58,6 +58,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Local design-tool artifacts (the taste checker writes a Chrome profile here)
+.taste-skill/
+
 # GhostInit internal state
 # The project manifest is committed. Every generator command needs it to know
 # which files it owns, so a fresh checkout has to be able to run the pinned
@@ -67,3 +70,4 @@ Thumbs.db
 /apps/*/.ghostinit/
 /.ghostinit-staging/
 /.ghostinit.lock
+dependency-lock-evidence.json

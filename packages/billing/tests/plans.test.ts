@@ -3,6 +3,7 @@ import {
   BILLING_PLAN_IDS,
   BILLING_USD_DZD_RATE,
   DEFAULT_BILLING_PLANS,
+  DEFAULT_BILLING_PLAN_PRICES,
   DEFAULT_BILLING_PRICES,
   addBillingInterval,
   billingPeriodRemainingDays,
@@ -12,11 +13,34 @@ import {
 } from "../src/domain/plans";
 
 describe("billing plans", () => {
-  it("offers the three tiers this application sells", () => {
-    expect(BILLING_PLAN_IDS).toEqual(["basic", "standard", "pro"]);
-    expect(DEFAULT_BILLING_PLANS.map((plan) => plan.id)).toEqual(["basic", "standard", "pro"]);
-    expect(DEFAULT_BILLING_PLANS.every((plan) => plan.interval === "month")).toBe(true);
+  it("offers three tiers on two billing periods", () => {
+    expect(BILLING_PLAN_IDS).toEqual([
+      "basic",
+      "basic-yearly",
+      "standard",
+      "standard-yearly",
+      "pro",
+      "pro-yearly",
+    ]);
+    expect(DEFAULT_BILLING_PLANS.map((plan) => plan.id)).toEqual([...BILLING_PLAN_IDS]);
+    const monthly = DEFAULT_BILLING_PLANS.filter((plan) => plan.interval === "month");
+    const yearly = DEFAULT_BILLING_PLANS.filter((plan) => plan.interval === "year");
+    expect(monthly.map((plan) => plan.id)).toEqual(["basic", "standard", "pro"]);
+    expect(yearly.map((plan) => plan.id)).toEqual([
+      "basic-yearly",
+      "standard-yearly",
+      "pro-yearly",
+    ]);
     expect(DEFAULT_BILLING_PLANS.every((plan) => plan.intervalCount === 1)).toBe(true);
+  });
+
+  it("prices a year at ten months so the yearly plan saves two months", () => {
+    for (const tier of ["basic", "standard", "pro"]) {
+      const monthly = DEFAULT_BILLING_PLAN_PRICES.find((entry) => entry.planId === tier);
+      const yearly = DEFAULT_BILLING_PLAN_PRICES.find((entry) => entry.planId === `${tier}-yearly`);
+      expect(monthly).toBeDefined();
+      expect(yearly?.usdAmountMinor).toBe((monthly?.usdAmountMinor ?? 0) * 10);
+    }
   });
 
   it("prices every tier on every rail", () => {

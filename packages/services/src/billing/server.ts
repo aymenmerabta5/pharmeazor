@@ -6,6 +6,7 @@ export {
   createPortalSessionService,
   createBillingPlanCatalog,
   createSubscriptionLifecycle,
+  purchasePlanWithBalanceService,
   validateBillingRedirectUrl,
 } from "./index";
 export { billingCustomerRepository } from "./billing-customer.repository";

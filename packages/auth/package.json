@@ -15,16 +15,16 @@
     "format:check": "oxfmt --check ."
   },
   "dependencies": {
-    "@better-auth/core": "1.7.7",
-    "@better-auth/expo": "1.7.7",
-    "@better-auth/passkey": "1.7.7",
+    "@better-auth/core": "1.7.25",
+    "@better-auth/expo": "1.7.25",
+    "@better-auth/passkey": "1.7.25",
     "@repo/config": "workspace:*",
     "@repo/database": "workspace:*",
     "@repo/email": "workspace:*",
-    "better-auth": "1.7.7"
+    "better-auth": "1.7.25"
   },
   "devDependencies": {
-    "@types/node": "24.19.1",
+    "@types/node": "24.19.2",
     "typescript": "7.0.2"
   }
 }

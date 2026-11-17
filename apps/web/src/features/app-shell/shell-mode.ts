@@ -8,7 +8,7 @@
  */
 export type AppShellMode = "workspace" | "immersive";
 
-const IMMERSIVE_PATHS = new Set(["/", "/agent", "/plans", "/pricing"]);
+const IMMERSIVE_PATHS = new Set(["/", "/agent", "/pricing"]);
 
 export function appShellMode(pathname: string): AppShellMode {
   const normalized = pathname.replace(/\/+$/, "") || "/";

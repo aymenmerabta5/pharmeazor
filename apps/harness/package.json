@@ -1,0 +1,47 @@
+{
+  "name": "pharmeazor-eve",
+  "version": "0.1.0",
+  "private": true,
+  "description": "pharmeazor durable backend agent via eve@1.0 filesystem-first framework",
+  "type": "module",
+  "imports": {
+    "#*": "./agent/*",
+    "#evals/*": "./evals/*"
+  },
+  "scripts": {
+    "build": "eve build",
+    "dev:diagnostic": "node ../../scripts/eve-dev.mjs",
+    "start:diagnostic": "node .output/server/index.mjs",
+    "typecheck": "bun check",
+    "test": "bun test",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "@ai-sdk/groq": "4.0.84",
+    "@repo/config": "workspace:*",
+    "@repo/contracts": "workspace:*",
+    "@repo/database": "workspace:*",
+    "@repo/kernel": "workspace:*",
+    "@repo/modules": "workspace:*",
+    "@repo/workflows": "workspace:*",
+    "@vercel/connect": "2.9.4",
+    "ai": "7.0.173",
+    "eve": "1.0.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "oxfmt": "0.79.0",
+    "oxlint": "1.94.0",
+    "typescript": "7.0.2"
+  },
+  "overrides": {
+    "ai": "7.0.173"
+  },
+  "engines": {
+    "node": "24.19.0"
+  },
+  "packageManager": "bun@1.4.4"
+}

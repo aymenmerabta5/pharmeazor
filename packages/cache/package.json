@@ -12,10 +12,10 @@
     "format:check": "oxfmt --check ."
   },
   "dependencies": {
-    "@upstash/redis": "1.39.0"
+    "@upstash/redis": "1.41.0"
   },
   "devDependencies": {
-    "@types/node": "24.19.1",
+    "@types/node": "24.19.2",
     "bun-types": "1.4.4",
     "typescript": "7.0.2"
   }

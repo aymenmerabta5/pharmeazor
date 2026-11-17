@@ -4,7 +4,21 @@ import { useManualPayments } from "./use-manual-payments";
 import { useManualWebHandoff } from "./use-manual-web-handoff";
 import type { ManualPaymentCopy } from "./types";
 import { usePlatformI18n, useTranslations } from "@/lib/i18n";
-export function ManualMobilePayments(): React.JSX.Element {
+
+/**
+ * The transfer top-up panel.
+ *
+ * On the wallet the balance is already the hero, so the embedded panel hides
+ * its own copy of the same number and keeps the instructions, receipt handoff,
+ * and payment history.
+ */
+export function ManualMobilePayments({
+  showBalance = true,
+  copyOverride,
+}: {
+  showBalance?: boolean;
+  copyOverride?: Partial<ManualPaymentCopy>;
+} = {}): React.JSX.Element {
   const t = useTranslations("billing");
   const locale = usePlatformI18n().locale;
   const payments = useManualPayments();
@@ -26,6 +40,7 @@ export function ManualMobilePayments(): React.JSX.Element {
     rejected: t("manualRejected"),
     pending: t("manualPending"),
     refresh: t("refresh"),
+    ...copyOverride,
   };
   return (
     <ManualPaymentCard
@@ -44,6 +59,7 @@ export function ManualMobilePayments(): React.JSX.Element {
       opening={handoff.pending}
       openError={handoff.error}
       onOpen={handoff.open}
+      showBalance={showBalance}
     />
   );
 }

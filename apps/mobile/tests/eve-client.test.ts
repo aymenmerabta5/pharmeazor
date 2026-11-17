@@ -101,14 +101,14 @@ describe("Eve platform client", () => {
     expect(updates[0]).toBe("Hi");
     expect(updates.at(-1)).toBe("Hi there");
     expect(requests[0]).toEqual({
-      path: "/api/agent/eve/v1/session",
+      path: "/api/agent/harness/v1/session",
       body: JSON.stringify({ message: "Hello" }),
       method: "POST",
     });
     expect(requests[1]?.path).toBe(
-      "/api/agent/eve/v1/session/wrun_platform/stream?startIndex=0&includeTailIndex=1",
+      "/api/agent/harness/v1/session/wrun_platform/stream?startIndex=0&includeTailIndex=1",
     );
-    expect(requests.every(({ path }) => path.startsWith("/api/agent/eve/v1/"))).toBe(true);
+    expect(requests.every(({ path }) => path.startsWith("/api/agent/harness/v1/"))).toBe(true);
   });
 
   test("restarts a retired session instead of failing every later turn", async () => {
@@ -142,10 +142,10 @@ describe("Eve platform client", () => {
       { sessionId: "wrun_stale", nextIndex: 42 },
       { timeoutMs: 1_000 },
     );
-    expect(requests[0]?.path).toBe("/api/agent/eve/v1/session/wrun_stale");
-    expect(requests[1]?.path).toBe("/api/agent/eve/v1/session");
+    expect(requests[0]?.path).toBe("/api/agent/harness/v1/session/wrun_stale");
+    expect(requests[1]?.path).toBe("/api/agent/harness/v1/session");
     expect(requests[2]?.path).toBe(
-      "/api/agent/eve/v1/session/wrun_fresh/stream?startIndex=0&includeTailIndex=1",
+      "/api/agent/harness/v1/session/wrun_fresh/stream?startIndex=0&includeTailIndex=1",
     );
     expect(result).toEqual({
       message: "Hi there",

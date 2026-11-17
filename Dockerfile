@@ -26,7 +26,7 @@ RUN test -f apps/web/.next/BUILD_ID || { \
       echo "Run 'bun --env-file=.env.local scripts/build-deployment.mjs' before building the image." >&2; \
       exit 1; \
     }; \
-    test -f apps/eve/.output/server/index.mjs || { \
+    test -f apps/harness/.output/server/index.mjs || { \
       echo "The Eve agent was not built." >&2; \
       echo "Run 'bun --env-file=.env.local scripts/build-deployment.mjs' before building the image." >&2; \
       exit 1; \
@@ -64,7 +64,7 @@ STOPSIGNAL SIGTERM
 ENV STORAGE_DRIVER=s3
 COPY --from=base --chown=1000:1000 /app ./
 # PDF admission is process-local. Run exactly one web replica unless you replace it with a shared transactional adapter.
-RUN mkdir -p /app/apps/web/.next/cache /app/apps/web/.next/server/app /app/apps/web/.next/server/pages /app/data/uploads /app/apps/eve/.eve /app/apps/eve/.eve/.workflow-data && chown -R 1000:1000 /app/apps/web/.next/cache /app/apps/web/.next/server/app /app/apps/web/.next/server/pages /app/data/uploads /app/apps/eve/.eve /app/apps/eve/.eve/.workflow-data
+RUN mkdir -p /app/apps/web/.next/cache /app/apps/web/.next/server/app /app/apps/web/.next/server/pages /app/data/uploads /app/apps/harness/.eve /app/apps/harness/.eve/.workflow-data && chown -R 1000:1000 /app/apps/web/.next/cache /app/apps/web/.next/server/app /app/apps/web/.next/server/pages /app/data/uploads /app/apps/harness/.eve /app/apps/harness/.eve/.workflow-data
 ENV EVE_NEXT_PRODUCTION_PORT=4274
 ENV UPLOADS_DIR=/app/data/uploads
 USER 1000:1000

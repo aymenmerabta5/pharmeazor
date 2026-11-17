@@ -7,7 +7,7 @@ import { useSurfaceTranslations } from "@/lib/translations";
 import { useQueryAuthSession } from "@/components/query-auth-boundary";
 const nav = [
   { labelKey: "title", href: "/settings" },
-  { labelKey: "billing", href: "/billing" },
+  { labelKey: "billing", href: "/settings/billing" },
 ] as const;
 export default function SettingsLayout({
   children,

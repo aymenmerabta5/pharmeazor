@@ -1,39 +1,16 @@
 "use client";
 import type * as React from "react";
+import Link from "next/link";
 import { Clock, PanelLeft, Plus, Star } from "lucide-react";
+import { BrandMark } from "@/components/brand-wordmark";
 import { useSurfaceTranslations } from "@/lib/translations";
-
-/** Leaf logo — rounded-square green bg + white leaf */
-function LeafLogoSmall(): React.JSX.Element {
-  return (
-    <span className="ph-leaf-sm" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path
-          d="M10 3.5C10 3.5 5 5.5 5 10.5C5 13.5 7.2 16 10 16C12.8 16 15 13.5 15 10.5C15 7.5 12.5 5 10 3.5Z"
-          fill="white"
-          fillOpacity="0.95"
-        />
-        <line
-          x1="10"
-          y1="16"
-          x2="10"
-          y2="11"
-          stroke="white"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-        />
-      </svg>
-    </span>
-  );
-}
 
 /**
  * Narrow navigation rail shown while the history sidebar is closed.
  *
- * A focused view shared by the welcome and chat surfaces: it renders the
- * rail and reports intent through callbacks. The rail and the history
- * sidebar are the two states of the same panel, so only one of them is
- * ever visible.
+ * The rail is the closed state of the sidebar panel, so it renders the
+ * buttons only; the panel owns the width, the background and the open/closed
+ * transition. The mark is the same `BrandMark` the app menu uses.
  */
 export function NavRail({
   open,
@@ -52,11 +29,11 @@ export function NavRail({
   const header = useSurfaceTranslations("header");
 
   return (
-    <aside className="ph-rail" aria-label={header("openNavigation")} hidden={open}>
+    <div className="ph-rail">
       <div className="ph-rail-top">
-        <button type="button" className="ph-rail-logo" aria-label="pharmeazor home">
-          <LeafLogoSmall />
-        </button>
+        <Link href="/" className="ph-rail-logo" aria-label="pharmeazor home">
+          <BrandMark />
+        </Link>
 
         <button
           type="button"
@@ -91,6 +68,6 @@ export function NavRail({
           PH
         </span>
       </div>
-    </aside>
+    </div>
   );
 }

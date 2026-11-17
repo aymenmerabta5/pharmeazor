@@ -244,8 +244,8 @@ export function createEveClient(transport: EveTransport) {
       const send = async (cursor: EveSessionCursor | null): Promise<Response> =>
         await transport.request(
           cursor
-            ? "/api/agent/eve/v1/session/" + encodeURIComponent(cursor.sessionId)
-            : "/api/agent/eve/v1/session",
+            ? "/api/agent/harness/v1/session/" + encodeURIComponent(cursor.sessionId)
+            : "/api/agent/harness/v1/session",
           {
             body: JSON.stringify({ message: normalized }),
             method: "POST",
@@ -325,7 +325,7 @@ export function createEveClient(transport: EveTransport) {
         throwIfAborted(options.signal);
         if (Date.now() > deadline) throw new EveClientError("Timed out waiting for Eve.");
         const streamPath =
-          "/api/agent/eve/v1/session/" +
+          "/api/agent/harness/v1/session/" +
           encodeURIComponent(sessionId) +
           "/stream?startIndex=" +
           String(nextIndex) +

@@ -18,14 +18,14 @@ describe("protected paths", () => {
     expect(isProtectedPath("/dashboard", true)).toBe(true);
     expect(isProtectedPath("/admin", true)).toBe(true);
     expect(isProtectedPath("/settings", true)).toBe(true);
-    expect(isProtectedPath("/billing", true)).toBe(true);
-    expect(isProtectedPath("/plans", true)).toBe(true);
+    expect(isProtectedPath("/settings/billing", true)).toBe(true);
+    expect(isProtectedPath("/checkout", true)).toBe(true);
   });
 
-  it("keeps the billing result routes public", () => {
-    expect(isProtectedPath("/billing/success", true)).toBe(false);
-    expect(isProtectedPath("/billing/cancel", true)).toBe(false);
-    expect(isProtectedPath("/billing", true)).toBe(true);
+  it("keeps the checkout result routes public", () => {
+    expect(isProtectedPath("/checkout/success", true)).toBe(false);
+    expect(isProtectedPath("/checkout/cancel", true)).toBe(false);
+    expect(isProtectedPath("/checkout", true)).toBe(true);
   });
 
   it("matches a preview route on its own path segments only", () => {

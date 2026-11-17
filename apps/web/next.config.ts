@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { withEve, type WithEveConfigFunction } from "eve/next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { LEGACY_BILLING_REDIRECTS } from "./src/features/app-shell/navigation-model";
 
 const config: NextConfig = {
   // Cache Components keeps static shells and Partial Prerendering available.
@@ -8,8 +9,12 @@ const config: NextConfig = {
   // Next.js cacheHandler/cacheHandlers against shared storage. --cache redis
   // configures the application cache only; it does not configure Next.js.
   cacheComponents: true,
+  // Prefetch the shared App Shell instead of duplicating a full route payload
+  // for every visible link. The app has no `prefetch={true}` navigations that
+  // rely on the legacy full-route prefetch, so every link uses the default
+  // App Shell contract.
+  partialPrefetching: true,
   experimental: {
-    webpackBuildWorker: true,
     // Limit local prerender worker copies; CI keeps Next's default parallelism.
     ...(process.env.CI ? {} : { cpus: 2 }),
     // Reclaim persisted compiler cache between local development snapshots.
@@ -85,6 +90,16 @@ const config: NextConfig = {
       "./node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif-Bold.ttf",
     ],
   },
+  async redirects() {
+    return [
+      { source: "/plans", destination: "/pricing", permanent: false },
+      ...LEGACY_BILLING_REDIRECTS.map(({ path, destination }) => ({
+        source: path,
+        destination,
+        permanent: false,
+      })),
+    ];
+  },
   async rewrites() {
     return [
       {
@@ -121,7 +136,7 @@ const config: NextConfig = {
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const withEveConfig = withEve(withNextIntl(config), {
-  eveRoot: "../eve",
+  eveRoot: "../harness",
 });
 
 // Eve returns a Next config function, so resolve it before normalizing fields.

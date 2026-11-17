@@ -2,13 +2,15 @@ import "server-only";
 import {
   createManualPaymentRepository,
   createManualPaymentService,
-  manualPaymentConfig,
+  type ManualPaymentConfig,
 } from "@repo/billing/manual";
+import { postgresWalletRepository } from "@repo/billing/wallet";
 import { auth } from "@repo/auth/server";
 import { createRequestApplication, type BillingApplicationPort } from "./facade";
 import { RequestApplicationError } from "./errors";
 import { rateLimit } from "./rate-limit";
 import type {
+  BillingBalancePurchaseInput,
   BillingCheckoutInput,
   BillingPaymentLinkInput,
   BillingPortalInput,
@@ -29,22 +31,43 @@ import {
   createCheckoutService,
   createPortalSessionService,
   listSubscriptionsService,
+  purchasePlanWithBalanceService,
   validateBillingRedirectUrl,
   subscriptionLifecycle,
 } from "../billing/server";
-import { createManualSubscriptionGrantHook } from "../billing/manual-payment-grant";
+import { toPublicPlans } from "../billing/plan-catalog-view";
 
 /**
- * The manual rail writes to the same subscription as the card rails.
+ * The receiving account for bank transfers.
  *
- * The grant runs inside the review transaction, so an approved payment always
- * carries the period it paid for.
+ * It is environment-driven because the account details are an operator
+ * decision, not a code change: enabling the rail, naming the account holder
+ * and listing the accepted transfer methods all happen in `.env.local` (or
+ * the deployment environment) without a rebuild.
+ */
+function manualPaymentConfigFromEnvironment(): ManualPaymentConfig {
+  const methods = (process.env.MANUAL_PAYMENT_METHODS ?? "BaridiMob,Bank transfer")
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  return {
+    enabled: process.env.MANUAL_PAYMENTS_ENABLED === "true",
+    currency: "DZD",
+    receiverInstructions: process.env.MANUAL_PAYMENT_INSTRUCTIONS?.trim() ?? "",
+    allowedMethods: methods,
+  };
+}
+
+/**
+ * The manual rail sells credit, not a plan.
+ *
+ * An approval credits the wallet; access is granted later, when the customer
+ * spends that credit from the pricing page. Nothing about a receipt can grant
+ * a subscription on its own.
  */
 const manualBillingService = createManualPaymentService(
-  createManualPaymentRepository(
-    createManualSubscriptionGrantHook({ lifecycle: subscriptionLifecycle }),
-  ),
-  manualPaymentConfig,
+  createManualPaymentRepository(),
+  manualPaymentConfigFromEnvironment(),
 );
 
 async function resolvePrincipal(headers: Headers): Promise<RequestPrincipal | null> {
@@ -96,6 +119,47 @@ function unwrap<T>(
 }
 
 const billing: BillingApplicationPort = {
+  async plans() {
+    return { plans: await toPublicPlans(billingPlanCatalog) };
+  },
+  /**
+   * Buy a plan with the wallet.
+   *
+   * The service resolves the price and writes the debit and the subscription
+   * together, so the only failures worth naming are a balance that does not
+   * cover the plan and a plan the balance cannot buy.
+   */
+  async purchaseWithBalance(principal, input: BillingBalancePurchaseInput) {
+    const result = await purchasePlanWithBalanceService(
+      { ownerId: principal.userId, planId: input.planId, requestKey: input.requestKey },
+      {
+        repository: postgresWalletRepository,
+        planCatalog: billingPlanCatalog,
+        lifecycle: subscriptionLifecycle,
+      },
+    );
+    if (result.ok) return result.value;
+    const code = (result.error as { code?: unknown }).code;
+    if (code === "INSUFFICIENT_FUNDS") {
+      throw new RequestApplicationError(
+        "APPLICATION_INSUFFICIENT_FUNDS",
+        "The balance does not cover this plan",
+        { cause: result.error },
+      );
+    }
+    if (code === "NOT_CONFIGURED" || code === "INVALID_INPUT") {
+      throw new RequestApplicationError(
+        "APPLICATION_BAD_REQUEST",
+        "This plan cannot be bought with a balance",
+        { cause: result.error },
+      );
+    }
+    throw new RequestApplicationError(
+      "APPLICATION_INTERNAL_ERROR",
+      "Failed to buy with the balance",
+      { cause: result.error },
+    );
+  },
   async subscriptions(userId) {
     return unwrap(
       await listSubscriptionsService(userId, billingSnapshotRepository),

@@ -19,8 +19,6 @@ export const URL_SECRET_PARAM_PATTERN = /token|key|secret|password|auth|api|sign
 /** Value shapes that are secrets regardless of the key they arrive under. */
 export const SECRET_VALUE_PATTERNS: RegExp[] = [
   /\b(?:sk|pk|rk|whsec|psk)_[A-Za-z0-9_]{8,}/g,
-  /\bpdl_[A-Za-z0-9_]{8,}/g,
-  /\bpolar_[A-Za-z0-9_]{8,}/g,
   /\b(?:phc|re)_[A-Za-z0-9_]{16,}/g,
   /\bBearer\s+[A-Za-z0-9._~+/-]{12,}=*/gi,
   /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]+/g,

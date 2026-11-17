@@ -17,8 +17,19 @@ import type { BillingProviderName } from "./model";
 export const BILLING_INTERVALS = ["day", "week", "month", "year"] as const;
 export type BillingInterval = (typeof BILLING_INTERVALS)[number];
 
-export const BILLING_PLAN_IDS = ["basic", "standard", "pro"] as const;
-export type BillingPlanId = (typeof BILLING_PLAN_IDS)[number];
+/**
+ * The plans this application sells.
+ *
+ * A plan is one tier bought for one period, because the period is a property
+ * of the plan: `interval` is what the granted window is computed from. The
+ * same tier is therefore seeded twice, once monthly and once yearly, and the
+ * pricing surface switches between the two rows with its interval toggle.
+ *
+ * The identifiers are the entitlement contract shared with the assistant, so
+ * they are defined in `@repo/contracts` and re-exported here for the rest of
+ * the billing package.
+ */
+export { BILLING_PLAN_IDS, type BillingPlanId } from "@repo/contracts";
 
 /** The currency a rail settles in when the customer does not pick one. */
 export const BILLING_PROVIDER_DEFAULT_CURRENCY = {
@@ -66,11 +77,27 @@ export const DEFAULT_BILLING_PLANS: readonly BillingPlanDefinition[] = [
     intervalCount: 1,
   },
   {
+    id: "basic-yearly",
+    name: "Basic (yearly)",
+    description: "The pharmacy assistant and the essential catalogue tools, billed yearly.",
+    tier: 11,
+    interval: "year",
+    intervalCount: 1,
+  },
+  {
     id: "standard",
     name: "Standard",
     description: "Everything in Basic, plus the professional workflow tools.",
     tier: 20,
     interval: "month",
+    intervalCount: 1,
+  },
+  {
+    id: "standard-yearly",
+    name: "Standard (yearly)",
+    description: "Everything in Basic, plus the professional workflow tools, billed yearly.",
+    tier: 21,
+    interval: "year",
     intervalCount: 1,
   },
   {
@@ -81,7 +108,24 @@ export const DEFAULT_BILLING_PLANS: readonly BillingPlanDefinition[] = [
     interval: "month",
     intervalCount: 1,
   },
+  {
+    id: "pro-yearly",
+    name: "Pro (yearly)",
+    description: "Every capability, including the multi-pharmacy tooling, billed yearly.",
+    tier: 31,
+    interval: "year",
+    intervalCount: 1,
+  },
 ];
+
+/**
+ * The months a yearly plan includes that a customer does not pay for.
+ *
+ * A yearly purchase is ten monthly prices: pay for ten months, receive
+ * twelve. It is expressed here rather than as a hand-written yearly amount so
+ * the two ladders cannot drift apart.
+ */
+export const BILLING_YEARLY_FREE_MONTHS = 2;
 
 /**
  * The USD/DZD rate used to keep the two price ladders matched.
@@ -128,12 +172,12 @@ export interface BillingPlanPriceSeed {
 }
 
 /**
- * What each plan costs in USD.
+ * What each tier costs per month in USD.
  *
  * Stripe is the global rail and settles in USD. Chargily and manual transfer
  * are Algerian rails and settle in DZD at the rate above.
  */
-export const DEFAULT_BILLING_PLAN_PRICES: readonly BillingPlanPriceSeed[] = [
+const MONTHLY_PLAN_PRICES: readonly BillingPlanPriceSeed[] = [
   { planId: "basic", usdAmountMinor: 800 },
   { planId: "standard", usdAmountMinor: 2_000 },
   { planId: "pro", usdAmountMinor: 10_000 },
@@ -142,8 +186,24 @@ export const DEFAULT_BILLING_PLAN_PRICES: readonly BillingPlanPriceSeed[] = [
 /**
  * The price of every plan on every rail.
  *
- * Built from the USD ladder so the two currencies stay matched by
- * construction rather than by two hand-kept lists.
+ * Built from the monthly USD ladder so the monthly and yearly prices, and the
+ * two currencies, stay matched by construction rather than by hand-kept
+ * lists.
+ */
+export const DEFAULT_BILLING_PLAN_PRICES: readonly BillingPlanPriceSeed[] =
+  MONTHLY_PLAN_PRICES.flatMap((seed) => [
+    seed,
+    {
+      planId: `${seed.planId}-yearly`,
+      usdAmountMinor: seed.usdAmountMinor * (12 - BILLING_YEARLY_FREE_MONTHS),
+    },
+  ]);
+
+/**
+ * The price of every plan on every rail.
+ *
+ * Each USD seed expands to the global Stripe price and the two Algerian
+ * prices, which are derived at the reference rate.
  */
 export const DEFAULT_BILLING_PRICES: readonly BillingPriceDefinition[] =
   DEFAULT_BILLING_PLAN_PRICES.flatMap((seed) => [

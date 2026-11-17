@@ -1,63 +1,73 @@
 "use client";
 import * as React from "react";
-import { useSurfaceTranslations } from "@/lib/translations";
-import type { BillingInterval, Plan } from "./model";
+import {
+  billingTierOf,
+  billingTierOfferings,
+  headlinePrice,
+  type BillingPlan,
+} from "@/lib/billing-catalog";
+import { formatBillingPriceAmount } from "@/lib/billing-money";
+import { useSurfaceLocale, useSurfaceTranslations } from "@/lib/translations";
+import {
+  TIER_DESCRIPTIONS,
+  TIER_FEATURES,
+  TIER_NAMES,
+  type PricingCard,
+  type PricingInterval,
+} from "./model";
 
 /**
- * Pricing workflow: the selected billing interval and the plan cards rendered
- * from the `pricing` translation surface.
+ * Pricing workflow.
+ *
+ * The page reads the same catalog the checkout charges from, so a card can
+ * never advertise a plan or a price the checkout would then refuse. The
+ * interval only selects which row of a tier is shown; the tier itself owns the
+ * copy.
  */
-export function usePricingPlans() {
+export function usePricingPlans({
+  plans,
+  signedIn,
+  currentPlanIds,
+}: {
+  plans: readonly BillingPlan[];
+  signedIn: boolean;
+  currentPlanIds: readonly string[];
+}) {
   const t = useSurfaceTranslations("pricing");
-  const [interval, setBillingInterval] = React.useState<BillingInterval>("monthly");
+  const locale = useSurfaceLocale();
+  const [interval, setInterval] = React.useState<PricingInterval>("monthly");
 
-  const plans: Plan[] = [
-    {
-      id: "free",
-      name: t("plans.free.name"),
-      description: t("plans.free.description"),
-      price: t("plans.free.price"),
-      cta: t("currentPlan"),
-      features: [
-        { key: "citations", label: t("plans.free.features.citations") },
-        { key: "dailyLimit", label: t("plans.free.features.dailyLimit") },
-        { key: "sources", label: t("plans.free.features.sources") },
-        { key: "scope", label: t("plans.free.features.scope") },
-      ],
-    },
-    {
-      id: "pro",
-      name: t("plans.pro.name"),
-      description: t("plans.pro.description"),
-      price: t("plans.pro.price"),
-      cta: t("upgradeToPro"),
-      popular: true,
-      features: [
-        { key: "unlimited", label: t("plans.pro.features.unlimited") },
-        { key: "crossSource", label: t("plans.pro.features.crossSource") },
-        { key: "disagreement", label: t("plans.pro.features.disagreement") },
-        { key: "prescription", label: t("plans.pro.features.prescription") },
-        { key: "export", label: t("plans.pro.features.export") },
-      ],
-    },
-    {
-      id: "pharmacy",
-      name: t("plans.pharmacy.name"),
-      description: t("plans.pharmacy.description"),
-      price: t("plans.pharmacy.price"),
-      cta: t("contactUs"),
-      features: [
-        { key: "everything", label: t("plans.pharmacy.features.everything") },
-        { key: "seats", label: t("plans.pharmacy.features.seats") },
-        { key: "noticeTracking", label: t("plans.pharmacy.features.noticeTracking") },
-        { key: "support", label: t("plans.pharmacy.features.support") },
-      ],
-    },
-  ];
+  const cards: PricingCard[] = billingTierOfferings(plans).map((offering) => {
+    const plan = interval === "yearly" ? offering.yearly : offering.monthly;
+    const price = plan ? headlinePrice(plan) : null;
+    const current = signedIn && currentPlanIds.some((id) => billingTierOf(id) === offering.tier);
+    const href = !plan
+      ? null
+      : current
+        ? "/settings/billing"
+        : signedIn
+          ? `/checkout?plan=${encodeURIComponent(plan.id)}`
+          : "/sign-up";
+    return {
+      tier: offering.tier,
+      planId: plan?.id ?? null,
+      name: t(TIER_NAMES[offering.tier]),
+      description: t(TIER_DESCRIPTIONS[offering.tier]),
+      price: price ? formatBillingPriceAmount(price.amountMinor, price.currency, locale) : "",
+      period: plan ? (interval === "yearly" ? t("perYear") : t("perMonth")) : "",
+      features: TIER_FEATURES[offering.tier].map((key) => ({ key, label: t(key) })),
+      cta: current
+        ? t("currentPlan")
+        : !plan
+          ? t("unavailable")
+          : signedIn
+            ? t("choosePlan")
+            : t("createAccount"),
+      href,
+      popular: offering.tier === "standard",
+      current,
+    };
+  });
 
-  const selectInterval = React.useCallback((next: BillingInterval) => {
-    setBillingInterval(next);
-  }, []);
-
-  return { interval, plans, selectInterval };
+  return { interval, cards, selectInterval: setInterval };
 }

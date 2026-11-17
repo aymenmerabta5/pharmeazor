@@ -5,20 +5,20 @@ import { cn } from "@/lib/utils";
 import { Text, TextClassContext } from "./text";
 
 const buttonVariants = tv({
-  base: "inline-flex flex-row items-center justify-center rounded-md gap-2 focus:border-ring",
+  base: "inline-flex flex-row items-center justify-center rounded-full gap-2 border border-transparent focus:border-ring",
   variants: {
     variant: {
       default: "bg-primary active:bg-primary/90",
-      destructive: "border border-destructive/50 bg-background active:bg-destructive",
-      outline: "border border-input bg-background active:bg-accent",
+      destructive: "border-destructive/40 bg-destructive/10 active:bg-destructive/20",
+      outline: "border-input bg-card active:bg-accent",
       secondary: "bg-secondary active:bg-secondary/80",
       ghost: "active:bg-accent",
       link: "bg-transparent",
     },
     size: {
-      default: "h-11 px-4",
-      sm: "min-h-11 px-3",
-      lg: "h-11 px-8",
+      default: "h-11 px-5",
+      sm: "min-h-10 px-4",
+      lg: "h-12 px-7",
       icon: "size-11",
     },
   },
@@ -26,7 +26,7 @@ const buttonVariants = tv({
 });
 
 const buttonTextVariants = tv({
-  base: "text-center font-medium",
+  base: "text-center font-semibold",
   variants: {
     variant: {
       default: "text-primary-foreground",
@@ -38,7 +38,7 @@ const buttonTextVariants = tv({
     },
     size: {
       default: "text-sm",
-      sm: "text-xs",
+      sm: "text-[13px]",
       lg: "text-base",
       icon: "text-base",
     },

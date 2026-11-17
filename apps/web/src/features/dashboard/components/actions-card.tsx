@@ -29,7 +29,7 @@ export function ActionsCard(): React.JSX.Element {
           />
         </Link>
         <Link
-          href="/billing"
+          href="/settings/billing"
           className="group flex min-h-20 items-center gap-3 rounded-lg py-4 text-sm font-medium outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">

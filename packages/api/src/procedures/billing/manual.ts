@@ -22,7 +22,8 @@ const receiptSchema = z
 const paymentSchema = z.object({
   id: z.string(),
   ownerId: z.string(),
-  planId: z.string(),
+  /** Null for a wallet top-up; legacy per-plan payments keep their plan. */
+  planId: z.string().nullable(),
   amountMinor: z.number().int(),
   currency: z.literal("DZD"),
   status: z.enum(["pending", "approved", "rejected"]),
@@ -66,8 +67,9 @@ export const manualBillingContract = {
     .input(
       z
         .object({
-          planId: z.string().min(1).max(64),
-          amountMinor: z.number().int().min(1).max(100_000_000),
+          // A top-up is credit, not a plan: the amount is what the customer
+          // transferred, and the plan is chosen later at checkout.
+          amountMinor: z.number().int().min(10_000).max(100_000_000),
           requestKey: z.string().uuid(),
           method: z.string().min(1).max(80).optional(),
           reference: z.string().max(160).optional(),

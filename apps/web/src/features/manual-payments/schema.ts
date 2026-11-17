@@ -1,9 +1,13 @@
 import { z } from "zod";
+import { manualAmountMinor } from "./model";
 import { manualReceiptAllowed } from "./receipt-utils";
 
-export function createManualPaymentSchema(messages: { receipt: string }) {
+export function createManualPaymentSchema(messages: { amount: string; receipt: string }) {
   return z.object({
-    planId: z.string().min(1),
+    amount: z
+      .string()
+      .trim()
+      .refine((value) => manualAmountMinor(value) !== null, messages.amount),
     method: z.string().min(1),
     reference: z.string().trim().max(160),
     receipt: z.custom<File | null>(

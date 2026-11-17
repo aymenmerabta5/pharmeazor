@@ -1,13 +1,14 @@
 import "server-only";
 import type { Result } from "@repo/kernel";
 import { err, ok } from "@repo/kernel";
+import type { PublicPlan } from "./plan-catalog-view";
 export interface BillingSnapshot {
   subscriptions: Array<Record<string, unknown>>;
   invoices: Array<Record<string, unknown>>;
   usageEvents: Array<Record<string, unknown>>;
   licenseKeys: Array<Record<string, unknown>>;
   /** The plans on offer, each with its price per rail. */
-  plans: Array<Record<string, unknown>>;
+  plans: PublicPlan[];
 }
 export interface BillingSnapshotRepositoryPort {
   findSnapshot(userId: string): Promise<BillingSnapshot>;

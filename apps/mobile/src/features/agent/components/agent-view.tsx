@@ -1,25 +1,37 @@
 import type * as React from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, type ScrollView, View } from "react-native";
 import { Link } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ChatMessage } from "../model";
+import type { AgentSuggestion, ChatMessage } from "../model";
+import { AgentConversation } from "./agent-conversation";
+import { AgentEmpty } from "./agent-empty";
 import type { NamespaceTranslate } from "@/lib/i18n";
+
 export interface AgentViewProps {
   isPending: boolean;
   isAuthenticated: boolean;
   error: string | null;
   messages: readonly ChatMessage[];
+  pending: boolean;
+  suggestions: readonly AgentSuggestion[];
   composer: React.ReactNode;
+  scrollRef: React.RefObject<ScrollView | null>;
+  onSuggestion: (question: string) => void;
   t: NamespaceTranslate<"agent">;
 }
+
 export function AgentView({
   isPending,
   isAuthenticated,
   error,
   messages,
+  pending,
+  suggestions,
   composer,
+  scrollRef,
+  onSuggestion,
   t,
 }: AgentViewProps): React.JSX.Element {
   if (isPending)
@@ -49,55 +61,19 @@ export function AgentView({
   }
 
   return (
-    <View className="flex-1 bg-background p-4">
-      <Card className="flex-1">
-        <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("mobileDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 gap-3">
-          <ScrollView
-            accessibilityLabel={t("conversationLabel")}
-            accessibilityLiveRegion="polite"
-            className="flex-1 rounded-xl border p-3"
-          >
-            {messages.length === 0 ? (
-              <Text className="py-8 text-center text-muted-foreground">{t("empty")}</Text>
-            ) : (
-              messages.map((message) => (
-                <View
-                  key={message.id}
-                  className={message.role === "user" ? "mb-2 items-end" : "mb-2 items-start"}
-                >
-                  <Card
-                    className={
-                      message.role === "user"
-                        ? "max-w-[85%] border-primary bg-primary"
-                        : "max-w-[85%] bg-muted"
-                    }
-                  >
-                    <CardContent className="p-3">
-                      <Text
-                        className={
-                          message.role === "user" ? "text-primary-foreground" : "text-foreground"
-                        }
-                      >
-                        {message.text}
-                      </Text>
-                    </CardContent>
-                  </Card>
-                </View>
-              ))
-            )}
-          </ScrollView>
-          {error ? (
-            <Text accessibilityRole="alert" className="text-sm text-destructive">
-              {error}
-            </Text>
-          ) : null}
-          {composer}
-        </CardContent>
-      </Card>
+    <View className="flex-1 bg-background">
+      {messages.length === 0 ? (
+        <AgentEmpty suggestions={suggestions} onSuggestion={onSuggestion} error={error} t={t} />
+      ) : (
+        <AgentConversation
+          messages={messages}
+          pending={pending}
+          error={error}
+          scrollRef={scrollRef}
+          t={t}
+        />
+      )}
+      <View className="border-t border-border bg-background px-3 pb-2 pt-2">{composer}</View>
     </View>
   );
 }

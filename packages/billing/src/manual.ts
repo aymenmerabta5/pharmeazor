@@ -4,13 +4,15 @@ export {
   createManualPaymentRepository,
   postgresManualPaymentRepository,
 } from "./adapters/manual/repository";
-export { manualPaymentConfig } from "./manual-payment-config";
-export { ManualPaymentError } from "./domain/manual-payment";
+export {
+  ManualPaymentError,
+  MAX_MANUAL_AMOUNT_MINOR,
+  MIN_MANUAL_TOPUP_MINOR,
+} from "./domain/manual-payment";
 export type {
   ManualPayment,
   ManualPaymentActor,
-  ManualPaymentExecutor,
-  ManualPaymentReviewHooks,
+  ManualPaymentConfig,
   ManualPaymentSubmitInput,
   ManualPaymentReviewInput,
   ManualPaymentReceipt,

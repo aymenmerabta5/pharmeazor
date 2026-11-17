@@ -21,10 +21,9 @@ export {
 } from "@/lib/protected-paths";
 
 /**
- * The design prototype on `/agent` renders with no session, so a designer can
- * reach it without signing in. `NODE_ENV` is `development` for `next dev` and
- * `production` for every other command, so the bypass never reaches a
- * production build and the route stays behind the session guard there.
+ * The legacy `/agent` alias stays reachable without a session in development
+ * so an old bookmark still redirects to the unified surface; the route keeps
+ * the session guard in a production build.
  */
 function designPreviewEnabled(): boolean {
   return process.env.NODE_ENV !== "production";

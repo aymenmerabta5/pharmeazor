@@ -4,3 +4,70 @@
 @source "./app/**/*.{js,jsx,ts,tsx}";
 @source "./src/**/*.{js,jsx,ts,tsx}";
 @source "./components/**/*.{js,jsx,ts,tsx}";
+
+/*
+ * Pharmeazor brand theme.
+ *
+ * The web application scopes its warm cream and olive palette to the
+ * `.ph-surface` pages. The mobile application has a single surface, so the
+ * same palette is promoted to the semantic tokens that every native primitive
+ * already reads. Both variants define the same variables because UniWind
+ * validates theme parity at build time.
+ */
+@layer theme {
+  :root {
+    @variant light {
+      --color-background: #f5f2eb;
+      --color-foreground: #1a1a14;
+      --color-card: #ffffff;
+      --color-card-foreground: #1a1a14;
+      --color-popover: #ffffff;
+      --color-popover-foreground: #1a1a14;
+      --color-primary: #3d5a27;
+      --color-primary-foreground: #fbfcf7;
+      --color-secondary: #e8eddf;
+      --color-secondary-foreground: #2f4620;
+      --color-muted: #efebe2;
+      --color-muted-foreground: #6b6b5a;
+      --color-accent: #e6ecdb;
+      --color-accent-foreground: #2f4620;
+      --color-destructive: #a0452f;
+      --color-destructive-foreground: #fdf7f4;
+      --color-border: #e2ddd2;
+      --color-input: #d3ccbe;
+      --color-ring: #3d5a27;
+      --color-success: #3d5a27;
+      --color-warning: #a0603a;
+      --color-code: #efebe2;
+      --color-code-foreground: #4d4d3f;
+      --color-scrim: rgba(26, 26, 20, 0.55);
+    }
+
+    @variant dark {
+      --color-background: #14150f;
+      --color-foreground: #f2efe6;
+      --color-card: #1d1f17;
+      --color-card-foreground: #f2efe6;
+      --color-popover: #22251b;
+      --color-popover-foreground: #f2efe6;
+      --color-primary: #b6c99a;
+      --color-primary-foreground: #1a2410;
+      --color-secondary: #2a2e20;
+      --color-secondary-foreground: #dfe8cf;
+      --color-muted: #26281e;
+      --color-muted-foreground: #a7a594;
+      --color-accent: #31361f;
+      --color-accent-foreground: #dfe8cf;
+      --color-destructive: #d98b72;
+      --color-destructive-foreground: #2a130d;
+      --color-border: #34372a;
+      --color-input: #4a4e3c;
+      --color-ring: #b6c99a;
+      --color-success: #b6c99a;
+      --color-warning: #d6a079;
+      --color-code: #26281e;
+      --color-code-foreground: #c9c7b7;
+      --color-scrim: rgba(8, 9, 5, 0.72);
+    }
+  }
+}

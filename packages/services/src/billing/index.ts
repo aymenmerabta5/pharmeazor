@@ -11,7 +11,7 @@ export {
   providerPriceEnvironmentName,
 } from "./billing-price-catalog";
 export { createSubscriptionLifecycle } from "./subscription-lifecycle.service";
-export { createManualSubscriptionGrantHook } from "./manual-payment-grant";
+export { purchasePlanWithBalanceService } from "./wallet-purchase.service";
 export {
   buildEntitlementPredicate,
   AGENT_ENTITLED_PLAN_IDS,
@@ -81,4 +81,15 @@ export type {
 } from "./create-portal-session.service";
 export type { BillingRedirectErrorCode, BillingRedirectValidation } from "./redirect-url-policy";
 export type { BillingSnapshot, BillingSnapshotRepositoryPort } from "./list-subscriptions.service";
+export type {
+  WalletPurchaseDeps,
+  WalletPurchaseDto,
+  WalletPurchaseInput,
+} from "./wallet-purchase.service";
+export type {
+  WalletGrant,
+  WalletPurchaseCommand,
+  WalletPurchaseResult,
+  WalletRepositoryPort,
+} from "@repo/billing/wallet";
 export type { Result } from "@repo/kernel";

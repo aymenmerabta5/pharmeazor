@@ -17,18 +17,18 @@
   },
   "dependencies": {
     "@repo/config": "workspace:*",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "react-email": "6.11.0",
-    "resend": "6.32.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-email": "6.11.14",
+    "resend": "6.38.1",
     "server-only": "0.0.1"
   },
   "devDependencies": {
-    "@types/node": "24.19.1",
+    "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "bun-types": "1.4.4",
-    "oxfmt": "0.71.0",
-    "oxlint": "1.86.0",
+    "oxfmt": "0.79.0",
+    "oxlint": "1.94.0",
     "typescript": "7.0.2"
   }
 }

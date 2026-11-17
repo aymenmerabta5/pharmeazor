@@ -1,14 +1,22 @@
-import type { ComponentProps as GhostinitPageProps } from "react";
 import { RequestLocalizedMetadataBoundary } from "@/lib/request-localized-metadata";
-import { WelcomePage as GhostinitPageContent } from "@/features/chat-welcome/page";
+import { ChatPage as GhostinitPageContent } from "@/features/chat/page";
 
-export default function RequestLocalizedPage(
-  props: GhostinitPageProps<typeof GhostinitPageContent> & object,
-) {
+/**
+ * The single agent surface. The question is read on the server so the route
+ * renders the conversation state immediately on a deep link instead of
+ * flashing the welcome hero while a client search-param read catches up.
+ */
+export default async function RequestLocalizedPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const initialQuestion = typeof params.q === "string" ? params.q : undefined;
   return (
     <>
       <RequestLocalizedMetadataBoundary />
-      <GhostinitPageContent {...props} />
+      <GhostinitPageContent initialQuestion={initialQuestion} />
     </>
   );
 }

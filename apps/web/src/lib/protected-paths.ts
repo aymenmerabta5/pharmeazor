@@ -6,24 +6,23 @@
  * result of the design-preview check in.
  */
 
-/** Routes that require a session. */
+/** The routes a customer needs when they come back from checkout. */
 export const PROTECTED_PATHS = [
   "/agent",
   "/dashboard",
   "/onboarding",
-  "/plans",
+  "/checkout",
   "/profile",
   "/admin",
   "/settings",
-  "/billing",
 ] as const;
 
 /**
  * Routes that render a design prototype with no session of their own.
  *
  * The prototype is a local design surface, so it stays reachable without a
- * login while it is being built. The route it occupies is the one the real
- * agent will own, so the bypass is never enabled in a production build.
+ * login while it is being built. The route now only redirects to the unified
+ * chat surface; the bypass is never enabled in a production build.
  */
 export const DESIGN_PREVIEW_PATHS = ["/agent"] as const;
 
@@ -36,8 +35,8 @@ export const AUTH_PATHS = [
   "/forgot-password",
 ] as const;
 
-/** Billing routes that a provider redirects to after a checkout. */
-export const PUBLIC_BILLING_PATHS: readonly string[] = ["/billing/success", "/billing/cancel"];
+/** The public pages a payment rail returns the customer to. */
+export const PUBLIC_BILLING_PATHS: readonly string[] = ["/checkout/success", "/checkout/cancel"];
 
 /** Routes that stay reachable while maintenance mode is on. */
 export const MAINTENANCE_EXEMPT_PATHS = [

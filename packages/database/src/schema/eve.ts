@@ -74,7 +74,17 @@ export const eveAgentAdmissions = pgTable(
     teamId: text("team_id").references(() => teams.id, { onDelete: "cascade" }),
     eveSessionId: text("eve_session_id"),
     operation: text("operation").$type<"create" | "follow" | "compact">().notNull(),
-    plan: text("plan").$type<"pro" | "sponsored">().notNull(),
+    plan: text("plan")
+      .$type<
+        | "basic"
+        | "basic-yearly"
+        | "standard"
+        | "standard-yearly"
+        | "pro"
+        | "pro-yearly"
+        | "sponsored"
+      >()
+      .notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     releasedAt: timestamp("released_at", { withTimezone: true }),

@@ -5,6 +5,7 @@ import { subscriptions, invoices, usage_events, license_keys } from "@repo/billi
 import { isBillingPeriodCovered } from "@repo/billing";
 import type { BillingSnapshotRepositoryPort } from "./list-subscriptions.service";
 import { billingPlanCatalog } from "./billing-plan.repository";
+import { toPublicPlans } from "./plan-catalog-view";
 
 /**
  * The status a subscription shows.
@@ -35,22 +36,7 @@ export const billingSnapshotRepository: BillingSnapshotRepositoryPort = {
         ? db.select().from(license_keys).where(inArray(license_keys.subscriptionId, subIds))
         : Promise.resolve([]),
     ]);
-    const planRecords = await billingPlanCatalog.listPlans();
-    const plans = await Promise.all(
-      planRecords.map(async (plan) => ({
-        id: plan.id,
-        name: plan.name,
-        description: plan.description,
-        tier: plan.tier,
-        interval: plan.interval,
-        intervalCount: plan.intervalCount,
-        prices: (await billingPlanCatalog.listPrices(plan.id)).map((price) => ({
-          provider: price.provider,
-          amountMinor: price.amountMinor,
-          currency: price.currency,
-        })),
-      })),
-    );
+    const plans = await toPublicPlans(billingPlanCatalog);
     return {
       subscriptions: subs,
       invoices: invs,

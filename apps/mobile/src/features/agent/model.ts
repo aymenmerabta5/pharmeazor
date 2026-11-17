@@ -3,6 +3,11 @@ export interface ChatMessage {
   readonly role: "assistant" | "user";
   readonly text: string;
 }
+export interface AgentSuggestion {
+  readonly key: string;
+  readonly label: string;
+  readonly question: string;
+}
 export type ConversationEvent = { kind: "user" | "assistant"; id: number; text: string };
 export function conversationReducer(
   messages: readonly ChatMessage[],

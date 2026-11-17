@@ -33,14 +33,14 @@ export function AgentTopbar({
         </Button>
       ) : null}
       <Link
-        href="/billing"
+        href="/settings/billing"
         className="inline-flex h-8 items-center rounded-full bg-secondary px-3 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
         {planPending ? t("freePlan") : planLabel}
       </Link>
       <Button
         className="h-10 rounded-xl px-5 text-sm font-semibold"
-        render={<Link href="/plans" />}
+        render={<Link href="/pricing" />}
         nativeButton={false}
       >
         {planName ? t("managePlan") : t("upgrade")}

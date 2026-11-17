@@ -1,13 +1,14 @@
 import { and, gt, inArray, or } from "drizzle-orm";
-import { subscriptions } from "@repo/billing";
+import { BILLING_PLAN_IDS, subscriptions } from "@repo/billing";
 
 /**
  * The plans that grant the assistant.
  *
- * The catalog sells three tiers, but only the top tier carries the agent.
- * This is the one place that decides it, so a tier change is a single edit.
+ * Every paid tier carries the agent; the tiers differ in the limits and tools
+ * around it, not in whether the assistant exists. The list is derived from the
+ * catalog so a new plan cannot be sold without granting what it sells.
  */
-export const AGENT_ENTITLED_PLAN_IDS = ["pro"] as const;
+export const AGENT_ENTITLED_PLAN_IDS = BILLING_PLAN_IDS;
 
 /**
  * Statuses that grant access while the period is still covered.

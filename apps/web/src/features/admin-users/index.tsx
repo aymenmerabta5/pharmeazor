@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useSurfaceTranslations } from "@/lib/translations";
 import { CreateUserForm } from "./components/create-user-form";
 import { AdminUserFilters } from "./components/filters";
 import { AdminUsersResults } from "./components/user-results";
@@ -17,6 +18,7 @@ export interface AdminUsersFeatureProps {
 
 export function AdminUsersFeature({ initialData }: AdminUsersFeatureProps): React.JSX.Element {
   const translate = useAdminUsersTranslations();
+  const billing = useSurfaceTranslations("billing");
   const admin = useAdminUsers(initialData);
   const filters = useAdminUserFilters({
     search: admin.filters.search,
@@ -37,13 +39,19 @@ export function AdminUsersFeature({ initialData }: AdminUsersFeatureProps): Reac
               : null}
           </p>
         </div>
-        <Button
-          className="w-auto self-start"
-          render={<a href="/admin/users/create" />}
-          nativeButton={false}
-        >
-          {translate("list.create")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <Button className="w-auto" render={<a href="/admin/users/create" />} nativeButton={false}>
+            {translate("list.create")}
+          </Button>
+          <Button
+            className="w-auto"
+            variant="outline"
+            render={<a href="/admin/payments" />}
+            nativeButton={false}
+          >
+            {billing("manualQueue")}
+          </Button>
+        </div>
       </header>
 
       <AdminUserFilters {...filters} />

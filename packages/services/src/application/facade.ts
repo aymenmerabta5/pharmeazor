@@ -14,6 +14,8 @@ type TeamMembership = identityCapability.TeamMembership;
 import type { ManualPaymentService } from "@repo/services";
 import { RequestApplicationError } from "./errors";
 import type {
+  BillingBalancePurchaseDto,
+  BillingBalancePurchaseInput,
   BillingCheckoutDto,
   BillingCheckoutInput,
   BillingPaymentLinkInput,
@@ -23,6 +25,7 @@ import type {
 } from "./types";
 
 export interface BillingApplicationPort {
+  plans(): Promise<{ plans: readonly unknown[] }>;
   subscriptions(userId: string): Promise<{
     subscriptions: readonly unknown[];
     invoices: readonly unknown[];
@@ -34,6 +37,10 @@ export interface BillingApplicationPort {
     principal: RequestPrincipal,
     input: BillingCheckoutInput,
   ): Promise<BillingCheckoutDto>;
+  purchaseWithBalance(
+    principal: RequestPrincipal,
+    input: BillingBalancePurchaseInput,
+  ): Promise<BillingBalancePurchaseDto>;
   createPortalSession(
     principal: RequestPrincipal,
     input: BillingPortalInput,
@@ -419,6 +426,13 @@ export function createRequestApplication(dependencies: RequestApplicationDepende
       },
     },
     billing: {
+      plans: async () => {
+        // The pricing page is public: the catalog is not customer data, and a
+        // price that a visitor cannot read before signing up is a price they
+        // will not trust after signing up either.
+        const plans = await dependencies.billing.plans();
+        return { plans: plans.plans.map(publicRecord) };
+      },
       subscriptions: async () => {
         const principal = requireVerifiedPrincipal(dependencies.principal);
         await dependencies.rateLimit("billing:subscriptions:" + principal.userId, 60, 60_000);
@@ -435,6 +449,11 @@ export function createRequestApplication(dependencies: RequestApplicationDepende
         const principal = requireVerifiedPrincipal(dependencies.principal);
         await dependencies.rateLimit("billing:checkout:" + principal.userId, 10, 60_000);
         return await dependencies.billing.createCheckout(principal, input);
+      },
+      purchaseWithBalance: async (input: BillingBalancePurchaseInput) => {
+        const principal = requireVerifiedPrincipal(dependencies.principal);
+        await dependencies.rateLimit("billing:balance:" + principal.userId, 10, 60_000);
+        return await dependencies.billing.purchaseWithBalance(principal, input);
       },
       createPortalSession: async (input: BillingPortalInput) => {
         const principal = requireVerifiedPrincipal(dependencies.principal);

@@ -1,30 +1,9 @@
 "use client";
 import type * as React from "react";
+import { PanelLeft } from "lucide-react";
+import { BrandWordmark } from "@/components/brand-wordmark";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { groupChatHistory, type ChatHistoryEntry } from "@/lib/chat-history";
-
-/* ── Shared SVG icons ────────────────────────────────────────────────── */
-
-function LeafIcon({ size = 20 }: { size?: number }): React.JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
-      <path
-        d="M10 3.5C10 3.5 5 5.5 5 10.5C5 13.5 7.2 16 10 16C12.8 16 15 13.5 15 10.5C15 7.5 12.5 5 10 3.5Z"
-        fill="white"
-        fillOpacity="0.95"
-      />
-      <line
-        x1="10"
-        y1="16"
-        x2="10"
-        y2="11"
-        stroke="white"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function IconPlus(): React.JSX.Element {
   return (
@@ -43,15 +22,13 @@ function IconPlus(): React.JSX.Element {
   );
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────────── */
-
 /**
- * Chat history sidebar shared by the welcome and chat surfaces.
+ * History sidebar content shared by the welcome and chat surfaces.
  *
  * A focused view: it renders the entries it is given and reports intent back
- * through callbacks. The entries themselves come from the `useChatHistory`
- * workflow each page composes, so the list reflects what was actually
- * searched for instead of example data.
+ * through callbacks. The brand lockup is the same one the app menu carries,
+ * and the collapse control lives here, inside the panel it closes, rather
+ * than in the page top bar.
  */
 export function ChatHistorySidebar({
   entries,
@@ -59,8 +36,8 @@ export function ChatHistorySidebar({
   onSelect,
   onNewQuestion,
   onSeePlans,
-  id,
-  hidden,
+  onClose,
+  controlsId,
 }: {
   entries: ChatHistoryEntry[];
   /** Query of the conversation currently shown, when there is one. */
@@ -68,13 +45,13 @@ export function ChatHistorySidebar({
   onSelect(entry: ChatHistoryEntry): void;
   onNewQuestion(): void;
   onSeePlans(): void;
-  /** Lets a host toggle keep `aria-controls` pointing at a mounted panel. */
-  id?: string;
-  /** Keeps the panel mounted while it is visually closed. */
-  hidden?: boolean;
+  onClose(): void;
+  /** Id of the sidebar panel this content lives in. */
+  controlsId: string;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("chat");
   const common = useSurfaceTranslations("common");
+  const header = useSurfaceTranslations("header");
   const { today, earlier } = groupChatHistory(entries);
 
   function renderGroup(label: string, group: ChatHistoryEntry[]): React.JSX.Element | null {
@@ -97,13 +74,20 @@ export function ChatHistorySidebar({
   }
 
   return (
-    <aside id={id} className="ph-chat-sidebar" hidden={hidden}>
+    <div className="ph-chat-sidebar">
       {/* Brand header */}
       <div className="ph-chat-sidebar-header">
-        <span className="ph-leaf-sm" aria-hidden="true">
-          <LeafIcon />
-        </span>
-        <span className="ph-chat-brand">pharmeazor</span>
+        <BrandWordmark />
+        <button
+          type="button"
+          className="ph-sidebar-close"
+          aria-label={common("close")}
+          aria-controls={controlsId}
+          aria-expanded={false}
+          onClick={onClose}
+        >
+          <PanelLeft size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        </button>
       </div>
 
       {/* New question button */}
@@ -113,7 +97,7 @@ export function ChatHistorySidebar({
       </button>
 
       {/* Conversation groups */}
-      <nav className="ph-sidebar-nav" aria-label="Conversations">
+      <nav className="ph-sidebar-nav" aria-label={header("primaryNavigation")}>
         {entries.length === 0 ? <p className="ph-sidebar-empty">{common("noResults")}</p> : null}
         {renderGroup(t("today"), today)}
         {renderGroup(t("earlier"), earlier)}
@@ -138,6 +122,6 @@ export function ChatHistorySidebar({
           <span className="ph-sidebar-user-plan">{t("freePlan")}</span>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

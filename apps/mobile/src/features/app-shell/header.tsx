@@ -7,7 +7,8 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { BrandWordmark } from "@/components/brand-wordmark";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LocaleSwitcher, useTranslations } from "@/lib/i18n";
+import { useTranslations } from "@/lib/i18n";
+import { AppMenu } from "./app-menu";
 
 export function Header(): React.JSX.Element {
   const t = useTranslations("header");
@@ -26,7 +27,7 @@ export function Header(): React.JSX.Element {
           </Link>
         </View>
         <View className="flex-row items-center gap-2">
-          <LocaleSwitcher />
+          <AppMenu />
           {isPending ? (
             <Skeleton accessibilityLabel={t("userMenu")} className="size-11 rounded-full" />
           ) : isAuthed ? (
@@ -35,20 +36,7 @@ export function Header(): React.JSX.Element {
                 <Text className="text-[11px] font-bold">{initials}</Text>
               </Button>
             </Link>
-          ) : (
-            <View className="flex-row gap-2">
-              <Link href="/sign-in" asChild>
-                <Button variant="outline" size="sm">
-                  <Text>{t("signIn")}</Text>
-                </Button>
-              </Link>
-              <Link href="/sign-up" asChild>
-                <Button size="sm">
-                  <Text>{t("signUp")}</Text>
-                </Button>
-              </Link>
-            </View>
-          )}
+          ) : null}
         </View>
       </View>
       {isAuthed ? (

@@ -2,7 +2,7 @@ export type WorkspaceDestination =
   | "/dashboard"
   | "/agent"
   | "/storage"
-  | "/billing"
+  | "/settings/billing"
   | "/pdf"
   | "/settings"
   | "/admin/users";
@@ -11,10 +11,23 @@ export const WORKSPACE_NAVIGATION = [
   { path: "/dashboard", label: "dashboard", match: "subtree" },
   { path: "/agent", label: "agent", match: "subtree" },
   { path: "/storage", label: "storage", match: "subtree" },
-  { path: "/billing", label: "billing", match: "exact" },
+  { path: "/settings/billing", label: "billing", match: "exact" },
   { path: "/pdf", label: "pdf", match: "subtree" },
   { path: "/settings", label: "settings", match: "subtree" },
   { path: "/admin/users", label: "admin", match: "subtree" },
+] as const;
+
+/**
+ * Legacy billing entry points, redirected to their replacement routes.
+ *
+ * Customer billing moved under settings, and the provider return pages moved
+ * under checkout. Each legacy URL stays an exact match so an old return link
+ * can never resolve as a workspace subtree.
+ */
+export const LEGACY_BILLING_REDIRECTS = [
+  { path: "/billing", destination: "/settings/billing", match: "exact" },
+  { path: "/billing/success", destination: "/checkout/success", match: "exact" },
+  { path: "/billing/cancel", destination: "/checkout/cancel", match: "exact" },
 ] as const;
 
 export function isCurrentPath(

@@ -25,6 +25,6 @@ export function useAuthenticatedLanding(isAuthenticated: boolean): void {
 
   React.useEffect(() => {
     if (!shouldLand) return;
-    router.replace("/dashboard");
+    router.replace("/home");
   }, [router, shouldLand]);
 }

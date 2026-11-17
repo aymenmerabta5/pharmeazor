@@ -64,6 +64,24 @@ export interface BillingCheckoutDto {
   readonly planId: string;
 }
 
+/**
+ * Paying for a plan with the balance the customer already holds.
+ *
+ * Only the plan and a replay key come from the client. The amount is read from
+ * the catalog, so a caller cannot decide how much a plan costs.
+ */
+export interface BillingBalancePurchaseInput {
+  readonly planId: string;
+  readonly requestKey: string;
+}
+
+export interface BillingBalancePurchaseDto {
+  readonly planId: string;
+  readonly balanceMinor: number;
+  readonly duplicate: boolean;
+  readonly periodEnd: string | null;
+}
+
 export interface BillingPortalInput {
   readonly provider: "stripe";
   readonly returnUrl: string;

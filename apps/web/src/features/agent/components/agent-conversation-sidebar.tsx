@@ -77,7 +77,7 @@ export function AgentConversationSidebar({
           <p className="mt-2 text-sm leading-5 text-muted-foreground">{t("upgradeDescription")}</p>
           <Button
             className="mt-4 h-10 w-full rounded-xl text-sm font-semibold"
-            render={<Link href="/plans" />}
+            render={<Link href="/pricing" />}
             nativeButton={false}
           >
             {t("seePlans")}

@@ -11,7 +11,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(({ className, ...pr
     <TextInput
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground",
+        "flex h-12 w-full rounded-xl border border-input bg-card px-4 text-[15px] text-foreground placeholder:text-muted-foreground",
         className,
       )}
       {...props}

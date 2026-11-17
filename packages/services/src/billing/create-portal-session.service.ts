@@ -3,6 +3,7 @@ import type { Result } from "@repo/kernel";
 import { err } from "@repo/kernel";
 import { ServiceError } from "../errors";
 import type { BillingPortalProviderName } from "@repo/billing";
+import { assertSafeProviderUrl } from "./provider-url-policy";
 export type { BillingPortalProviderName };
 export type BillingProviderName = BillingPortalProviderName;
 export type BillingPortalErrorCode =
@@ -71,7 +72,7 @@ export async function createPortalSessionService(
       customerId,
       returnUrl: input.returnUrl,
     });
-    return { ok: true, value: session };
+    return { ok: true, value: { url: assertSafeProviderUrl(session.url) } };
   } catch (e) {
     return err(
       new ServiceError("PORTAL_FAILED", "Unable to create customer portal session", { cause: e }),

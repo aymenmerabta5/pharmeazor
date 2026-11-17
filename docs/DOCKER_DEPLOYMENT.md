@@ -28,7 +28,7 @@ docker compose -f compose.production.yml ps
 
 The application service sets `stop_grace_period: 30s` and inherits the image health check at `/api/health`.
 
-The Compose file mounts the stable named volume `pharmeazor_eve_workflow_data` at `/app/apps/eve/.eve/.workflow-data`. `docker compose down` preserves it; never use `down -v` unless deleting Workflow state is intentional.
+The Compose file mounts the stable named volume `pharmeazor_eve_workflow_data` at `/app/apps/harness/.eve/.workflow-data`. `docker compose down` preserves it; never use `down -v` unless deleting Workflow state is intentional.
 
 This profile uses process-local admission or Workflow state. Run exactly one application replica until a shared transactional adapter is configured.
 
@@ -83,7 +83,7 @@ continuation differs):
 bun --env-file=.env.local scripts/build-deployment.mjs
 docker build -t pharmeazor .
 docker run -d --name pharmeazor --env-file .env.local -p 127.0.0.1:3000:3000 \
-  --mount type=volume,src=pharmeazor_eve_workflow_data,dst=/app/apps/eve/.eve/.workflow-data \
+  --mount type=volume,src=pharmeazor_eve_workflow_data,dst=/app/apps/harness/.eve/.workflow-data \
   --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
   --group-add "$(stat -c %g /var/run/docker.sock)" pharmeazor
 docker inspect --format "{{json .State.Health}}" pharmeazor
@@ -114,4 +114,4 @@ so the host needs a reachable Docker daemon.
   privilege on the host. Keep the daemon on a dedicated machine.
 
 See `docs/EVE_SELF_HOSTING.md` for the full contract and
-`apps/eve/agent/sandbox/README.md` for the runtime the container provides.
+`apps/harness/agent/sandbox/README.md` for the runtime the container provides.

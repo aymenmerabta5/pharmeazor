@@ -314,7 +314,7 @@ Mirror the `storage` capability rather than inventing a new shape.
 | Postgres hybrid retrieval adapter                   | `packages/api/src/adapters/retrieval/postgres.ts` |
 | Embedding and reranking provider adapters           | `packages/api/src/adapters/retrieval/`            |
 | Composition root                                    | `packages/api/src/composition/retrieval.ts`       |
-| Agent retrieval tool                                | `apps/eve/agent/tools/`                           |
+| Agent retrieval tool                                | `apps/harness/agent/tools/`                       |
 
 `tooling/corpus/` prepares the corpus offline: it turns the raw collection into
 clean Markdown plus an import manifest and stops there. It is not a runtime

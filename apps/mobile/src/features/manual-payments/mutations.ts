@@ -15,7 +15,7 @@ export async function openManualBillingWeb(isCurrent: () => boolean): Promise<vo
     }
   })[0];
   if (!configured) throw new Error("MANUAL_WEB_UNAVAILABLE");
-  const url = new URL("/billing", configured).toString();
+  const url = new URL("/settings/billing", configured).toString();
   if (!(await Linking.canOpenURL(url))) throw new Error("MANUAL_WEB_UNAVAILABLE");
   if (isCurrent()) await Linking.openURL(url);
 }

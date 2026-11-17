@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 if (typeof Bun !== "undefined") throw new Error("Eve's development worker requires Node.js");
-const appRoot = fileURLToPath(new URL("../apps/eve/", import.meta.url));
+const appRoot = fileURLToPath(new URL("../apps/harness/", import.meta.url));
 const require = createRequire(pathToFileURL(join(appRoot, "package.json")));
 const cli = join(dirname(require.resolve("eve/package.json")), "bin", "eve.js");
 const port = process.env.EVE_NEXT_PRODUCTION_PORT?.trim() || "4274";

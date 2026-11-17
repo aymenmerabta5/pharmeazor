@@ -18,6 +18,7 @@ export interface ManualPaymentCardProps {
   readonly refreshDisabled: boolean;
   readonly opening: boolean;
   readonly openError: boolean;
+  readonly showBalance?: boolean;
   readonly onRefresh: () => void;
   readonly onOpen: () => Promise<void>;
 }
@@ -33,6 +34,7 @@ export function ManualPaymentCard({
   refreshDisabled,
   opening,
   openError,
+  showBalance = true,
   onRefresh,
   onOpen,
 }: ManualPaymentCardProps): React.JSX.Element {
@@ -53,11 +55,13 @@ export function ManualPaymentCard({
         {summaryPending ? <ActivityIndicator accessibilityLabel={copy.loading} /> : null}
         {summary ? (
           <>
-            <View className="gap-1">
-              <Text className="text-sm text-muted-foreground">{copy.balance}</Text>
-              <Text className="text-3xl font-semibold">{money(summary.balanceMinor)}</Text>
-              <Text className="text-sm text-muted-foreground">{copy.balanceHelp}</Text>
-            </View>
+            {showBalance ? (
+              <View className="gap-1">
+                <Text className="text-sm text-muted-foreground">{copy.balance}</Text>
+                <Text className="text-3xl font-semibold">{money(summary.balanceMinor)}</Text>
+                <Text className="text-sm text-muted-foreground">{copy.balanceHelp}</Text>
+              </View>
+            ) : null}
             {summary.enabled ? (
               <>
                 <Text className="text-sm leading-6">{summary.receiverInstructions}</Text>

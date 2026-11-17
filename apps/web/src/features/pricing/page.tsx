@@ -1,19 +1,38 @@
 "use client";
 import type * as React from "react";
+import { useAppShell } from "@/features/app-shell/use-app-shell";
+import type { BillingPlan } from "@/lib/billing-catalog";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { BillingIntervalToggle } from "./components/billing-interval-toggle";
 import { PlanCard } from "./components/plan-card";
 import { PricingHeader } from "./components/pricing-header";
 import { usePricingPlans } from "./use-pricing-plans";
 
-/** Pricing surface: plan cards with a billing-interval toggle. */
-export function PricingPage(): React.JSX.Element {
+/** Pricing surface: the billed tiers with a monthly/yearly toggle. */
+export function PricingPage({
+  plans,
+  signedIn,
+  currentPlanIds,
+}: {
+  plans: readonly BillingPlan[];
+  signedIn: boolean;
+  currentPlanIds: readonly string[];
+}): React.JSX.Element {
   const t = useSurfaceTranslations("pricing");
-  const { interval, plans, selectInterval } = usePricingPlans();
+  const shell = useAppShell();
+  const { interval, cards, selectInterval } = usePricingPlans({
+    plans,
+    signedIn,
+    currentPlanIds,
+  });
 
   return (
     <div className="ph-surface">
-      <PricingHeader />
+      <PricingHeader
+        identity={shell.identity}
+        onNavigate={shell.onNavigate}
+        onSignOut={shell.onSignOut}
+      />
 
       <main className="ph-pricing-main">
         <span className="ph-pricing-eyebrow">{t("eyebrow")}</span>
@@ -21,10 +40,13 @@ export function PricingPage(): React.JSX.Element {
         <p className="ph-pricing-description">{t("description")}</p>
 
         <BillingIntervalToggle interval={interval} onSelect={selectInterval} />
+        <p className="ph-pricing-note">
+          {interval === "yearly" ? t("yearlyNote") : t("monthlyNote")}
+        </p>
 
         <div className="ph-pricing-grid">
-          {plans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
+          {cards.map((plan) => (
+            <PlanCard key={plan.tier} plan={plan} />
           ))}
         </div>
       </main>

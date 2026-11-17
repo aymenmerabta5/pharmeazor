@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Text } from "./text";
 
 const badgeVariants = tv({
-  base: "inline-flex items-center rounded-full border px-2.5 py-0.5",
+  base: "inline-flex items-center rounded-full border px-3 py-1",
   variants: {
     variant: {
       default: "border-transparent bg-primary",
@@ -18,7 +18,7 @@ const badgeVariants = tv({
 });
 
 const badgeTextVariants = tv({
-  base: "text-xs font-semibold",
+  base: "text-[11px] font-semibold tracking-wide",
   variants: {
     variant: {
       default: "text-primary-foreground",

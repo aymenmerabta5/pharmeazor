@@ -8,6 +8,7 @@ import { WorkspaceNavigationTrigger } from "@/components/workspace-navigation-tr
 
 import { useAppShell } from "./use-app-shell";
 import { appShellMode } from "./shell-mode";
+import { MobileMenu } from "./mobile-menu";
 
 export function AppShell({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { identity, pathname, section, onNavigate, onSignOut } = useAppShell();
@@ -27,7 +28,12 @@ export function AppShell({ children }: { children: React.ReactNode }): React.JSX
           title={section ? t(section) : undefined}
           navigation={workspace ? <WorkspaceNavigationTrigger {...navigationProps} /> : undefined}
         >
-          <HeaderActions identity={identity} onNavigate={onNavigate} onSignOut={onSignOut} />
+          <HeaderActions
+            identity={identity}
+            onNavigate={onNavigate}
+            onSignOut={onSignOut}
+            mobileMenu={workspace ? undefined : <MobileMenu />}
+          />
         </Header>
         {children}
       </div>

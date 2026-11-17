@@ -257,22 +257,31 @@ const STATEMENTS: readonly string[] = [
        END IF;
      END $$`,
 
-  // The rails this application does not offer are removed from the enum.
+  // Rails this application does not offer are removed from the enum. A row on
+  // a rail without an adapter cannot be cast to the new enum, so it is
+  // recorded on Stripe, the global rail, before the type is replaced.
   `DO $$
      BEGIN
        IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'billing_provider')
           AND EXISTS (
             SELECT 1 FROM pg_enum
              WHERE enumtypid = 'billing_provider'::regtype
-               AND enumlabel IN ('paddle', 'polar')
+               AND enumlabel NOT IN ('stripe', 'chargily', 'manual')
           ) THEN
-         UPDATE subscriptions SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
-         UPDATE checkouts SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
-         UPDATE customers SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
-         UPDATE invoices SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
-         UPDATE prices SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
-         UPDATE usage_events SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
-         UPDATE license_keys SET provider = 'stripe' WHERE provider IN ('paddle', 'polar');
+         UPDATE subscriptions SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
+         UPDATE checkouts SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
+         UPDATE customers SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
+         UPDATE invoices SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
+         UPDATE prices SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
+         UPDATE usage_events SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
+         UPDATE license_keys SET provider = 'stripe'
+          WHERE provider::text NOT IN ('stripe', 'chargily', 'manual');
          ALTER TABLE subscriptions
            ALTER COLUMN provider TYPE text USING provider::text;
          ALTER TABLE checkouts

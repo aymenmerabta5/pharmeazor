@@ -21,7 +21,7 @@ services:
       # the host socket owner, for example `stat -c %g /var/run/docker.sock`.
       - "${DOCKER_GID:-999}"
     volumes:
-      - eve_workflow_data:/app/apps/eve/.eve/.workflow-data
+      - eve_workflow_data:/app/apps/harness/.eve/.workflow-data
       # The agent sandbox container is created on the host daemon. This mount
       # gives the service control of that daemon, so it is a root-equivalent
       # privilege on the host; isolate the daemon on a dedicated machine.

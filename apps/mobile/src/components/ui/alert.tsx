@@ -5,12 +5,11 @@ import { cn } from "@/lib/utils";
 import { Text } from "./text";
 
 const alertVariants = tv({
-  base: "relative flex w-full rounded-lg border p-4",
+  base: "relative flex w-full rounded-[14px] border border-border bg-card p-4",
   variants: {
     variant: {
       default: "bg-card text-card-foreground",
-      destructive:
-        "border-destructive/50 text-destructive dark:border-destructive bg-destructive/10",
+      destructive: "border-destructive/30 bg-destructive/10 text-destructive",
     },
   },
   defaultVariants: { variant: "default" },

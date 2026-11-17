@@ -1,18 +1,18 @@
 "use client";
 import type * as React from "react";
 import { useSurfaceTranslations } from "@/lib/translations";
-import type { BillingInterval } from "../model";
+import type { PricingInterval } from "../model";
 
 /** Monthly/yearly radio group. */
 export function BillingIntervalToggle({
   interval,
   onSelect,
 }: {
-  interval: BillingInterval;
-  onSelect(interval: BillingInterval): void;
+  interval: PricingInterval;
+  onSelect(interval: PricingInterval): void;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("pricing");
-  const options: { id: BillingInterval; label: string }[] = [
+  const options: { id: PricingInterval; label: string }[] = [
     { id: "monthly", label: t("monthly") },
     { id: "yearly", label: t("yearly") },
   ];

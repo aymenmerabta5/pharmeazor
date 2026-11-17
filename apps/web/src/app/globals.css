@@ -105,7 +105,7 @@
     0 22px 45px -30px oklch(0.1 0.02 120 / 0.65);
 }
 /* ─── Pharmeazor immersive-surface design tokens ─────────────────────────── */
-/* Used by chat-welcome, chat, and pricing pages only. Scoped to .ph-surface  */
+/* Used by the chat and pricing surfaces only. Scoped to .ph-surface        */
 /* so the workspace shell theme is not affected.                               */
 
 .ph-surface {
@@ -119,6 +119,7 @@
   --ph-green-hover: #4a6b30;
   --ph-green-light: #e8eddf;
   --ph-green-pill: #e6ecdb;
+  --ph-on-green: #ffffff;
   --ph-text: #1a1a14;
   --ph-text-muted: #6b6b5a;
   --ph-text-sidebar: #3a3a2e;
@@ -127,16 +128,73 @@
   --ph-badge-official: #3d5a27;
   --ph-badge-foreign: #8a8a78;
   --ph-badge-differs: #a0603a;
+  --ph-tag-neutral-bg: #e8e8e0;
+  --ph-tag-warn-bg: #f3e8e0;
   --ph-radius-card: 14px;
   --ph-radius-pill: 999px;
+  --ph-rail-width: 56px;
+  --ph-panel-width: 232px;
   background-color: var(--ph-bg);
   color: var(--ph-text);
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   min-height: 100dvh;
+}
+
+/* The cream pages have their own palette, so the shared dark tokens never
+   reached them. These values mirror the mobile dark theme: olive ink, paper
+   text, and a light primary that carries dark text on filled controls. */
+.dark .ph-surface {
+  --ph-bg: #14150f;
+  --ph-bg-card: #1d1f17;
+  --ph-bg-sidebar: #191b13;
+  --ph-bg-sidebar-hover: #24271b;
+  --ph-bg-sidebar-active: #2d3122;
+  --ph-green: #b6c99a;
+  --ph-green-dark: #dfe8cf;
+  --ph-green-hover: #c6d8ab;
+  --ph-green-light: #2a2e20;
+  --ph-green-pill: #31361f;
+  --ph-on-green: #1a2410;
+  --ph-text: #f2efe6;
+  --ph-text-muted: #a7a594;
+  --ph-text-sidebar: #d7d5c6;
+  --ph-border: #34372a;
+  --ph-border-card: #2c2f24;
+  --ph-badge-official: #b6c99a;
+  --ph-badge-foreign: #a7a594;
+  --ph-badge-differs: #d6a079;
+  --ph-tag-neutral-bg: #2a2d22;
+  --ph-tag-warn-bg: #3a2c24;
+}
+
+/* The full-screen menu renders in a portal, outside the page's `.ph-surface`,
+   so it carries the same palette itself instead of falling back to the neutral
+   application theme. Its primitives read the semantic tokens, which are mapped
+   here onto the cream/olive values. */
+.ph-menu-sheet {
+  --background: var(--ph-bg);
+  --foreground: var(--ph-text);
+  --card: var(--ph-bg-card);
+  --card-foreground: var(--ph-text);
+  --popover: var(--ph-bg-card);
+  --popover-foreground: var(--ph-text);
+  --primary: var(--ph-green);
+  --primary-foreground: var(--ph-on-green);
+  --secondary: var(--ph-bg-sidebar-hover);
+  --secondary-foreground: var(--ph-text);
+  --muted: var(--ph-bg-sidebar-hover);
+  --muted-foreground: var(--ph-text-muted);
+  --accent: var(--ph-bg-sidebar-hover);
+  --accent-foreground: var(--ph-text);
+  --destructive: #a0452f;
+  --destructive-foreground: #fdf7f4;
+  --border: var(--ph-border);
+  --input: var(--ph-border);
+  --ring: var(--ph-green);
+}
+.dark .ph-menu-sheet {
+  --destructive: #d98b72;
+  --destructive-foreground: #2a130d;
 }
 
 /* Smooth focus rings for pharmeazor inputs */
@@ -167,19 +225,7 @@
   animation: ph-shimmer 1.4s ease-in-out infinite;
 }
 
-/* ─── Pharmeazor leaf logo icons ──────────────────────────────────────── */
-
-/* Small leaf: rounded-square green bg used in the left rail */
-.ph-leaf-sm {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--ph-green);
-  flex-shrink: 0;
-}
+/* ─── Pharmeazor leaf logo icon ───────────────────────────────────────── */
 
 /* Large leaf: bigger rounded-square used in page center */
 .ph-leaf-lg {
@@ -202,26 +248,49 @@
   height: 32px;
   border-radius: 50%;
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   flex-shrink: 0;
 }
 
-/* ─── Welcome page — two-column layout ───────────────────────────────── */
+/* ─── Welcome page — sidebar panel and content column ─────────────────── */
 
-/* Root grid: narrow left rail + right content column */
+/* Root row: the animated panel on the inline start, the content beside it.
+   The panel animates its own width, so the content column follows frame by
+   frame instead of jumping between two grid definitions. */
 .ph-welcome-layout {
-  display: grid;
-  grid-template-columns: 56px 1fr;
+  display: flex;
   min-height: 100dvh;
 }
 
-/* Open state: the history sidebar takes over the left edge, so the rail is
-   hidden and its column is replaced by the sidebar column. */
-.ph-welcome-layout--open {
-  grid-template-columns: 210px 1fr;
+/* ── Sidebar panel ── */
+/* One panel holds both states: the narrow rail and the open history list.
+   Its width is animated in the component, the two contents cross-fade. */
+.ph-sidebar-panel {
+  position: sticky;
+  top: 0;
+  width: var(--ph-rail-width);
+  height: 100dvh;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--ph-bg-sidebar);
+  border-inline-end: 1px solid var(--ph-border);
+}
+.ph-sidebar-rail,
+.ph-sidebar-body {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: 0;
+}
+.ph-sidebar-rail {
+  width: var(--ph-rail-width);
+}
+.ph-sidebar-body {
+  width: var(--ph-panel-width);
+  overflow-y: auto;
 }
 
 /* ── Left rail ── */
@@ -231,20 +300,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 0;
-  background: var(--ph-bg-sidebar);
-  border-right: 1px solid var(--ph-border);
-  position: sticky;
-  top: 0;
-  height: 100dvh;
-  width: 56px;
-  flex-shrink: 0;
+  width: var(--ph-rail-width);
+  height: 100%;
   overflow: hidden;
-}
-
-/* The rail and the history sidebar are the two states of the same panel, so
-   the rail leaves the flow while the sidebar is open. */
-.ph-rail[hidden] {
-  display: none;
 }
 .ph-rail-top {
   display: flex;
@@ -259,7 +317,7 @@
   gap: 0.625rem;
 }
 
-/* Logo button in rail (green rounded-square) */
+/* Logo button in rail — same mark and wordmark lockup as the app menu */
 .ph-rail-logo {
   display: inline-flex;
   align-items: center;
@@ -309,57 +367,82 @@
 }
 
 /* ── Right column ── */
-.ph-welcome-right {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-}
-
-/* Top bar — only the pill + upgrade button, flush right */
+/* Top bar — the header controls sit at the inline end, which keeps the same
+   physical corner under RTL. The optional conversation title stays at the
+   inline start; the auto margin is what pins the controls to the end. */
 .ph-welcome-topbar {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.875rem 1.5rem;
 }
-.ph-welcome-topbar-actions {
+.ph-welcome-topbar-controls {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  margin-inline-start: auto;
 }
 
-/* The top-bar toggle closes the history sidebar, so it sits at the inline
-   start while the plan actions stay flush to the end. */
-.ph-welcome-topbar .ph-chat-topbar-toggle {
-  margin-inline-end: auto;
-}
-
-/* Free plan pill */
-.ph-badge-free {
-  padding: 0.3rem 0.875rem;
-  border-radius: var(--ph-radius-pill);
-  border: 1px solid var(--ph-border);
-  font-size: 0.775rem;
-  color: var(--ph-text-muted);
-  background: var(--ph-bg-card);
-  font-weight: 500;
-}
-
-/* Upgrade button */
-.ph-btn-upgrade {
-  padding: 0.4rem 1.125rem;
-  border-radius: var(--ph-radius-pill);
+/* Menu trigger — the cream control shared by the immersive top bars. */
+.ph-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
   border: none;
-  background: var(--ph-green);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ph-text) 6%, transparent);
+  color: var(--ph-text);
   cursor: pointer;
-  transition: background 0.15s;
-  font-family: inherit;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.ph-btn-upgrade:hover {
-  background: var(--ph-green-hover);
+.ph-menu-trigger:hover {
+  background: color-mix(in srgb, var(--ph-text) 11%, transparent);
+}
+
+/* Full-screen menu — rows land in sequence instead of appearing at once. */
+@keyframes ph-menu-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ph-menu-row {
+  animation: ph-menu-row-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ph-menu-row:nth-child(2) {
+  animation-delay: 40ms;
+}
+.ph-menu-row:nth-child(3) {
+  animation-delay: 80ms;
+}
+.ph-menu-row:nth-child(4) {
+  animation-delay: 120ms;
+}
+.ph-menu-row:nth-child(5) {
+  animation-delay: 160ms;
+}
+.ph-menu-row:nth-child(6) {
+  animation-delay: 200ms;
+}
+.ph-menu-row:nth-child(7) {
+  animation-delay: 240ms;
+}
+.ph-menu-row:nth-child(8) {
+  animation-delay: 280ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-menu-row {
+    animation: none;
+  }
 }
 
 /* Center content — vertically centered, takes remaining space */
@@ -441,7 +524,7 @@
   border-radius: 50%;
   border: none;
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s;
@@ -529,6 +612,16 @@
   align-items: center;
   gap: 0.625rem;
 }
+.ph-pricing-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+@media (max-width: 640px) {
+  .ph-pricing-header {
+    padding: 1rem;
+  }
+}
 .ph-pricing-brand {
   font-size: 1.05rem;
   font-weight: 600;
@@ -606,6 +699,12 @@
   color: var(--ph-text);
   font-weight: 600;
 }
+.ph-pricing-note {
+  margin: -1.5rem 0 2.25rem;
+  font-size: 0.8rem;
+  color: var(--ph-text-muted);
+  text-align: center;
+}
 
 /* Plan cards grid */
 .ph-pricing-grid {
@@ -632,7 +731,7 @@
 }
 .ph-plan-popular {
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   border-color: var(--ph-green);
 }
 .ph-plan-header {
@@ -654,8 +753,8 @@
   font-weight: 600;
   padding: 0.2rem 0.6rem;
   border-radius: var(--ph-radius-pill);
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: color-mix(in srgb, var(--ph-on-green) 18%, transparent);
+  color: var(--ph-on-green);
 }
 .ph-plan-description {
   font-size: 0.8rem;
@@ -688,17 +787,24 @@
   background: transparent;
   color: var(--ph-text);
   font-family: inherit;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+.ph-plan-cta-disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 .ph-plan-cta:hover {
   background: var(--ph-bg-sidebar-hover);
 }
 .ph-plan-cta-primary {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: #fff;
+  border-color: color-mix(in srgb, var(--ph-on-green) 30%, transparent);
+  background: var(--ph-bg-card);
   color: var(--ph-green);
 }
 .ph-plan-cta-primary:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--ph-bg);
 }
 
 /* Feature list */
@@ -724,7 +830,7 @@
   margin-top: 1px;
 }
 .ph-plan-popular .ph-plan-check {
-  color: #fff;
+  color: var(--ph-on-green);
 }
 
 /* Pricing footer */
@@ -760,31 +866,12 @@
 
 /* ─── Chat page ────────────────────────────────────────────────────────── */
 
-/* Root layout: sidebar + main */
-.ph-chat-layout {
-  display: flex;
-  min-height: 100dvh;
-}
-
-/* ── Sidebar ── */
+/* ── Sidebar content ── */
 .ph-chat-sidebar {
   display: flex;
   flex-direction: column;
-  width: 210px;
-  flex-shrink: 0;
-  background: var(--ph-bg-sidebar);
-  border-right: 1px solid var(--ph-border);
-  height: 100dvh;
-  position: sticky;
-  top: 0;
-  overflow-y: auto;
+  min-height: 100%;
   padding-bottom: 1rem;
-}
-
-/* The closed panel stays mounted so a host toggle's `aria-controls` resolves,
-   but leaves the layout flow so the closed state keeps its own grid. */
-.ph-chat-sidebar[hidden] {
-  display: none;
 }
 
 /* Empty-history message shown until something has been searched for */
@@ -799,12 +886,36 @@
 .ph-chat-sidebar-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 1rem 0.875rem 0.75rem;
 }
 .ph-chat-brand {
   font-size: 0.95rem;
   font-weight: 700;
+  color: var(--ph-text);
+}
+
+/* Collapse control lives in the panel it closes. */
+.ph-sidebar-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ph-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.ph-sidebar-close:hover {
+  background: var(--ph-bg-sidebar-hover);
   color: var(--ph-text);
 }
 .ph-new-question-btn {
@@ -815,7 +926,7 @@
   margin: 0 0.75rem 1rem;
   padding: 0.55rem 1rem;
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   border: none;
   border-radius: var(--ph-radius-pill);
   font-size: 0.8rem;
@@ -894,7 +1005,7 @@
   width: 100%;
   padding: 0.5rem;
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   border: none;
   border-radius: var(--ph-radius-pill);
   font-size: 0.75rem;
@@ -923,7 +1034,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   font-size: 0.6rem;
   font-weight: 700;
   flex-shrink: 0;
@@ -952,44 +1063,13 @@
   background: var(--ph-bg);
 }
 
-/* Top bar */
-.ph-chat-topbar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.5rem;
-  border-bottom: 1px solid var(--ph-border-card);
-  background: var(--ph-bg);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.ph-chat-topbar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ph-text-muted);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition:
-    background 0.12s,
-    color 0.12s;
-  padding: 0;
-}
-.ph-chat-topbar-toggle:hover {
-  background: var(--ph-bg-sidebar-hover);
-  color: var(--ph-text);
-}
+/* Top bar title, shown once a conversation owns the surface. */
 .ph-chat-topbar-title {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--ph-text);
   margin: 0;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1194,14 +1274,14 @@
 }
 .ph-source-tag-official {
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
 }
 .ph-source-tag-foreign {
-  background: #e8e8e0;
+  background: var(--ph-tag-neutral-bg);
   color: var(--ph-text-muted);
 }
 .ph-source-tag-differs {
-  background: #f3e8e0;
+  background: var(--ph-tag-warn-bg);
   color: var(--ph-badge-differs);
 }
 
@@ -1338,7 +1418,7 @@
   border-radius: 50%;
   border: none;
   background: var(--ph-green);
-  color: #fff;
+  color: var(--ph-on-green);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s;

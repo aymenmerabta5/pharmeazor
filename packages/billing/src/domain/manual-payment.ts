@@ -1,4 +1,5 @@
 export const MAX_MANUAL_AMOUNT_MINOR = 100_000_000;
+export const MIN_MANUAL_TOPUP_MINOR = 10_000;
 export const MAX_MANUAL_RECEIPT_BYTES = 5 * 1024 * 1024;
 export const MAX_MANUAL_PENDING = 10;
 export const MAX_MANUAL_RECEIPTS_PER_OWNER = 1000;
@@ -26,7 +27,6 @@ export interface ManualPaymentReceipt {
   readonly originalName: string;
 }
 export interface ManualPaymentSubmitInput {
-  readonly planId: string;
   readonly amountMinor: number;
   readonly requestKey: string;
   readonly method?: string;
@@ -34,7 +34,6 @@ export interface ManualPaymentSubmitInput {
   readonly receipt: ManualPaymentReceipt;
 }
 export interface ValidatedManualPaymentSubmitInput extends ManualPaymentSubmitInput {
-  readonly planId: string;
   readonly method: string;
   readonly reference: string;
 }
@@ -46,8 +45,8 @@ export interface ManualPaymentReviewInput {
 export interface ManualPayment {
   readonly id: string;
   readonly ownerId: string;
-  /** The plan this payment buys. Approving it grants that plan's period. */
-  readonly planId: string;
+  /** The plan a legacy payment bought; null for a wallet top-up. */
+  readonly planId: string | null;
   readonly amountMinor: number;
   readonly currency: "DZD";
   readonly status: "pending" | "approved" | "rejected";
@@ -65,7 +64,8 @@ export type ManualPaymentErrorCode =
   | "NOT_CONFIGURED"
   | "NOT_FOUND"
   | "CONFLICT"
-  | "LIMIT_EXCEEDED";
+  | "LIMIT_EXCEEDED"
+  | "INSUFFICIENT_FUNDS";
 export class ManualPaymentError extends Error {
   readonly code: ManualPaymentErrorCode;
   constructor(code: ManualPaymentErrorCode, message: string) {
@@ -73,26 +73,6 @@ export class ManualPaymentError extends Error {
     this.name = "ManualPaymentError";
     this.code = code;
   }
-}
-
-/**
- * The connection a review runs on.
- *
- * The manual repository owns the review transaction, so the subscription an
- * approval buys has to be written on the same connection: either the credit
- * and the access commit together, or neither does. The shape is opaque on
- * purpose, because the repository only passes it through.
- */
-export type ManualPaymentExecutor = unknown;
-
-export interface ManualPaymentReviewHooks {
-  /**
-   * Grants the subscription the approved payment buys.
-   *
-   * It runs inside the review transaction. Throwing rolls the approval back,
-   * so a payment is never approved without the access it paid for.
-   */
-  onApproved?: (payment: ManualPayment, executor: ManualPaymentExecutor) => Promise<void>;
 }
 
 /** Adapters recheck active identity within writes; roles passed by callers are never authority. */
@@ -103,11 +83,7 @@ export interface ManualPaymentRepository {
   reviewQueue(id: string): Promise<ManualPayment[]>;
   submit(id: string, input: ValidatedManualPaymentSubmitInput): Promise<ManualPayment>;
   receipt(id: string, paymentId: string): Promise<ManualPaymentReceipt>;
-  review(
-    id: string,
-    input: ManualPaymentReviewInput,
-    hooks?: ManualPaymentReviewHooks,
-  ): Promise<ManualPayment>;
+  review(id: string, input: ManualPaymentReviewInput): Promise<ManualPayment>;
 }
 
 export function validateManualPaymentReceipt(receipt: ManualPaymentReceipt): void {
@@ -156,16 +132,13 @@ export function validateManualPaymentSubmit(
 ): ValidatedManualPaymentSubmitInput {
   if (
     !Number.isSafeInteger(input.amountMinor) ||
-    input.amountMinor < 1 ||
+    input.amountMinor < MIN_MANUAL_TOPUP_MINOR ||
     input.amountMinor > MAX_MANUAL_AMOUNT_MINOR
   ) {
     throw new ManualPaymentError(
       "INVALID_INPUT",
-      "Amount must be between 1 and 100000000 DZD minor units",
+      "Top-up amount must be between 100 and 1,000,000 DZD",
     );
-  }
-  if (typeof input.planId !== "string" || !/^[a-z0-9][a-z0-9_-]{0,48}$/.test(input.planId)) {
-    throw new ManualPaymentError("INVALID_INPUT", "Choose a plan to pay for");
   }
   if (typeof input.requestKey !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(input.requestKey)) {
     throw new ManualPaymentError("INVALID_INPUT", "A valid submission key is required");

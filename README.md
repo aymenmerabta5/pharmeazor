@@ -19,4 +19,4 @@ Fixes retain the seven-day delay and empty exclusions. High/critical or unknown 
 After a failed install, source changes may already be applied. Inspect `.ghostinit/security-installation.json` and retry the fix after resolving the reported cause; installed dependencies are not rolled back. A `CLEANUP_UNVERIFIED` journal blocks mutation until process cleanup is independently verified and the journal is explicitly reconciled.
 If `init` fails after attempting installation in an initially empty directory, it preserves the incomplete project and its recovery record. A dependency fix alone does not finish creation state or local secrets; resolve the cause, repeat the original `init` selections with `--force`, and follow any bootstrap instruction.
 
-- Browser Eve traffic must use `/api/agent/eve/v1/*`; raw `/eve/v1/*` routes accept only the generated server-side proxy credential, and every durable session operation is owner/tenant checked.
+- Browser Eve traffic must use `/api/agent/harness/v1/*`; raw `/eve/v1/*` routes accept only the generated server-side proxy credential, and every durable session operation is owner/tenant checked.

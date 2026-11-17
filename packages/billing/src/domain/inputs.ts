@@ -73,7 +73,7 @@ export interface CreatePaymentLinkOutput {
 export interface VerifyWebhookInput {
   rawBody: Buffer;
   signature: string;
-  /** Full normalized request headers for providers such as Polar/Svix. */
+  /** Full normalized request headers for signature verification. */
   headers?: Record<string, string>;
 }
 

@@ -2,7 +2,7 @@ import type * as React from "react";
 import { View, type TextInputProps } from "react-native";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-function firstError(errors: readonly unknown[]): string | null {
+function firstFormError(errors: readonly unknown[]): string | null {
   for (const error of errors) {
     if (typeof error === "string" && error) return error;
     if (
@@ -15,6 +15,7 @@ function firstError(errors: readonly unknown[]): string | null {
   }
   return null;
 }
+export { firstFormError };
 export interface NativeFormFieldProps {
   label: string;
   value: string;
@@ -43,7 +44,7 @@ export function NativeFormField({
   keyboardType,
   autoCapitalize,
 }: NativeFormFieldProps): React.JSX.Element {
-  const error = firstError(errors);
+  const error = firstFormError(errors);
   return (
     <View className="gap-2">
       <Text className="text-sm font-medium">{label}</Text>

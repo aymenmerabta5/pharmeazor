@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { makeNativeQueryClient, nativeQueryCacheScope } from "@/lib/query-client";
 import { useOfflineSync } from "@/hooks/use-offline";
 
@@ -58,6 +59,7 @@ function AppNavigation() {
         <Stack.Screen name="2fa" options={{ title: t("twoFactor") }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Protected guard={isAuthenticated}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="dashboard" options={{ title: t("dashboard") }} />
           <Stack.Screen name="settings" options={{ title: t("settings") }} />
           <Stack.Screen name="workspace" options={{ title: t("workspace") }} />
@@ -80,5 +82,5 @@ export function ExpoRootLayout() {
   const analyticsApp = <ExpoAnalyticsProvider>{app}</ExpoAnalyticsProvider>;
   const instrumentedApp = <PlatformI18nProvider>{analyticsApp}</PlatformI18nProvider>;
 
-  return instrumentedApp;
+  return <SafeAreaProvider>{instrumentedApp}</SafeAreaProvider>;
 }

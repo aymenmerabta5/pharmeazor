@@ -2,6 +2,7 @@ import "server-only";
 import type { Result } from "@repo/kernel";
 import { err, ok } from "@repo/kernel";
 import type { BillingCheckoutProviderName } from "@repo/billing";
+import { assertSafeProviderUrl } from "./provider-url-policy";
 export type { BillingCheckoutProviderName };
 export type BillingProviderName = BillingCheckoutProviderName;
 export interface CheckoutRecord {
@@ -170,7 +171,7 @@ export async function createCheckoutService(
       return ok({
         id: intent.checkout.id,
         provider: input.provider,
-        url: intent.checkout.url,
+        url: assertSafeProviderUrl(intent.checkout.url),
         status: "pending",
         planId: input.planId,
       });
@@ -213,18 +214,19 @@ export async function createCheckoutService(
       metadata: { planId: input.planId },
       quantity: input.quantity,
     });
+    const checkoutUrl = assertSafeProviderUrl(checkout.url);
     await deps.checkoutRepository.complete({
       actorId: input.userId,
       provider: input.provider,
       requestKey: input.requestKey,
       leaseToken: intent.leaseToken,
       providerCheckoutId: checkout.id,
-      url: checkout.url,
+      url: checkoutUrl,
     });
     return ok({
       id: checkout.id,
       provider: input.provider,
-      url: checkout.url,
+      url: checkoutUrl,
       status: "pending",
       planId: input.planId,
     });
