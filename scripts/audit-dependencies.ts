@@ -140,6 +140,20 @@ const REVIEWED_ADVISORIES = new Map<string, string>([
   ["GHSA-vfj7-8cjw-p6xm", "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"],
   ["GHSA-ch52-4w7c-c8xp", "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"],
 ]);
+// Reviewed advisories with no patched release to move to. The key is the exact
+// `package:advisory` pair and the value the exact advisory URL, so this never
+// exempts a later advisory for the same package. Restore the failing gate by
+// deleting the entry once a fixed release exists and the lock resolves to it.
+//
+// Reviewed 2026-11-17, with the project owner's authorization:
+// picomatch@GHSA-fc5q-39xc-vjpf (HIGH, ReDoS). Advisory range is <=4.0.7 and
+// 4.0.7 is the newest published release, so no upgrade clears it. Every
+// reachable copy is build-time tooling (metro, @parcel/watcher via next-intl,
+// fdir via tinyglobby, jest-util); no request path matches user-supplied glob
+// patterns with it.
+const REVIEWED_UNPATCHED_ADVISORIES = new Map<string, string>([
+  ["picomatch:GHSA-fc5q-39xc-vjpf", "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"],
+]);
 // Tracks which reviewed patches resolve into the committed lock. Installed
 // verification skips only patches with no locked resolution; a locked but
 // missing installation still fails closed.
@@ -1375,6 +1389,7 @@ if (HAS_NODE_FORGE_PATCH) verifyNodeForgePatchInstalled(root, manifest);
 if (HAS_ELECTRON_TOOLCHAIN_PATCHES) verifyHttpCacheSemanticsPatchInstalled(root, manifest);
 const parsedReport = await bunAuditReport(root);
 const unexpected: string[] = [];
+const reviewedUnpatched: string[] = [];
 let reviewed = 0;
 for (const [packageName, advisories] of Object.entries(parsedReport)) {
   if (!Array.isArray(advisories)) fail("bun audit returned an invalid advisory list");
@@ -1389,6 +1404,13 @@ for (const [packageName, advisories] of Object.entries(parsedReport)) {
     }
     if (rank < 3) continue;
     const id = advisoryId(entry.url);
+    if (
+      REVIEWED_UNPATCHED_ADVISORIES.get(packageName + ":" + id) === entry.url &&
+      severity === "high"
+    ) {
+      reviewedUnpatched.push(packageName + ":" + id);
+      continue;
+    }
     const isReviewedImageSizePatch = HAS_IMAGE_SIZE_PATCH && packageName === "image-size";
     const isReviewedExpoToolchainPatch =
       (HAS_BRACES_PATCH && packageName === "braces") ||
@@ -1410,5 +1432,8 @@ for (const [packageName, advisories] of Object.entries(parsedReport)) {
 if (unexpected.length > 0) fail("unreviewed HIGH/CRITICAL advisories: " + unexpected.join(", "));
 console.log(
   "Dependency audit passed" +
-    (reviewed > 0 ? " with " + reviewed + " exactly patched advisories" : ""),
+    (reviewed > 0 ? " with " + reviewed + " exactly patched advisories" : "") +
+    (reviewedUnpatched.length > 0
+      ? "; reviewed with no patched release available: " + reviewedUnpatched.join(", ")
+      : ""),
 );
