@@ -1,0 +1,9 @@
+requests>=2.31
+beautifulsoup4>=4.12
+pandas>=2.1
+pymupdf>=1.24
+playwright>=1.44
+# Optional OCR fallback (also requires the Tesseract binary with fra/ara/eng
+# language data); the normal extraction run does not need these packages.
+pytesseract>=0.3.10
+Pillow>=10.0
