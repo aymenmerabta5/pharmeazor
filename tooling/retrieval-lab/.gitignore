@@ -15,6 +15,7 @@ data/reports/
 
 # metadata (excluded from tracking)
 data/metadata/
+Main_Arch
 
 # local secrets
 .env
