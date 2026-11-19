@@ -1,0 +1,21 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# collection artefacts (large, regenerable)
+data/raw/
+data/quarantine/
+data/.cache/
+data/logs/
+
+# reports (excluded from tracking)
+data/reports/
+
+# metadata (excluded from tracking)
+data/metadata/
+
+# local secrets
+.env
+*.key
