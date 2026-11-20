@@ -12,16 +12,16 @@
 # The committed default is deliberately relative so no machine-specific home
 # directory is baked into the repository.
 
-data_root: "../../../PHARMEAZOR/PHARMEAZOR"
+data_root:
 output_root: "output"
 
 paths:
-  documents_csv: "data/metadata/documents.csv"
-  sources_csv: "data/metadata/sources.csv"
-  medicines_csv: "data/input/medicines.csv"
-  name_map_csv: "data/metadata/name_map.csv"
-  needs_attention_csv: "data/metadata/needs_attention.csv"
-  raw_dir: "data/raw"
+  documents_csv:
+  sources_csv:
+  medicines_csv:
+  name_map_csv:
+  needs_attention_csv:
+  raw_dir:
 
 # Authority ranking is the one used by the project brief:
 #   1 = official Algerian SmPC / package leaflet (ANPP)

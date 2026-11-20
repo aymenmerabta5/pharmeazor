@@ -1,15 +1,11 @@
 # PHARMEAZOR — clean corpus
 
-This folder turns the raw PHARMEAZOR collection into a normalized corpus that is
-ready to insert into PostgreSQL and later chunk + embed with **BGE-M3**.
+This folder turns the raw PHARMEAZOR collection into a normalized corpus that is ready to insert into PostgreSQL and later chunk + embed with **BGE-M3**.
 
-It is an **offline** tool. It runs on a maintainer's machine, reads the raw
-collection, and writes clean Markdown plus an import manifest. It is not part of
-the application runtime, and it is not a workspace package.
+It is an **offline** tool. It runs on a maintainer's machine, reads the raw collection, and writes clean Markdown plus an import manifest. It is not part of the application runtime, and it is not a workspace package.
 
-The raw collection is never modified. The pipeline reads the raw collection
-root, writes everything under `tooling/corpus/output/`, and keeps a complete
-trail from every output back to the source file, SHA-256, source rank and
+The raw collection is never modified. The pipeline reads the raw collection root, writes everything under
+`tooling/corpus/output/`, and keeps a complete trail from every output back to the source file, SHA-256, source rank and
 collection date.
 
 The raw root is resolved in this order:
@@ -451,6 +447,4 @@ documents.
 Move the **manifest + Markdown body** into the database in one transaction per
 artifact, then build a separate chunk table. The clean corpus is deliberately
 not chunked into the final table yet: chunk sizes, contextualization and BGE-M3
-embedding belong to the retrieval pipeline and must be measured against the
-golden set. `output/preview/` proves the documents split cleanly; it is not the
-retrieval index.
+embedding belong to the retrieval pipeline and must be measured against the golden set. `output/preview/` proves the documents split cleanly; it is not the retrieval index.
