@@ -7,9 +7,9 @@
 ## Snapshot
 
 - Mode: monorepo with `apps/*`, `packages/*`, and `tooling/*` workspaces.
-- Package manager: Bun 1.4.4 (`packageManager: bun@1.4.4`). Do not use npm, pnpm, or Yarn.
+- Package manager: Bun 1.4.5 (`packageManager: bun@1.4.5`). Do not use npm, pnpm, or Yarn.
 - Supply-chain delay: `bunfig.toml` still sets `minimumReleaseAge = 0` under the project-owner-authorized exception created for the `eve@1.0.0-rc.6` prerelease. Eve is now stable at 1.0.1, so the seven-day delay and the commented release-age checks in the audit scripts are due to be restored as a follow-up; the empty exclusion list is already the intended policy.
-- Backend execution target: Bun 1.4.4. Installation and repository scripts still use Bun.
+- Backend execution target: Bun 1.4.5. Installation and repository scripts still use Bun. `ghostinit.config.json` keeps `packageManager.version` at `1.4.4` because the pinned `ghostinit@0.1.0` schema validates that field against its own runtime pin; do not raise it until a GhostInit release supports 1.4.5.
 - Frontend apps: mobile, web.
 - Web framework: Next.js 16.4.6.
 - Database: PostgreSQL 18.7 through Drizzle in `packages/database`, with pgvector 0.8.7 enabled. The image is built from `docker/postgres/Dockerfile` and pins both the server patch and the extension build.
@@ -134,7 +134,7 @@ Fixes retain the seven-day delay and empty exclusions. High/critical or unknown 
 
 `scripts/audit-dependencies.ts` and the copy of it embedded in `policy.auditScriptContent` must stay byte-identical, because the dependency-security runtime rewrites the file from the embedded copy during a repair. `bun scripts/sync-audit-script-policy.mjs` verifies that and `--write` resynchronises it.
 
-Bun 1.4.4 writes a v3 lockfile whenever it has to resolve a changed graph, and the v3 package map has the same shape as v2, so the audit accepts all three lockfile versions. A v2 lockfile is only preserved while the resolved graph stays unchanged.
+Bun 1.4.5 writes a v3 lockfile whenever it has to resolve a changed graph, and the v3 package map has the same shape as v2, so the audit accepts all three lockfile versions. A v2 lockfile is only preserved while the resolved graph stays unchanged.
 
 After a failed install, source changes may already be applied. Inspect `.ghostinit/security-installation.json` and retry the fix after resolving the reported cause; installed dependencies are not rolled back. A `CLEANUP_UNVERIFIED` journal blocks mutation until process cleanup is independently verified and the journal is explicitly reconciled.
 If `init` fails after attempting installation in an initially empty directory, it preserves the incomplete project and its recovery record. A dependency fix alone does not finish creation state or local secrets; resolve the cause, repeat the original `init` selections with `--force`, and follow any bootstrap instruction.

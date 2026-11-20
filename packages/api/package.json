@@ -6,6 +6,7 @@
     "./harness": "./src/harness/index.ts",
     "./identity": "./src/identity/index.ts",
     "./openapi": "./src/openapi.ts",
+    "./retrieval": "./src/retrieval/index.ts",
     "./storage": "./src/storage/index.ts",
     "./workers/storage/cleanup": "./src/workers/storage/cleanup.ts"
   },
@@ -26,6 +27,7 @@
     "@repo/billing": "workspace:*",
     "@repo/config": "workspace:*",
     "@repo/database": "workspace:*",
+    "@repo/modules": "workspace:*",
     "@repo/observability": "workspace:*",
     "@repo/services": "workspace:*",
     "@repo/storage": "workspace:*",

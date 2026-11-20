@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BUN_VERSION: 1.4.4
+  BUN_VERSION: 1.4.5
   # The generator CLI is pinned to an exact published version so the
   # architecture gate and the generated-state gate always run the same
   # generator. Bump this together with the published package.

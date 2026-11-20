@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "registry": "https://registry.npmjs.org",
   "minimumReleaseAgeSeconds": 604800,
-  "auditedAt": "2026-11-20T14:18:51.426Z",
-  "lockSha256": "70ac018ec3af3b77573a1fad407bf8590422152518c728110a08886c5797505f",
+  "auditedAt": "2026-11-20T20:08:03.120Z",
+  "lockSha256": "9948e88e103943d2c3fd3b40d300a466bebb4c7bfe12c61c66eaaa5b25b7723e",
   "releases": [
     {
       "package": "@ai-sdk/gateway",
@@ -3985,9 +3985,9 @@
     },
     {
       "package": "bun-types",
-      "version": "1.4.4",
-      "publishedAt": "2026-10-22T10:17:50.170Z",
-      "integrity": "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="
+      "version": "1.4.5",
+      "publishedAt": "2026-11-19T08:56:28.988Z",
+      "integrity": "sha512-ECHn+9dhL3wv0G6u0+7dQvrnaimXiRDxxerYBmhTaLyJEEuvTPWk2Fye3XIf5Y++JIIiHKfQw4Z7V5D8KuiXbg=="
     },
     {
       "package": "bytes",

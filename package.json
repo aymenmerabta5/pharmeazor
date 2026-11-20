@@ -23,6 +23,9 @@
     "db:ensure-extensions": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/database/ensure-extensions.ts --ghostinit-database-extension-bootstrap",
     "db:migrate:billing": "bun --env-file=.env.local packages/database/src/workers/database/migrate-billing-subscriptions.ts --ghostinit-billing-migration",
     "db:verify": "bun --env-file=.env.local packages/database/src/workers/database/verify.ts",
+    "retrieval:ensure-schema": "bun --conditions=react-server --env-file=.env.local packages/database/src/workers/database/ensure-retrieval.ts --retrieval-schema",
+    "retrieval:ingest": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts",
+    "retrieval:ingest:dry": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --dry-run",
     "dev": "bun --env-file=.env.local run turbo run dev",
     "doctor:fix": "bunx --bun ghostinit@0.1.0 doctor --fix",
     "eve:build": "bun --env-file=.env.local run --cwd apps/harness build",
@@ -57,7 +60,7 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "bun-types": "1.4.4",
+    "bun-types": "1.4.5",
     "husky": "9.1.7",
     "oxc-parser": "0.159.0",
     "oxfmt": "0.79.0",
@@ -75,9 +78,9 @@
     "undici": "8.12.3"
   },
   "engines": {
-    "bun": "1.4.4"
+    "bun": "1.4.5"
   },
-  "packageManager": "bun@1.4.4",
+  "packageManager": "bun@1.4.5",
   "patchedDependencies": {
     "image-size@1.2.1": "patches/image-size@1.2.1.patch",
     "braces@3.0.3": "patches/braces@3.0.3.patch"

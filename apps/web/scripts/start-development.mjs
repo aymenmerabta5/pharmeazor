@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { createConnection } from "node:net";
 import { fileURLToPath } from "node:url";
 
-const EXPECTED_BUN_VERSION = "1.4.4";
+const EXPECTED_BUN_VERSION = "1.4.5";
 const CONFIGURED_PROCESS_SCRIPTS = ["eve:dev", "dev:web"];
 const EVE_PROCESS_SCRIPT = "eve:dev";
 const WEB_PROCESS_SCRIPT = "dev:web";
