@@ -228,6 +228,31 @@ def _provenance(group: dict[str, Any], source_info: dict[str, Any]) -> str:
     return " · ".join(pieces)
 
 
+PART_DOCUMENT_TYPES = {
+    "smpc": "smpc",
+    "rcp": "smpc",  # the French name for the same document type
+    "label": "label",
+    "notice": "notice",
+    "fiche_info": "notice",  # patient-facing summary used when rcp/notice are absent
+    "nomenclature": "nomenclature",
+}
+
+
+def document_type_for(part: ExtractedPart, group: dict[str, Any]) -> str:
+    """Return the type of this document, not of the source that carried it.
+
+    One source can carry several parts: a single BDPM page yields both the SmPC
+    and the patient notice. The group-level type is therefore identical for
+    both, which labelled every patient notice an SmPC and made notices
+    indistinguishable from the professional summary in any type filter. The part
+    decides whenever it is a known one, and the group is only a fallback.
+    """
+    part_id = (part.part_id or "").strip().lower()
+    if part_id in PART_DOCUMENT_TYPES:
+        return PART_DOCUMENT_TYPES[part_id]
+    return str(_first(group["document_types"], "unknown") or "unknown").strip().lower()
+
+
 def build_artifact(
     group: dict[str, Any],
     part: ExtractedPart,
@@ -271,7 +296,7 @@ def build_artifact(
         "part_id": part.part_id,
         "source_id": group["source_id"],
         **source_info,
-        "document_type": _first(group["document_types"], "unknown"),
+        "document_type": document_type_for(part, group),
         "language": _first(group["language"], "?"),
         "country": source_info.get("jurisdiction", ""),
         "medicine_ids": medicine_ids,
@@ -402,8 +427,68 @@ def manifest_row(artifact: dict[str, Any], *, output_path: str | None) -> dict[s
     return row
 
 
-def write_markdown(artifact: dict[str, Any], documents_dir: Path) -> str:
-    path = documents_dir / f"{artifact['artifact_id']}.md"
+def raw_folder(artifact: dict[str, Any]) -> str | None:
+    """Return the single ``data/raw/<dir>`` grouping this artifact came from."""
+    folders: set[str] = set()
+    for entry in artifact.get("original_files") or []:
+        parts = str(entry).replace("\\", "/").split("/")
+        if len(parts) > 3 and parts[0] == "data" and parts[1] == "raw":
+            folders.add(parts[2])
+    return folders.pop() if len(folders) == 1 else None
+
+
+def medicine_folder_map(artifacts: list[dict[str, Any]]) -> dict[str, str]:
+    """Map every medicine id to the raw directory that holds its files.
+
+    Most artifacts live under ``data/raw/<medicine>/`` and give this mapping for
+    free. A source that spans the whole corpus -- the Algerian nomenclature
+    workbook is one file covering all forty medicines -- produces one artifact
+    per medicine but no directory of its own, so the mapping has to be learnt
+    from the artifacts that do have one. Directories starting with ``_`` are
+    collector groupings, not medicines.
+    """
+    mapping: dict[str, str] = {}
+    for artifact in artifacts:
+        folder = raw_folder(artifact)
+        if folder is None or folder.startswith("_"):
+            continue
+        medicine_ids = artifact.get("medicine_ids") or []
+        if len(medicine_ids) == 1:
+            mapping.setdefault(medicine_ids[0], folder)
+    return mapping
+
+
+def medicine_folder(artifact: dict[str, Any], mapping: dict[str, str]) -> str:
+    """Return the directory this artifact belongs to.
+
+    The collector groups every source file under ``data/raw/<medicine>/``, and
+    the cleaned corpus mirrors that grouping: one medicine's SmPC, RCP, patient
+    notice, DailyMed label and nomenclature entry stay together instead of being
+    flattened into a single list of ``MED001__…`` files.
+
+    The artifact's own medicine id decides, not its source path. The
+    nomenclature workbook is one shared file whose forty artifacts each belong
+    to a different medicine, so keying on the source directory would bury them
+    all in ``_shared``. Anything that genuinely spans several medicines falls
+    back to ``_shared``, the convention the collector already uses.
+    """
+    medicine_ids = artifact.get("medicine_ids") or []
+    if len(medicine_ids) == 1:
+        folder = mapping.get(medicine_ids[0])
+        if folder:
+            return folder
+    folder = raw_folder(artifact)
+    if folder is not None and not folder.startswith("_"):
+        return folder
+    return "_shared"
+
+
+def write_markdown(
+    artifact: dict[str, Any], documents_dir: Path, mapping: dict[str, str]
+) -> str:
+    folder = documents_dir / medicine_folder(artifact, mapping)
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{artifact['artifact_id']}.md"
     front_matter = {
         key: value
         for key, value in artifact.items()
@@ -733,6 +818,7 @@ def run(
             official_threshold=settings.dedupe.official_threshold,
         )
     manifest: list[dict[str, Any]] = []
+    medicine_dirs = medicine_folder_map(artifacts)
     for artifact in artifacts:
         info = duplicate_info[artifact["artifact_id"]]
         artifact["status"] = info.status
@@ -742,7 +828,7 @@ def run(
             artifact["warnings"] = sorted(set(artifact["warnings"]) | {f"duplicate:{info.reason}"})
             manifest.append(manifest_row(artifact, output_path=None))
         else:
-            output_path = write_markdown(artifact, documents_dir)
+            output_path = write_markdown(artifact, documents_dir, medicine_dirs)
             manifest.append(manifest_row(artifact, output_path=output_path))
 
     for artifact in structured_artifacts:

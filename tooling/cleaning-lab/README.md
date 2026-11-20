@@ -149,7 +149,7 @@ documents.csv
    → Block[] (heading, paragraph, bullet, table)
    → section taxonomy + Markdown renderer
    → strength-aware dedupe
-   → output/documents/*.md + manifest.jsonl
+   → output/documents/<medicine>/*.md + manifest.jsonl
    → LangChain splitter preview + validation
 ```
 
@@ -292,10 +292,13 @@ tooling/cleaning-lab/
     clean_corpus.py           # orchestration + reports
     validate.py               # traceability and quality gate
   output/
-    documents/*.md            # 526 clean documents
+    documents/
+      <medicine>/             # one directory per medicine, mirroring data/raw/
+        *.md                  # 478 clean documents: SmPC, RCP, notice, label, nomenclature
+      _shared/                # artifacts that belong to no single medicine
     manifest.jsonl            # one row per artifact; the import contract
     inventory.jsonl           # one row per raw file group and its fate
-    excluded.jsonl            # 248 non-collected/rejected raw rows
+    excluded.jsonl            # 235 non-collected/rejected raw rows
     structured/
       nomenclature_products.csv|jsonl
       bdpm_cis.csv
@@ -313,6 +316,17 @@ tooling/cleaning-lab/
       summary.json
       validation.json
 ```
+
+### One directory per medicine
+
+`output/documents/` mirrors the collector's `data/raw/` layout: every clean
+document is written under the medicine it belongs to, so one medicine's SmPC,
+RCP, patient notice, DailyMed label and nomenclature entry sit in a single
+directory. The directory is chosen from the artifact's own `medicine_id`, not
+from its source path — the Algerian nomenclature workbook is one file covering
+all forty medicines, and keying on the source would bury all forty of its
+artifacts in `_shared/`. Anything that genuinely spans several medicines lands
+in `_shared/`, the same convention the collector already uses.
 
 ### The manifest is the database contract
 
