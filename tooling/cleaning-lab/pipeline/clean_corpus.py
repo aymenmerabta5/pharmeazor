@@ -1,6 +1,6 @@
 """Build the clean PHARMEAZOR corpus.
 
-Usage (from ``tooling/clearning-lab/``):
+Usage (from ``tooling/cleaning-lab/``):
 
     python run.py                 # clean + preview chunks + validate
     python run.py --no-chunks     # clean + validate only
@@ -49,8 +49,11 @@ from .text_utils import (
 
 CLEANER_VERSION = "1.0.0"
 SOURCE_TOKEN_RE = re.compile(r"__SRC_([A-Z0-9_]+?)__")
+# Alternation is first-match-wins, so the multi-token units must precede the
+# single-token units they start with; otherwise "500 mg/ml" matches "mg" and the
+# concentration denominator is silently dropped.
 STRENGTH_RE = re.compile(
-    r"\b\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ml|cl|l|ui|iu|%|mg/ml|mg/g)"
+    r"\b\d+(?:[.,]\d+)?\s*(?:mg/ml|mg/g|mcg|µg|mg|ml|cl|g|l|ui|iu|%)"
     r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
     re.IGNORECASE,
 )
