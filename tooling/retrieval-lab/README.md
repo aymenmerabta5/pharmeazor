@@ -2,19 +2,21 @@
 
 Medication knowledge base for pharmacists (Project 2, PHARMEAZOR).
 
-This repository implements the **data collection stage** described in
-`Main_Arch/Pharmeazor_Data_Collection_Workflow.pdf`: a source-aware, compliant
-collector that finds documents for a list of medicines, validates them, and
-stores them with full provenance so the downstream RAG pipeline (extraction →
-normalisation → retrieval → cited answers → verification) can be built on top.
+This repository implements the **data collection stage** of Project 2: a
+source-aware, compliant collector that finds documents for a list of medicines,
+validates them, and stores them with full provenance so the downstream RAG
+pipeline (extraction → normalisation → retrieval → cited answers →
+verification) can be built on top.
 
-The list of medicines comes from the professor:
+The list of medicines comes from the professor. The source files are **not
+committed**: place them under `data/input/` (ignored by git) and import them
+once. After that, `data/metadata/medicines.csv` is the runtime source of truth.
 
-| file                                          | content                                                             |
-| --------------------------------------------- | ------------------------------------------------------------------- |
-| `Main_Arch/targetMeds.csv`                    | the 10 antihypertensives (rows 31–40 of the list)                   |
-| `Main_Arch/Projet2_Liste_40_medicaments.xlsx` | the full list of 40 medicines + the "mode d'emploi"                 |
-| `Main_Arch/nomenclature_algerienne.xlsx`      | the **official national nomenclature**, downloaded by hand (see §5) |
+| file                                           | content                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| `data/input/targetMeds.csv`                    | the 10 antihypertensives (rows 31–40 of the list)                   |
+| `data/input/Projet2_Liste_40_medicaments.xlsx` | the full list of 40 medicines + the "mode d'emploi"                 |
+| `data/input/nomenclature_algerienne.xlsx`      | the **official national nomenclature**, downloaded by hand (see §5) |
 
 ---
 
@@ -28,11 +30,24 @@ python -m venv .venv                     # or: uv venv
 
 Python 3.12 is expected.
 
+### Configuration
+
+`config.yaml` is the single source of runtime configuration: paths, HTTP
+politeness and retry policy, the source registry, compliance decisions,
+discovery routing and collection caps. `config.py` is a typed loader: it
+validates the YAML, resolves every path against this folder and exposes stable
+names (`RAW_DIR`, `SEED_SOURCES`, ...) to the rest of the package.
+
+A typo, a missing key, an unknown authority level or a discovery entrypoint for
+a source that does not exist fails at import time with the offending key.
+Paths are resolved relative to `config.yaml`, so the committed defaults work on
+every machine. Set `PHARMEAZOR_COLLECTION_CONFIG` to load a different file.
+
 ## 2. First run
 
 ```bash
 python main.py init                      # data/ tree + empty tables + source registry
-python main.py import-meds --xlsx "Main_Arch/Projet2_Liste_40_medicaments.xlsx"
+python main.py import-meds --xlsx "data/input/Projet2_Liste_40_medicaments.xlsx"
 python main.py import-nomenclature        # the official register downloaded by hand
 python main.py source-audit              # fetch robots.txt evidence for every source
 python main.py approve --source DAILYMED --decision permitted --reviewer "your name"
@@ -60,7 +75,7 @@ every unapproved source, and every decision is written to
 | `check --source X --url U`                                                                        | runs the compliance gate for one URL (no download)                                                                                                                                                                                       |
 | `recon --source X --url U`                                                                        | Playwright reconnaissance (refused unless the gate allows it)                                                                                                                                                                            |
 | `resolve-names`                                                                                   | builds the DCI → brand name map (`data/metadata/name_map.csv`)                                                                                                                                                                           |
-| `import-nomenclature --file Main_Arch/nomenclature_algerienne.xlsx`                               | reads the **official** nomenclature downloaded by hand: writes the product table, fills column E and records the Algerian commercial names                                                                                               |
+| `import-nomenclature --file data/input/nomenclature_algerienne.xlsx`                              | reads the **official** nomenclature downloaded by hand: writes the product table, fills column E and records the Algerian commercial names                                                                                               |
 | `names [--med MED031] [--algerian]`                                                               | shows the name map                                                                                                                                                                                                                       |
 | `discover --med MED031 [--source X]`                                                              | shows the candidate documents a source would yield                                                                                                                                                                                       |
 | `collect --med MED031 [--source X] [--refresh]`                                                   | collects one medicine                                                                                                                                                                                                                    |
@@ -194,10 +209,10 @@ Algerian portal, which is indexed by brand.
 
 ### The official nomenclature
 
-`Main_Arch/nomenclature_algerienne.xlsx` is the **NOMENCLATURE NATIONALE DES
-PRODUITS PHARMACEUTIQUES** (Ministère de l'Industrie Pharmaceutique), with
-three sheets: the products registered (August 2026), the non-renewed and the
-withdrawn ones.
+The workbook at `data/input/nomenclature_algerienne.xlsx` is the **NOMENCLATURE
+NATIONALE DES PRODUITS PHARMACEUTIQUES** (Ministère de l'Industrie
+Pharmaceutique), with three sheets: the products registered (August 2026), the
+non-renewed and the withdrawn ones.
 
 ```bash
 python main.py import-nomenclature
@@ -263,6 +278,12 @@ that still have no Algerian brand, i.e. the ones the manual step must cover.
    patient notice.
 
 ## 6. Data layout
+
+This `data/` tree is the handoff to the cleaning lab. `tooling/cleaning-lab`
+reads it in place — its `config.yaml` resolves `data_root` to
+`../retrieval-lab`, so the raw files, `documents.csv` and `medicines.csv` are
+consumed exactly as collected. Run the collection stage here first, then run
+`python run.py` from `tooling/cleaning-lab`.
 
 ```
 data/

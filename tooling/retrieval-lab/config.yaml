@@ -1,0 +1,274 @@
+# =============================================================================
+# PHARMEAZOR - collection lab configuration
+# =============================================================================
+# This file is the single source of runtime configuration for the collection
+# stage. Python stays in `config.py` (typed loader) and `src/`; paths, source
+# policy, HTTP behaviour and capability caps are declared here.
+#
+# Every path below is resolved relative to this file's directory. The collector
+# writes into `data/`; the sibling cleaning lab (`tooling/cleaning-lab`) reads
+# that tree in place, so the two labs never copy or rewrite a raw file.
+
+paths:
+  data: data
+  input: data/input
+  raw: data/raw
+  quarantine: data/quarantine
+  metadata: data/metadata
+  reports: data/reports
+  logs: data/logs
+  recon: data/recon
+  cache: data/.cache
+
+http:
+  user_agent: "PharmeazorAcademicBot/1.0 (+contact: team@univ.dz)"
+  connect_timeout_s: 10
+  read_timeout_s: 30
+  max_retries: 2 # transient failures only (429/5xx)
+  backoff_factor_s: 5
+  chunk_size_bytes: 65536
+  max_file_mb: 25
+  default_delay_s: 3.0 # per-domain polite delay
+  robots_cache_ttl_h: 24
+  max_links_per_page: 25 # never bulk-download a whole index page
+  blocked_statuses: [401, 403, 407, 451] # never retried, never bypassed
+
+authority:
+  levels:
+    official_algerian: "1"
+    official_nomenclature: "2"
+    foreign_institutional: "3"
+    algerian_professional: "4"
+  names:
+    "1": "official Algerian (ANPP)"
+    "2": "official Algerian nomenclature"
+    "3": "foreign institutional reference"
+    "4": "Algerian professional website (secondary)"
+
+compliance:
+  decisions:
+    automated: AUTOMATED
+    manual: MANUAL
+    excluded: EXCLUDED
+    review_required: REVIEW_REQUIRED
+
+  # Project brief: the official Algerian nomenclature list page must never be
+  # automated. The list page is downloaded by hand and imported instead.
+  manual_only_targets:
+    - host_glob: "*.msp.dz"
+      path_prefix: "/nomenclature"
+      reason: "Official Algerian nomenclature list page - manual download only (project brief)."
+    - host_glob: "msp.dz"
+      path_prefix: "/nomenclature"
+      reason: "Official Algerian nomenclature list page - manual download only (project brief)."
+    - host_glob: "sante.gov.dz"
+      path_prefix: "/nomenclature"
+      reason: "Official Algerian nomenclature list page - manual download only (project brief)."
+    - host_glob: "www.sante.gov.dz"
+      path_prefix: "/nomenclature"
+      reason: "Official Algerian nomenclature list page - manual download only (project brief)."
+
+  excluded_domains:
+    - facebook.com
+    - twitter.com
+    - x.com
+    - reddit.com
+    - blogspot.com
+    - wordpress.com
+    - youtube.com
+    - quora.com
+
+# Seed source registry. `allowed_scope` lists the path prefixes that were
+# reviewed for automation. `review_status` stays "pending" until a human records
+# a terms review, so a fresh install never automates anything by accident.
+sources:
+  - source_id: ANPP_RCP
+    source_name: "ANPP - Resume des caracteristiques du produit (RCP)"
+    base_domain: rcp.anpp.dz
+    country: DZ
+    language: fr
+    source_type: official_agency
+    authority_level: "1"
+    authority_notes: "Priority source 1: official Algerian SmPC portal (ANPP)."
+    jurisdiction: Algeria
+    robots_url: "https://rcp.anpp.dz/robots.txt"
+    terms_url: "https://rcp.anpp.dz/"
+    allowed_mode: AUTOMATED
+    allowed_scope: "/"
+    crawl_delay_s: 3.0
+
+  - source_id: ANPP_SITE
+    source_name: "ANPP - Agence Nationale des Produits Pharmaceutiques"
+    base_domain: anpp.dz
+    country: DZ
+    language: fr/ar
+    source_type: official_agency
+    authority_level: "1"
+    authority_notes: "Priority source 1: official Algerian agency documents and product dossiers."
+    jurisdiction: Algeria
+    robots_url: "https://anpp.dz/robots.txt"
+    terms_url: "https://anpp.dz/"
+    allowed_mode: AUTOMATED
+    allowed_scope: "/wpfd_file/,/download/,/wp-sitemap"
+    crawl_delay_s: 3.0
+
+  - source_id: SANTE_MSP
+    source_name: "Ministere de la Sante - nomenclature des produits pharmaceutiques"
+    base_domain: sante.gov.dz
+    country: DZ
+    language: fr
+    source_type: official_ministry
+    authority_level: "2"
+    authority_notes: "Priority source 2: official nomenclature (manual download only for the list page)."
+    jurisdiction: Algeria
+    robots_url: "https://sante.gov.dz/robots.txt"
+    terms_url: "https://sante.gov.dz/"
+    allowed_mode: MANUAL
+    allowed_scope: "/"
+    crawl_delay_s: 3.0
+
+  - source_id: BDPM_FR
+    source_name: "Base de donnees publique des medicaments (France)"
+    base_domain: base-donnees-publique.medicaments.gouv.fr
+    country: FR
+    language: fr
+    source_type: foreign_institutional
+    authority_level: "3"
+    authority_notes: "Priority source 3: French ministry open data (nomenclature + composition)."
+    jurisdiction: France
+    robots_url: "https://base-donnees-publique.medicaments.gouv.fr/robots.txt"
+    terms_url: "https://base-donnees-publique.medicaments.gouv.fr/mentions-legales"
+    allowed_mode: AUTOMATED
+    allowed_scope: "/download/file/,/api/options_autocompilation,/medicament/,/telechargement"
+    crawl_delay_s: 3.0
+    notes: >-
+      Official French ministry open data and product pages. The product pages
+      (/medicament/<id>/extrait) carry the ANSM SmPC and the patient notice; the
+      site also publishes the register extracts (/download/file/).
+
+  - source_id: DAILYMED
+    source_name: "DailyMed (U.S. National Library of Medicine)"
+    base_domain: dailymed.nlm.nih.gov
+    country: US
+    language: en
+    source_type: foreign_institutional
+    authority_level: "3"
+    authority_notes: "Priority source 3: US FDA approved labelling (SPL)."
+    jurisdiction: United States
+    robots_url: "https://dailymed.nlm.nih.gov/robots.txt"
+    terms_url: "https://dailymed.nlm.nih.gov/about-dailymed/terms-conditions.html"
+    allowed_mode: AUTOMATED
+    allowed_scope: "/dailymed/services/v2/,/dailymed/getFile.cfm"
+    crawl_delay_s: 3.0
+
+  - source_id: EMA
+    source_name: "European Medicines Agency (EPAR)"
+    base_domain: ema.europa.eu
+    country: EU
+    language: en
+    source_type: foreign_institutional
+    authority_level: "3"
+    authority_notes: "Priority source 3: European product information."
+    jurisdiction: European Union
+    robots_url: "https://www.ema.europa.eu/robots.txt"
+    terms_url: "https://www.ema.europa.eu/en/about-us/legal-notice"
+    allowed_mode: AUTOMATED
+    allowed_scope: "/en/documents/product-information/,/sitemap.xml"
+    crawl_delay_s: 3.0
+
+  - source_id: PHARMNET
+    source_name: "Pharm'Net (Algerian professional website)"
+    base_domain: pharmnet.dz
+    country: DZ
+    language: fr
+    source_type: algerian_professional
+    authority_level: "4"
+    authority_notes: "Priority source 4: secondary, must be labelled as non-official."
+    jurisdiction: Algeria
+    robots_url: "https://www.pharmnet.dz/robots.txt"
+    terms_url: "https://www.pharmnet.dz/"
+    allowed_mode: MANUAL
+    allowed_scope: "/"
+    crawl_delay_s: 4.0
+    notes: >-
+      pharmnet.dz answered 'under maintenance' during reconnaissance;
+      superseded by PHARMNET_CATALOG (pharmnet-dz.com).
+
+  - source_id: PHARMNET_CATALOG
+    source_name: "Pharm'Net catalogue of the Algerian nomenclature"
+    base_domain: pharmnet-dz.com
+    country: DZ
+    language: fr
+    source_type: algerian_professional
+    authority_level: "4"
+    authority_notes: >-
+      Priority source 4: secondary mirror of the official Algerian
+      nomenclature; used as a NAME source (commercial name, DCI, nomenclature
+      code, registration number).
+    jurisdiction: Algeria
+    robots_url: "https://pharmnet-dz.com/robots.txt"
+    terms_url: "https://pharmnet-dz.com/"
+    allowed_mode: AUTOMATED
+    allowed_scope: "/"
+    crawl_delay_s: 4.0
+    notes: >-
+      NAME SOURCE ONLY: the catalogue exposes no leaflets (notice_url is empty)
+      and the site states that its interaction data is a demo set - excluded
+      from the corpus by policy. The public catalogue request is the site's own
+      read-only call, made with the publishable key that the site ships in its
+      public page.
+
+# Patient-notice sources (Algerian manufacturers). The official portal publishes
+# RCPs only, so notices are looked for on the manufacturers' own sites.
+notice_sources:
+  - source_id: BEKER
+    source_name: "Laboratoires BEKER (Algerian manufacturer)"
+    base_domain: bekerlaboratoires.com
+    country: DZ
+    language: fr
+    robots_url: "https://bekerlaboratoires.com/robots.txt"
+    terms_url: "https://bekerlaboratoires.com/"
+    product_sitemap: "https://bekerlaboratoires.com/product-sitemap.xml"
+    allowed_scope: "/produits/,/wp-content/uploads/"
+
+# Patterns that identify a patient-notice link on a product page.
+notice_link_patterns:
+  - 'lire\s+la\s+notice'
+  - 'notice\s+patient'
+  - "notice\\s+d'information"
+  - 'patient\s+information'
+  - 'package\s+leaflet'
+  - '\bpil\b'
+
+# Discovery dispatch. Each source maps to its adapter entry point; the probe URL
+# is the first request the collector would make, used for the source-level
+# compliance check.
+discovery:
+  probe_urls:
+    ANPP_RCP: "https://rcp.anpp.dz/"
+    ANPP_SITE: "https://anpp.dz/wp-sitemap-posts-wpfd_file-1.xml"
+    SANTE_MSP: "https://sante.gov.dz/pharmacie-et-equipements-de-sante/"
+    BDPM_FR: "https://base-donnees-publique.medicaments.gouv.fr/download/file/CIS_bdpm.txt"
+    DAILYMED: "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json"
+    EMA: "https://www.ema.europa.eu/sitemap.xml?page=1"
+    PHARMNET: "https://www.pharmnet.dz/"
+    PHARMNET_CATALOG: "https://pharmnet-dz.com/"
+
+  entrypoints:
+    ANPP_RCP: ["src.discovery.anpp", "search_rcp"]
+    ANPP_SITE: ["src.discovery.anpp", "search_site"]
+    SANTE_MSP: ["src.discovery.sante", "search"]
+    BDPM_FR: ["src.discovery.bdpm", "search"]
+    DAILYMED: ["src.discovery.dailymed", "search"]
+    EMA: ["src.discovery.ema", "search"]
+    PHARMNET: ["src.discovery.pharmnet", "search"]
+    PHARMNET_CATALOG: ["src.discovery.pharmnet_catalog", "discover"]
+
+  metadata_hooks:
+    BDPM_FR: ["src.discovery.bdpm", "document_metadata"]
+
+# Collection budgets.
+caps:
+  max_brand_queries: 6 # brand queries per medicine and source (politeness)
+  foreign_cap_when_official: 2 # foreign docs once an official doc exists
+  official_extra_documents: 7 # official source allowance on top of the cap

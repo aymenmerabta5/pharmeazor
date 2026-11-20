@@ -11,7 +11,8 @@ from typing import Any
 import pandas as pd
 import yaml
 
-from .clean_corpus import BASE_DIR, DEFAULT_CONFIG, resolve_data_root
+from settings import DEFAULT_CONFIG, load_settings
+
 from .sections import KEY_CODES
 from .text_utils import sha256_text
 
@@ -58,9 +59,8 @@ def validate(
     config_path: Path = DEFAULT_CONFIG,
     output_root: str | Path | None = None,
 ) -> dict[str, Any]:
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    data_root = resolve_data_root(config_path, None, config["data_root"])
-    root = Path(output_root or (BASE_DIR / config["output_root"])).resolve()
+    settings = load_settings(config_path)
+    root = Path(output_root).resolve() if output_root else settings.output_root
     reports_dir = root / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
@@ -143,7 +143,7 @@ def validate(
 
     # Raw inventory traceability: every collected + verified row must be
     # covered, explicitly excluded, or recorded with a failure reason.
-    raw_path = data_root / config["paths"]["documents_csv"]
+    raw_path = settings.paths.documents_csv
     raw = pd.read_csv(raw_path, dtype=str).fillna("")
     excluded_rows: dict[str, str] = {}
     excluded_path = root / "excluded.jsonl"
@@ -181,7 +181,7 @@ def validate(
         errors.append(f"{len(uncovered)} collected document(s) not accounted for: {uncovered[:10]}")
 
     # Medicine coverage.
-    medicines = pd.read_csv(data_root / config["paths"]["medicines_csv"], dtype=str).fillna("")
+    medicines = pd.read_csv(settings.paths.medicines_csv, dtype=str).fillna("")
     clinical_documents = [
         row
         for row in documents

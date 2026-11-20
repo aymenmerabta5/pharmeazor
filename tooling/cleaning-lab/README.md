@@ -5,18 +5,25 @@ ready to insert into PostgreSQL and later chunk + embed with **BGE-M3**.
 
 It is an **offline** tool. It runs on a maintainer's machine, reads the raw
 collection, and writes clean Markdown plus an import manifest. It is not part of
-the application runtime, and it is not a workspace package.
+the application runtime. It is a workspace member with no runtime role and no
+JavaScript dependencies.
 
 The raw collection is never modified. The pipeline reads the raw collection
-root, writes everything under `tooling/corpus/output/`, and keeps a complete
-trail from every output back to the source file, SHA-256, source rank and
-collection date.
+root, writes everything under `tooling/cleaning-lab/output/`, and keeps a
+complete trail from every output back to the source file, SHA-256, source rank
+and collection date.
+
+The two labs are linked by path: the retrieval lab
+(`tooling/retrieval-lab`) collects into `tooling/retrieval-lab/data/`, and this
+cleaning lab reads that exact tree. No copy, move or rewrite happens between
+them. Run the collection stage first, then run this pipeline.
 
 The raw root is resolved in this order:
 
 1. `--data-root "<path>"` on the command line
 2. the `PHARMEAZOR_DATA_ROOT` environment variable
-3. `data_root` in `config.yaml`, resolved relative to that file
+3. `data_root` in `config.yaml` (default: `../retrieval-lab`), resolved
+   relative to that file
 
 `output/` is generated and is ignored by Git by default. It is fully
 reproducible with `python run.py`; remove that line from `.gitignore` only if
@@ -176,7 +183,12 @@ The four sections required by the project brief are `indications`, `dosage`,
 
 ## 4. Source authority and precedence
 
-The rank comes from the project brief, not from the collector:
+The rank comes from the project brief and is enforced by the collection lab's
+source registry (`data/metadata/sources.csv`). The cleaning lab reads that
+registry instead of keeping a second copy, so a source added or re-ranked in
+the collection lab is picked up automatically. `config.yaml` only relabels the
+cleaning-specific `tier`; identity, authority and jurisdiction are never
+overridden there.
 
 | Rank | Tier                             | Sources                        |
 | ---: | -------------------------------- | ------------------------------ |
@@ -259,8 +271,9 @@ they are different jurisdictions.
 ## 6. Output layout
 
 ```text
-tooling/corpus/
-  config.yaml                 # data path, source ranks, splitter settings
+tooling/cleaning-lab/
+  config.yaml                 # data path, source tiers, splitter settings
+  settings.py                 # typed, validated loader for config.yaml
   run.py                      # one-command entry point
   requirements.txt
   pipeline/
@@ -320,7 +333,8 @@ combination-product document can legitimately map to several medicines.
 
 ## 7. Running it
 
-From `tooling/corpus/`:
+From `tooling/cleaning-lab/` (after the retrieval lab has produced
+`tooling/retrieval-lab/data/`):
 
 ```powershell
 # one-time
@@ -341,6 +355,13 @@ python run.py --only-med MED031 --no-chunks
 The `data_root` is resolved from `--data-root`, then `PHARMEAZOR_DATA_ROOT`,
 then `config.yaml`. `output_root` defaults to `./output` and can be overridden
 with `--output-root`.
+
+`settings.py` validates the configuration and the collection registry before a
+single file is read. A missing `sources.csv`, an unknown authority level, an
+invalid regex or a chunk overlap larger than the chunk size fails immediately
+with the path and the expected value, rather than surfacing halfway through a
+run. The pipeline receives one typed `Settings` object; it never reads YAML
+directly.
 
 The validator is run automatically after every clean. It checks:
 

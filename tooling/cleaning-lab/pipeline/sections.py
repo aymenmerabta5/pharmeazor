@@ -387,6 +387,48 @@ SECTION_DEFS: tuple[SectionDef, ...] = (
         ),
         tier=3,
     ),
+    # ---- excluded commercial / administrative blocks -----------------------
+    # These are classified so the body renderer can drop the whole section
+    # (price and stock are explicitly out of scope for the corpus).
+    SectionDef(
+        "price",
+        "Prix",
+        ("prix", "price", "tarif", "tarifs"),
+        tier=3,
+    ),
+    SectionDef(
+        "reimbursement",
+        "Remboursement",
+        (
+            "remboursement",
+            "reimbursement",
+            "taux de prise en charge",
+            "prise en charge",
+        ),
+        tier=3,
+    ),
+    SectionDef(
+        "smr",
+        "Service médical rendu",
+        ("service medical rendu", "smr"),
+        tier=3,
+    ),
+    SectionDef(
+        "asmr",
+        "Amélioration du service médical rendu",
+        (
+            "amelioration du service medical rendu",
+            "asmr",
+            "amelioration du smr",
+        ),
+        tier=3,
+    ),
+    SectionDef(
+        "stock",
+        "Stock",
+        ("stock", "disponibilite", "availability", "rupture de stock"),
+        tier=3,
+    ),
 )
 
 _ALIAS_LOOKUP: list[tuple[str, str]] = []
@@ -398,7 +440,11 @@ _ALIAS_LOOKUP.sort(key=lambda pair: len(pair[0]), reverse=True)
 
 CODE_BY_LABEL = {definition.code: definition.label for definition in SECTION_DEFS}
 CODE_TIER = {definition.code: definition.tier for definition in SECTION_DEFS}
-KEY_CODES = {"indications", "dosage", "contraindications", "interactions"}
+# The brief's required sections are exactly the tier-1 clinical definitions.
+# Deriving them keeps the taxonomy and the "key section" policy in one place.
+KEY_CODES = frozenset(
+    definition.code for definition in SECTION_DEFS if definition.tier == 1
+)
 
 # A heading may be prefixed by 1, 4.1, 4.1.2, "1-", "I.", etc.
 # Only Arabic section numbers. Treating a leading "I" or "C" as a Roman

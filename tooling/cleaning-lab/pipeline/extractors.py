@@ -746,14 +746,57 @@ def _prune_empty_headings(blocks: list[Block]) -> list[Block]:
     return pruned
 
 
+def _drop_boilerplate(
+    text: str, patterns: tuple[re.Pattern[str], ...]
+) -> str:
+    """Remove configured boilerplate lines before the text is normalized."""
+    if not patterns:
+        return text
+    kept = [
+        line
+        for line in text.splitlines()
+        if line.strip() and not any(pattern.search(line) for pattern in patterns)
+    ]
+    return "\n".join(kept)
+
+
+def _drop_sections(
+    blocks: list[Block], codes: frozenset[str]
+) -> list[Block]:
+    """Remove a dropped heading and every block under it.
+
+    The section ends at the next heading of the same or a higher level, so a
+    nested ``4.1`` inside a dropped ``4`` disappears with its parent while the
+    following ``5`` survives.
+    """
+    if not codes:
+        return blocks
+    kept: list[Block] = []
+    skip_level: int | None = None
+    for block in blocks:
+        if block.kind == "heading":
+            if skip_level is not None and block.level <= skip_level:
+                skip_level = None
+            if skip_level is None and block.code in codes:
+                skip_level = block.level
+                continue
+        if skip_level is not None:
+            continue
+        kept.append(block)
+    return kept
+
+
 def render_markdown(
     title: str,
     blocks: list[Block],
     *,
     provenance: str | None = None,
+    drop_line_patterns: tuple[re.Pattern[str], ...] = (),
+    drop_section_codes: frozenset[str] = frozenset(),
 ) -> tuple[str, list[dict[str, object]]]:
     """Render blocks to a clean Markdown body and return section offsets."""
     title = _clean_title(title or "Document sans titre")
+    blocks = _drop_sections(blocks, drop_section_codes)
     blocks = _prune_empty_headings(blocks)
     lines: list[str] = [f"# {title}", ""]
     if provenance:
@@ -762,12 +805,18 @@ def render_markdown(
 
     previous_blank = True
     for block in blocks:
-        text = clean_paragraph(block.text) if block.kind in {"para", "bullet"} else block.text
+        text = _drop_boilerplate(block.text, drop_line_patterns)
+        if not text:
+            continue
+        if block.kind in {"para", "bullet"}:
+            text = clean_paragraph(text)
+        elif block.kind == "heading":
+            text = clean_inline(text)
         if not text:
             continue
         if block.kind == "heading":
             level = min(4, max(1, block.level or 1))
-            line = "#" * (level + 1) + " " + clean_inline(block.text)
+            line = "#" * (level + 1) + " " + text
             if not previous_blank:
                 lines.append("")
             heading_positions.append((len(lines), block))

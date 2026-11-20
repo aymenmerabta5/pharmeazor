@@ -22,7 +22,7 @@ class TestLoader:
 
     def test_reads_the_professor_xlsx(self, tmp_path):
         from pathlib import Path
-        real = Path("Main_Arch/Projet2_Liste_40_medicaments.xlsx")
+        real = Path("data/input/Projet2_Liste_40_medicaments.xlsx")
         if not real.exists():
             return
         rows = read_xlsx(real)

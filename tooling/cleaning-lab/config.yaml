@@ -1,0 +1,86 @@
+# =============================================================================
+# PHARMEAZOR — clean corpus configuration
+# =============================================================================
+# This file is the single source of runtime configuration for the cleaning
+# stage. `settings.py` validates it and resolves every path; the pipeline
+# receives a typed `Settings` object instead of reading YAML directly.
+#
+# The raw corpus is owned by the collection lab and is never modified. This
+# pipeline reads it and writes a new, normalized corpus under ./output.
+#
+# `data_root` is resolved in this order:
+#   1. the --data-root CLI flag
+#   2. the PHARMEAZOR_DATA_ROOT environment variable
+#   3. the value below, resolved relative to this file
+#
+# The committed default is the sibling collection lab: retrieval-lab writes its
+# corpus to `tooling/retrieval-lab/data/`, and this pipeline reads that same
+# tree. `data_root` is the parent of `data/`, so the two folders are linked
+# without copying or rewriting a single raw file. Run the collection stage
+# first (`tooling/retrieval-lab`: `python main.py collect-all`).
+
+data_root: "../retrieval-lab"
+output_root: "output"
+
+# Paths are relative to `data_root`, i.e. into the collection lab's tree.
+paths:
+  documents_csv: "data/metadata/documents.csv"
+  sources_csv: "data/metadata/sources.csv"
+  medicines_csv: "data/input/medicines.csv"
+
+# Source identity, authority and jurisdiction come from the collection lab's
+# registry (`data/metadata/sources.csv`). That file is authoritative; this block
+# only relabels the cleaning-specific `tier` where the default derived from
+# `source_type` is not precise enough. A source missing here still works.
+#
+# Authority ranking (from the project brief, lower wins):
+#   1 = official Algerian SmPC / package leaflet (ANPP)
+#   2 = official Algerian nomenclature (Ministry of Pharmaceutical Industry)
+#   3 = foreign institutional reference (ANSM/BDPM, DailyMed, EMA)
+#   4 = Algerian professional website (Pharm'Net, secondary only)
+sources:
+  ANPP_RCP:
+    tier: official_algerian_smpc
+
+# Chunking preview only. Final chunking belongs to the retrieval pipeline;
+# this proves the clean files split cleanly with the intended settings.
+chunking:
+  tokenizer: "cl100k_base"
+  chunk_size_tokens: 900
+  chunk_overlap_tokens: 135
+  merge_min_tokens: 80
+  preview_chunks_per_document: 2
+
+# Near-duplicate detection. DailyMed publishes many labels for the same INN
+# from different manufacturers; keeping all of them poisons retrieval.
+dedupe:
+  enabled: true
+  shingle_words: 5
+  near_threshold: 0.93
+  # Never collapse official Algerian docs unless they are byte-identical.
+  official_threshold: 0.985
+
+# Boilerplate lines that must not reach the embeddings. Each entry is a Python
+# regular expression matched against one source line before rendering.
+drop_line_patterns:
+  - "^Redirection vers le haut de page$"
+  - "^Retour aux résultats$"
+  - "^Imprimer$"
+  - "^Aller au glossaire$"
+  - "^Cliquez ici"
+  - "^Ouvrir la page de détail"
+  - "^Haut de page$"
+  - "^Partager$"
+  - "^Copier le lien"
+  - "^Sommaire$"
+  - "^Table des matières$"
+
+# Whole sections dropped from the body. The codes are defined in
+# `pipeline/sections.py`; a heading and everything under it is removed.
+# The project brief explicitly excludes prices and stock information.
+drop_section_codes:
+  - "price"
+  - "reimbursement"
+  - "smr"
+  - "asmr"
+  - "stock"

@@ -11,6 +11,7 @@ from urllib3.util.retry import Retry
 from config import (
     USER_AGENT, CONNECT_TIMEOUT, READ_TIMEOUT, MAX_RETRIES,
     BACKOFF_FACTOR, CHUNK_SIZE, MAX_FILE_MB, BLOCKED_STATUSES,
+    MAX_LINKS_PER_PAGE,
 )
 
 FILE_EXTENSIONS = (".pdf", ".doc", ".docx", ".html", ".htm", ".txt", ".csv", ".zip")
@@ -68,7 +69,7 @@ def fetch_html(session, url: str) -> dict:
 
 
 def find_document_links(html: str, base_url: str, patterns=(".pdf",),
-                        max_links: int = 25) -> list:
+                        max_links: int = MAX_LINKS_PER_PAGE) -> list:
     """Links to documents, same host only, capped so we never bulk-download."""
     from src.compliance.registry import host_of, host_matches
 

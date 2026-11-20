@@ -11,7 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from pipeline.clean_corpus import DEFAULT_CONFIG, run  # noqa: E402
+from settings import DEFAULT_CONFIG  # noqa: E402
+from pipeline.clean_corpus import run  # noqa: E402
 from pipeline.validate import validate  # noqa: E402
 
 
@@ -26,18 +27,17 @@ def main() -> int:
     parser.add_argument("--skip-validate", action="store_true")
     args = parser.parse_args()
 
-    output_root = Path(args.output_root) if args.output_root else (BASE_DIR / "output")
     summary = run(
         config_path=args.config,
         data_root_override=args.data_root,
-        output_root_override=str(output_root),
+        output_root_override=args.output_root,
         only_med=args.only_med,
         no_chunks=args.no_chunks,
         no_dedupe=args.no_dedupe,
     )
     result = {"summary": summary}
     if not args.skip_validate:
-        validation = validate(config_path=args.config, output_root=output_root)
+        validation = validate(config_path=args.config, output_root=args.output_root)
         result["validation"] = {
             "ok": validation["ok"],
             "errors": validation["errors"],
