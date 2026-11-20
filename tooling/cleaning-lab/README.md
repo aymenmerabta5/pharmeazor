@@ -27,7 +27,7 @@ The raw root is resolved in this order:
 
 `output/` is generated and is ignored by Git by default. It is fully
 reproducible with `python run.py`; remove that line from `.gitignore` only if
-you deliberately want to commit the 41 MB deliverable.
+you deliberately want to commit the 44 MB deliverable.
 
 ---
 
@@ -35,30 +35,30 @@ you deliberately want to commit the 41 MB deliverable.
 
 | Item                                                                             | Measured                                                             |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Rows in `documents.csv`                                                          | 786                                                                  |
-| Collected rows                                                                   | 540                                                                  |
-| Verified collected rows                                                          | 538                                                                  |
-| Rejected rows (kept out)                                                         | 2                                                                    |
-| `no_results` / `MANUAL` rows                                                     | 246                                                                  |
-| Unique raw files after grouping shared files                                     | 405                                                                  |
-| Raw file groups cleaned                                                          | 401                                                                  |
+| Rows in `documents.csv`                                                          | 800                                                                  |
+| Collected rows                                                                   | 555                                                                  |
+| Verified collected rows                                                          | 552                                                                  |
+| Rejected rows (kept out)                                                         | 3                                                                    |
+| `no_results` / `MANUAL` rows                                                     | 245                                                                  |
+| Unique raw files after grouping shared files                                     | 419                                                                  |
+| Raw file groups cleaned                                                          | 415                                                                  |
 | Raw file groups skipped (1 scanned PDF)                                          | 1                                                                    |
 | Raw file groups exported as structured reference (nomenclature + BDPM registers) | 3                                                                    |
-| Clean Markdown documents                                                         | **526**                                                              |
-| Near-duplicates removed (tracked, not deleted from raw)                          | **66**                                                               |
+| Clean Markdown documents                                                         | **558**                                                              |
+| Near-duplicates removed (tracked, not deleted from raw)                          | **63**                                                               |
 | Structured reference artifacts                                                   | **3**                                                                |
-| Total clean text                                                                 | **18.3 M characters**, 19,908 headings, median 29,230 chars/document |
+| Total clean text                                                                 | **19.6 M characters**, 21,608 headings, median 30,448 chars/document |
 
 By source and language:
 
 | Source                                           | Clean docs | Rank |
 | ------------------------------------------------ | ---------: | ---: |
-| `BDPM_FR` (ANSM/BDPM RCP + patient notice)       |        284 |    3 |
-| `DAILYMED` (US labels)                           |        165 |    3 |
+| `BDPM_FR` (ANSM/BDPM RCP + patient notice)       |        310 |    3 |
+| `DAILYMED` (US labels)                           |        168 |    3 |
 | `SANTE_MSP` (derived official nomenclature docs) |         40 |    2 |
-| `ANPP_RCP` (Algerian SmPC PDFs)                  |         37 |    1 |
+| `ANPP_RCP` (Algerian SmPC PDFs)                  |         40 |    1 |
 
-`361` documents are French, `165` are English. No Arabic document was present in
+`390` documents are French, `168` are English. No Arabic document was present in
 this snapshot.
 
 The source formats are genuinely different, not variations of one template:
@@ -215,7 +215,10 @@ they are different jurisdictions.
 - Removes the DailyMed highlights summary and the full-PI contents block, keeping
   one copy of the full PI.
 - Cuts the DailyMed packaging tail (`Package Description`, `Principal Display
-  Panel`, repeated `Product Information` blocks).
+  Panel`, repeated `Product Information` blocks) on **full prescribing
+  information** documents only. OTC drug-facts labels keep their whole panel:
+  the extraction order of an OTC PDF is not stable, and cutting at a display
+  panel removed one label's `Directions` block.
 - Rejoins PDF hyphenation and hard-wrapped lines into paragraphs.
 - Repairs BDPM drop caps (`C hez` → `Chez`, `I nsuffisance` → `Insuffisance`)
   without treating a leading `I`/`C` as a Roman section number.
@@ -261,9 +264,13 @@ they are different jurisdictions.
 - Near-duplicates use 5-word shingles + Jaccard similarity, only inside the same
   source / document type / language / medicine set / **strength set**.
 - Strength is part of the key: different strengths of the same product are never
-  merged, because posology is strength-specific.
+  merged, because posology is strength-specific. Because the metadata strength
+  list can be empty when the collector's title carries no dosage, the strengths
+  each document declares in its own title and composition section are compared
+  before any collapse: a declared-strength mismatch vetoes the merge however
+  high the template similarity is (ANPP SmPCs of two strengths score 0.98+).
 - Official Algerian docs only collapse at ≥ 0.985; foreign labels at ≥ 0.93.
-- 66 documents were marked duplicate and are listed in `reports/duplicates.csv`
+- 63 documents were marked duplicate and are listed in `reports/duplicates.csv`
   with `duplicate_of` and similarity. The raw files remain untouched.
 
 ---
@@ -302,6 +309,7 @@ tooling/cleaning-lab/
       coverage.csv
       coverage_gaps.csv
       skipped.csv
+      discovery.csv           # every raw file on disk and its fate
       summary.json
       validation.json
 ```
@@ -396,9 +404,9 @@ computed. Final measured preview:
 
 | Metric              |      Value |
 | ------------------- | ---------: |
-| Documents           |        526 |
-| Chunks              | **14,001** |
-| Median chunk        | 273 tokens |
+| Documents           |        558 |
+| Chunks              | **15,226** |
+| Median chunk        | 269 tokens |
 | Max chunk           | 899 tokens |
 | Chunks > 900 tokens |      **0** |
 | Chunks < 40 tokens  |      **1** |

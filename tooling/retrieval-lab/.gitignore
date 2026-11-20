@@ -21,3 +21,4 @@ data/metadata/
 # local secrets
 .env
 *.key
+
