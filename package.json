@@ -6,7 +6,8 @@
     "apps/*",
     "packages/*",
     "tooling/architecture",
-    "tooling/cleaning-lab"
+    "tooling/cleaning-lab",
+    "tooling/retrieval-lab"
   ],
   "type": "module",
   "scripts": {
@@ -78,7 +79,6 @@
   },
   "packageManager": "bun@1.4.4",
   "patchedDependencies": {
-    "image-size@1.2.1": "patches/image-size@1.2.1.patch",
     "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }
