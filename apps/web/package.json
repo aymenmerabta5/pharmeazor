@@ -18,6 +18,7 @@
   "dependencies": {
     "@base-ui/react": "1.9.0",
     "@chargily/chargily-pay": "2.1.0",
+    "@marsidev/react-turnstile": "1.6.3",
     "@orpc/client": "1.16.2",
     "@orpc/openapi": "1.16.2",
     "@orpc/react-query": "1.16.2",

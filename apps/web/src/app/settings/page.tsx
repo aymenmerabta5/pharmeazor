@@ -16,7 +16,7 @@ async function SettingsData(): Promise<React.JSX.Element> {
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
   const me = await application.me();
   const principal = application.principal;
-  if (!me.user || !principal) redirect("/sign-in");
+  if (!me.user || !principal) redirect("/auth/sign-in");
   const initialScope = {
     userId: principal.identityUserId,
     sessionId: principal.sessionId,

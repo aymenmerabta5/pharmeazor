@@ -384,6 +384,9 @@ export interface SurfaceMessageKeys {
   theme: "dark" | "light" | "switchToDark" | "switchToLight" | "system" | "toggle";
   auth:
     | "alreadyHaveAccount"
+    | "captcha.description"
+    | "captcha.error"
+    | "captcha.required"
     | "email"
     | "emailFlow.backSignIn"
     | "emailFlow.deliveryDescription"

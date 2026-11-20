@@ -17,7 +17,7 @@ import { RequestLocalizedMetadataBoundary } from "@/lib/request-localized-metada
 async function PaymentsData(): Promise<React.JSX.Element> {
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
   const principal = application.principal;
-  if (!principal) redirect("/sign-in");
+  if (!principal) redirect("/auth/sign-in");
   const scope = {
     userId: principal.identityUserId,
     sessionId: principal.sessionId,

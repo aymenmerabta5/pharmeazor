@@ -49,7 +49,7 @@ export function AgentView({
             <CardDescription>{t("signInDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/(auth)/sign-in" asChild>
+            <Link href="/auth/sign-in" asChild>
               <Button>
                 <Text>{t("signIn")}</Text>
               </Button>

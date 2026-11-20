@@ -4,6 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { createSignUpSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { signUpWithEmail } from "./mutations";
+import { useAuthCaptcha } from "./use-auth-captcha";
 import { useAuthIntent } from "./use-auth-intent";
 import { useAuthMethods } from "./use-auth-methods";
 import { useAuthNavigation } from "./use-auth-navigation";
@@ -12,6 +13,7 @@ export function useSignUpForm() {
   const intent = useAuthIntent();
   const navigation = useAuthNavigation();
   const t = useSurfaceTranslations("auth");
+  const captcha = useAuthCaptcha();
   const [error, setError] = useState<string | null>(null);
   const methods = useAuthMethods(intent, navigation.dashboard, "signUp", () => setError(null));
   const form = useForm({
@@ -28,12 +30,19 @@ export function useSignUpForm() {
       }),
     },
     onSubmit: async ({ value }) => {
+      if (captcha.enabled && !captcha.token) {
+        setError(t("captcha.required"));
+        return;
+      }
       const ticket = intent.begin();
       if (!ticket) return;
       setError(null);
       methods.reset();
       try {
-        const result = await signUpWithEmail(value);
+        const result = await signUpWithEmail({
+          ...value,
+          captchaToken: captcha.token ?? undefined,
+        });
         if (!ticket.isCurrent()) return;
         if (result.error) {
           setError(t("signUp.genericError"));
@@ -43,9 +52,10 @@ export function useSignUpForm() {
       } catch {
         if (ticket.isCurrent()) setError(t("signUp.genericError"));
       } finally {
+        captcha.reset();
         ticket.finish();
       }
     },
   });
-  return { form, error: error ?? methods.error, methods };
+  return { form, error: error ?? methods.error, methods, captcha };
 }

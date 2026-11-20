@@ -47,7 +47,7 @@ export function usePricingPlans({
         ? "/settings/billing"
         : signedIn
           ? `/checkout?plan=${encodeURIComponent(plan.id)}`
-          : "/sign-up";
+          : "/auth/sign-up";
     return {
       tier: offering.tier,
       planId: plan?.id ?? null,

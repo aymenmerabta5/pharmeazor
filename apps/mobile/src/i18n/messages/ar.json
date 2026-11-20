@@ -425,6 +425,11 @@
     "signUpTitle": "إنشاء حساب",
     "forgotPassword": "نسيت كلمة المرور؟",
     "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
+    "captcha": {
+      "description": "محمي بواسطة Cloudflare Turnstile.",
+      "error": "تعذّر تحميل التحقق الأمني. أعد المحاولة أو اسمح بـ challenges.cloudflare.com.",
+      "required": "أكمل التحقق الأمني قبل المتابعة."
+    },
     "noAccount": "ليس لديك حساب؟",
     "invalidEmail": "أدخل بريداً إلكترونياً صالحاً",
     "passwordTooShort": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",

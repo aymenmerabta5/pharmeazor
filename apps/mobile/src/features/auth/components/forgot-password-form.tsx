@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { AuthFrame } from "./auth-frame";
+import { AuthCaptchaField } from "./auth-captcha-field";
 import { NativeFormField as AuthTextField } from "@/components/form-fields/native-field";
 import type { ForgotPasswordFormState } from "../types";
 
@@ -21,7 +22,7 @@ export function ForgotPasswordForm({
       title={t("forgotPassword.title")}
       description={t("forgotPassword.description")}
       footer={
-        <Link href="/sign-in" asChild>
+        <Link href="/auth/sign-in" asChild>
           <Button variant="ghost">
             <Text>{t("forgotPassword.backSignIn")}</Text>
           </Button>
@@ -55,6 +56,7 @@ export function ForgotPasswordForm({
                 />
               )}
             </form.Field>
+            <AuthCaptchaField captcha={state.captcha} />
             <Button disabled={pending} onPress={() => void form.handleSubmit()}>
               <Text>{t("forgotPassword.submit")}</Text>
             </Button>

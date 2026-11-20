@@ -55,13 +55,36 @@ export interface IdentityEmailFlowResult {
   error?: { message?: string } | null;
 }
 
+interface CaptchaFetchOptions {
+  headers: { "x-captcha-response": string };
+}
+
+/**
+ * Attaches the Cloudflare Turnstile token to a Better Auth request.
+ *
+ * The captcha plugin reads `x-captcha-response`; omitting it leaves the
+ * request untouched so a deployment without Turnstile keys keeps working.
+ */
+function withCaptcha<T extends object>(
+  input: T,
+  captchaToken: string | undefined,
+): T | (T & { fetchOptions: CaptchaFetchOptions }) {
+  if (!captchaToken) return input;
+  return { ...input, fetchOptions: { headers: { "x-captcha-response": captchaToken } } };
+}
+
 interface IdentityEmailFlowClient {
   signIn: {
-    magicLink(input: { email: string; callbackURL: string }): Promise<IdentityEmailFlowResult>;
+    magicLink(input: {
+      email: string;
+      callbackURL: string;
+      fetchOptions?: CaptchaFetchOptions;
+    }): Promise<IdentityEmailFlowResult>;
   };
   sendVerificationEmail(input: {
     email: string;
     callbackURL: string;
+    fetchOptions?: CaptchaFetchOptions;
   }): Promise<IdentityEmailFlowResult>;
 }
 
@@ -93,11 +116,24 @@ export const identityClient = Object.freeze({
   useSession() {
     return authClient.useSession();
   },
-  signInWithEmail(input: { email: string; password: string; callbackURL: string }) {
-    return authClient.signIn.email(input);
+  signInWithEmail(input: {
+    email: string;
+    password: string;
+    callbackURL: string;
+    captchaToken?: string;
+  }) {
+    const { captchaToken, ...credentials } = input;
+    return authClient.signIn.email(withCaptcha(credentials, captchaToken));
   },
-  signUpWithEmail(input: { name: string; email: string; password: string; callbackURL: string }) {
-    return authClient.signUp.email(input);
+  signUpWithEmail(input: {
+    name: string;
+    email: string;
+    password: string;
+    callbackURL: string;
+    captchaToken?: string;
+  }) {
+    const { captchaToken, ...credentials } = input;
+    return authClient.signUp.email(withCaptcha(credentials, captchaToken));
   },
 
   signInWithOAuth(input: { provider: IdentityOAuthProvider; callbackURL: string }) {
@@ -106,14 +142,17 @@ export const identityClient = Object.freeze({
     }
     return authClient.signIn.social(input);
   },
-  requestPasswordReset(input: { email: string; redirectTo: string }) {
-    return authClient.requestPasswordReset(input);
+  requestPasswordReset(input: { email: string; redirectTo: string; captchaToken?: string }) {
+    const { captchaToken, ...request } = input;
+    return authClient.requestPasswordReset(withCaptcha(request, captchaToken));
   },
-  requestMagicLink(input: { email: string; callbackURL: string }) {
-    return identityEmailFlowClient.signIn.magicLink(input);
+  requestMagicLink(input: { email: string; callbackURL: string; captchaToken?: string }) {
+    const { captchaToken, ...request } = input;
+    return identityEmailFlowClient.signIn.magicLink(withCaptcha(request, captchaToken));
   },
-  requestEmailVerification(input: { email: string; callbackURL: string }) {
-    return identityEmailFlowClient.sendVerificationEmail(input);
+  requestEmailVerification(input: { email: string; callbackURL: string; captchaToken?: string }) {
+    const { captchaToken, ...request } = input;
+    return identityEmailFlowClient.sendVerificationEmail(withCaptcha(request, captchaToken));
   },
   resetPassword(input: { newPassword: string; token: string }) {
     return authClient.resetPassword(input);

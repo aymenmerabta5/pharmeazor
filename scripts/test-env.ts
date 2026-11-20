@@ -21,6 +21,7 @@ const applicationEnvironmentNames = new Set([
   "DATABASE_POOL_SIZE",
   "BETTER_AUTH_SECRET",
   "BETTER_AUTH_URL",
+  "TURNSTILE_SECRET_KEY",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "GITHUB_CLIENT_ID",

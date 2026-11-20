@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 import Link from "next/link";
+import { AuthCaptchaField } from "./auth-captcha-field";
 import { SignInMethods } from "./sign-in-methods";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BrandMark } from "@/components/brand-wordmark";
@@ -20,7 +21,7 @@ import type { SignInFormState } from "../types";
 
 export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Element {
   const t = useSurfaceTranslations("auth");
-  const { form, error, methods } = state;
+  const { form, error, methods, captcha } = state;
   return (
     <Card className="rounded-3xl border-border/80 bg-card p-6 shadow-surface sm:p-8">
       <CardHeader className="items-center gap-4 p-0 pb-7 text-center sm:p-0 sm:pb-7">
@@ -40,7 +41,7 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
               {error}{" "}
               {state.needsVerification ? (
                 <Link
-                  href="/verify-email"
+                  href="/auth/verify-email"
                   className="font-medium underline underline-offset-4 hover:text-destructive/80"
                 >
                   {t("signIn.verifyEmail")}
@@ -76,6 +77,7 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
                 )}
               </form.AppField>
             </FieldGroup>
+            <AuthCaptchaField captcha={captcha} />
             <form.SubmitButton
               disabled={methods.pending}
               className="h-11 w-full rounded-xl text-sm font-semibold"
@@ -89,13 +91,13 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
       <CardFooter className="mt-6 flex-col gap-3 border-t border-border/70 p-0 pt-5 sm:p-0 sm:pt-5">
         <div className="flex w-full flex-wrap items-center justify-between gap-3 text-sm">
           <Link
-            href="/forgot-password"
+            href="/auth/forgot-password"
             className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
           >
             {t("signIn.forgotPassword")}
           </Link>
           <Link
-            href="/sign-up"
+            href="/auth/sign-up"
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
             {t("signIn.createAccountLink")}

@@ -73,14 +73,14 @@ export function MobileMenuAccount({
       ) : (
         <div className="flex flex-col">
           <Link
-            href="/sign-in"
+            href="/auth/sign-in"
             onClick={onNavigate}
             className="ph-menu-row flex min-h-12 items-center rounded-lg px-0 text-[22px] leading-7 tracking-tight text-muted-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {auth("signInTitle")}
           </Link>
           <Link
-            href="/sign-up"
+            href="/auth/sign-up"
             onClick={onNavigate}
             className="ph-menu-row flex min-h-12 items-center rounded-lg px-0 text-[22px] font-medium leading-7 tracking-tight text-primary transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >

@@ -57,7 +57,7 @@ function AppNavigation() {
       <Stack screenOptions={{ header: () => <Header /> }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="2fa" options={{ title: t("twoFactor") }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Protected guard={isAuthenticated}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="dashboard" options={{ title: t("dashboard") }} />

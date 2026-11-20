@@ -54,6 +54,7 @@ export const serverSchema = {
     .transform((value) => Number.parseInt(value, 10)),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
+  TURNSTILE_SECRET_KEY: z.string().min(1).default("REPLACE_WITH_TURNSTILE_SECRET_KEY"),
   GOOGLE_CLIENT_ID: z.string().min(1).default("REPLACE_WITH_GOOGLE_CLIENT_ID"),
   GOOGLE_CLIENT_SECRET: z.string().min(1).default("REPLACE_WITH_GOOGLE_CLIENT_SECRET"),
   GITHUB_CLIENT_ID: z.string().min(1).default("REPLACE_WITH_GITHUB_CLIENT_ID"),

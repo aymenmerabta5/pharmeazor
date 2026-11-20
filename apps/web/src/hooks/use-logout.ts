@@ -8,7 +8,7 @@ export function useLogout() {
     try {
       await fetch("/api/auth/sign-out", { method: "POST" });
       // Works for Next.js (next/navigation) and TanStack Start (window) — avoid framework-specific router import.
-      window.location.href = "/sign-in";
+      window.location.href = "/auth/sign-in";
     } finally {
       setLoading(false);
     }

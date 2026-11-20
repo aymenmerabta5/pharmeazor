@@ -5,8 +5,8 @@ export function useAuthNavigation() {
     dashboard: () => router.replace("/dashboard"),
     afterSignIn: (twoFactor: boolean) => router.replace(twoFactor ? "/2fa" : "/dashboard"),
     afterSignUp: (hasSession: boolean) =>
-      router.replace(hasSession ? "/dashboard" : "/verify-email"),
+      router.replace(hasSession ? "/dashboard" : "/auth/verify-email"),
     afterPasswordReset: () =>
-      router.replace({ pathname: "/sign-in", params: { reset: "success" } }),
+      router.replace({ pathname: "/auth/sign-in", params: { reset: "success" } }),
   };
 }

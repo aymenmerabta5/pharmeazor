@@ -36,11 +36,18 @@ const config: NextConfig = {
       process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
     const convexConnectSources = "";
 
+    // Cloudflare Turnstile loads its widget script and renders the challenge
+    // in an iframe, so the challenge host is allowed explicitly.
+    const turnstileSources = "https://challenges.cloudflare.com";
     const contentSecurityPolicy =
-      "default-src 'self'; script-src 'self' 'unsafe-inline'" +
+      "default-src 'self'; script-src 'self' 'unsafe-inline' " +
+      turnstileSources +
       (allowsDevelopmentDiagnostics ? " 'unsafe-eval'" : "") +
-      "; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://us.i.posthog.com" +
+      "; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://us.i.posthog.com " +
+      turnstileSources +
       convexConnectSources +
+      "; frame-src " +
+      turnstileSources +
       "; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';";
     return [
       {

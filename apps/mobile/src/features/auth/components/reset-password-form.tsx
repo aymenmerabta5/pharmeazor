@@ -17,7 +17,7 @@ export function ResetPasswordForm({ state }: { state: ResetPasswordFormState }):
       title={t("resetPassword.title")}
       description={t("resetPassword.description")}
       footer={
-        <Link href="/sign-in" asChild>
+        <Link href="/auth/sign-in" asChild>
           <Button variant="ghost">
             <Text>{t("resetPassword.backSignIn")}</Text>
           </Button>
@@ -30,7 +30,7 @@ export function ResetPasswordForm({ state }: { state: ResetPasswordFormState }):
         </Alert>
       ) : null}
       {!state.token ? (
-        <Link href="/forgot-password" asChild>
+        <Link href="/auth/forgot-password" asChild>
           <Button variant="outline">
             <Text>{t("resetPassword.requestNewLink")}</Text>
           </Button>

@@ -425,6 +425,11 @@
     "signUpTitle": "Create account",
     "forgotPassword": "Forgot password?",
     "alreadyHaveAccount": "Already have an account?",
+    "captcha": {
+      "description": "Protected by Cloudflare Turnstile.",
+      "error": "The security check could not load. Retry, or allow challenges.cloudflare.com.",
+      "required": "Complete the security check before continuing."
+    },
     "noAccount": "Don't have an account?",
     "invalidEmail": "Enter a valid email",
     "passwordTooShort": "Password must be at least 8 characters",

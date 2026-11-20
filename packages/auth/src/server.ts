@@ -17,7 +17,13 @@ import { admin } from "better-auth/plugins/admin";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { magicLink } from "better-auth/plugins/magic-link";
+import { captcha } from "better-auth/plugins/captcha";
 import { ac, roles } from "./access";
+import {
+  createInertCaptchaOptions,
+  createTurnstileCaptchaOptions,
+  isTurnstileSecretConfigured,
+} from "./turnstile";
 import { env } from "@repo/config/server";
 
 import {
@@ -62,6 +68,15 @@ if (
 }
 
 const isHttps = env.BETTER_AUTH_URL.startsWith("https://");
+
+const turnstileSecretKey = env.TURNSTILE_SECRET_KEY;
+const turnstileEnabled = isTurnstileSecretConfigured(turnstileSecretKey);
+
+if (!turnstileEnabled) {
+  console.warn(
+    "[ghostinit] Cloudflare Turnstile is disabled because TURNSTILE_SECRET_KEY is not configured. Email auth flows accept requests without a bot challenge.",
+  );
+}
 
 type AppAdminOptions = {
   ac: typeof ac;
@@ -339,6 +354,11 @@ const configuredAuth = betterAuth({
     },
   },
   plugins: [
+    captcha(
+      turnstileEnabled
+        ? createTurnstileCaptchaOptions(turnstileSecretKey)
+        : createInertCaptchaOptions(),
+    ),
     transactionalAccountDeletion(),
     profileUpdateValidation(),
     expo(),

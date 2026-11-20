@@ -46,7 +46,7 @@ export function ResetPasswordForm({ state }: { state: ResetPasswordFormState }):
               <p className="max-w-[65ch] text-sm text-muted-foreground">
                 {t("resetPassword.invalidLinkDescription")}
               </p>
-              <Button render={<Link href="/forgot-password" />} nativeButton={false}>
+              <Button render={<Link href="/auth/forgot-password" />} nativeButton={false}>
                 {t("resetPassword.requestNewLink")}
               </Button>
             </div>
@@ -91,7 +91,7 @@ export function ResetPasswordForm({ state }: { state: ResetPasswordFormState }):
         </CardContent>
         <CardFooter className="mt-6 border-t border-border/70 p-0 pt-5 sm:p-0 sm:pt-5">
           <Link
-            href="/sign-in"
+            href="/auth/sign-in"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />

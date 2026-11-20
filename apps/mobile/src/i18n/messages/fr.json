@@ -425,6 +425,11 @@
     "signUpTitle": "Créer un compte",
     "forgotPassword": "Mot de passe oublié ?",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "captcha": {
+      "description": "Protégé par Cloudflare Turnstile.",
+      "error": "La vérification de sécurité n'a pas pu se charger. Réessayez ou autorisez challenges.cloudflare.com.",
+      "required": "Complétez la vérification de sécurité avant de continuer."
+    },
     "noAccount": "Vous n'avez pas de compte ?",
     "invalidEmail": "Entrez une adresse e-mail valide",
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",

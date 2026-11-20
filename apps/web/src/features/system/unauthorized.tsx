@@ -19,7 +19,7 @@ async function UnauthorizedContent(): Promise<React.JSX.Element> {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Button
-            render={<Link href="/sign-in" />}
+            render={<Link href="/auth/sign-in" />}
             nativeButton={false}
             aria-label={t("unauthorized.signIn")}
           >

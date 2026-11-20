@@ -7,6 +7,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import type { EmailFlowFormState } from "../types";
 import { useSurfaceTranslations } from "@/lib/translations";
+import { AuthCaptchaField } from "./auth-captcha-field";
 
 export function EmailFlowView({ state }: { state: EmailFlowFormState }): React.JSX.Element {
   const t = useSurfaceTranslations("auth");
@@ -49,13 +50,14 @@ export function EmailFlowView({ state }: { state: EmailFlowFormState }): React.J
                   )}
                 </form.AppField>
               </FieldGroup>
+              <AuthCaptchaField captcha={state.captcha} />
               <form.SubmitButton className="h-10 w-full" pendingLabel={t("emailFlow.sending")}>
                 {t("emailFlow.sendLink")}
               </form.SubmitButton>
             </Form>
           </form.AppForm>
           <div className="border-t border-border/70 pt-5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-            <Link href="/sign-in">{t("emailFlow.backSignIn")}</Link>
+            <Link href="/auth/sign-in">{t("emailFlow.backSignIn")}</Link>
           </div>
         </CardContent>
       </Card>

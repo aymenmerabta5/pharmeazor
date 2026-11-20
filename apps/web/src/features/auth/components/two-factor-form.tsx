@@ -96,7 +96,7 @@ export function TwoFactorForm({ state }: { state: TwoFactorFormState }): React.J
       <CardFooter className="mt-6 flex-col gap-3 border-t border-border/70 p-0 pt-5 sm:p-0 sm:pt-5">
         <div className="flex w-full flex-wrap justify-between gap-3 text-sm">
           <Link
-            href="/sign-in"
+            href="/auth/sign-in"
             className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             {t("twoFactor.backSignIn")}

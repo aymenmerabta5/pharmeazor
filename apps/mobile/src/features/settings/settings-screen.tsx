@@ -44,7 +44,7 @@ export function SettingsScreen(): React.JSX.Element {
     return (
       <View className="flex-1 items-center justify-center gap-3 p-6">
         <Text className="text-2xl font-bold">{t("native.signInRequired")}</Text>
-        <Link href="/(auth)/sign-in" asChild>
+        <Link href="/auth/sign-in" asChild>
           <Button>
             <Text>{t("native.signIn")}</Text>
           </Button>
@@ -81,7 +81,7 @@ function SettingsPanels({ user }: { user: SettingsUser }): React.JSX.Element {
         <PasswordSection />
         <TwoFactorSection />
         <View className="flex-row gap-2">
-          <Link href="/(auth)/forgot-password" asChild>
+          <Link href="/auth/forgot-password" asChild>
             <Button variant="outline">
               <Text>{t("native.forgotPassword")}</Text>
             </Button>

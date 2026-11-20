@@ -20,7 +20,7 @@ async function BillingData(): Promise<React.JSX.Element> {
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
   const me = await application.me();
   const principal = application.principal;
-  if (!me.user || !principal) redirect("/sign-in");
+  if (!me.user || !principal) redirect("/auth/sign-in");
   const [catalog, summary, snapshot] = await Promise.all([
     application.billing.plans(),
     application.billing.manual.summary(),
