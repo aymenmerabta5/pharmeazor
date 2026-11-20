@@ -1290,6 +1290,37 @@ def cmd_report(_args):
     build_coverage_report()
 
 
+def cmd_enrich_metadata(_args):
+    """Fill document metadata from the saved file itself (no new requests).
+
+    The BDPM product page carries the marketing-authorisation holder, the
+    denomination and the pharmaceutical form. The collector extracts them when
+    it downloads the page; this command backfills rows collected before that
+    hook existed, so the corpus never needs a re-download to gain metadata.
+    """
+    from src.discovery import registry as discovery_registry
+    from src.storage.store import resolve_path
+
+    docs = read_table(DOCUMENTS_CSV, DOCUMENT_COLUMNS)
+    candidates = docs[docs["file_path"] != ""]
+    fields = ("title", "holder", "strength_form", "publication_date")
+    updated = 0
+    touched = set()
+    for index, row in candidates.iterrows():
+        path = resolve_path(row["file_path"])
+        if not path.exists():
+            continue
+        meta = discovery_registry.document_metadata(row["source_id"], path)
+        for field in fields:
+            value = str(meta.get(field, "") or "").strip()
+            if value and value != str(row.get(field, "") or "").strip():
+                docs.at[index, field] = value
+                updated += 1
+                touched.add(index)
+    write_table(DOCUMENTS_CSV, docs)
+    print(f"enriched {updated} field(s) across {len(touched)} document row(s)")
+
+
 def cmd_status(_args):
     docs = read_table(DOCUMENTS_CSV, DOCUMENT_COLUMNS)
     meds = read_table(MEDICINES_CSV, MEDICINE_COLUMNS)
@@ -1434,6 +1465,7 @@ def build_parser():
     )
     nom.set_defaults(func=cmd_import_nomenclature)
     sub.add_parser("revalidate").set_defaults(func=cmd_revalidate)
+    sub.add_parser("enrich-metadata").set_defaults(func=cmd_enrich_metadata)
     sub.add_parser("status").set_defaults(func=cmd_status)
 
     a = sub.add_parser("audit")

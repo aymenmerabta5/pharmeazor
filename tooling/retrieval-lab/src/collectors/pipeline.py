@@ -7,6 +7,9 @@ Rules that are enforced here (from the workflow document):
   * a document that fails validation is quarantined, never silently accepted,
   * collection never rewrites medical content.
 """
+import hashlib
+import mimetypes
+import shutil
 import time
 import uuid
 from pathlib import Path
@@ -90,10 +93,30 @@ def _blank_row(medicine: dict, source_id: str, url: str = "") -> dict:
     return row
 
 
-def _download_to_temp(session, url: str, method: str) -> tuple:
-    """Download into a temporary file.  Returns (temp_path, metadata)."""
+def _download_to_temp(session, url: str, method: str, local_path: str = "") -> tuple:
+    """Download into a temporary file.  Returns (temp_path, metadata).
+
+    A candidate that already has a byte-identical local copy (the shared BDPM
+    register, fetched once by discovery) is copied instead of re-downloaded:
+    the URL and its compliance decision stay the same, only the transfer is
+    skipped.
+    """
     TMP_DIR.mkdir(parents=True, exist_ok=True)
-    tmp = TMP_DIR / f"{uuid.uuid4().hex}.part"
+    # ``download_file`` appends its own ".part", so the seed must not end in one.
+    tmp = TMP_DIR / f"{uuid.uuid4().hex}.tmp"
+    if local_path:
+        source = Path(local_path)
+        if source.is_file() and source.stat().st_size > 0:
+            shutil.copyfile(source, tmp)
+            data = tmp.read_bytes()
+            return tmp, {
+                "status_code": 200,
+                "content_type": mimetypes.guess_type(source.name)[0] or "application/octet-stream",
+                "final_url": url,
+                "file_size": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "from_cache": True,
+            }
     if method == "playwright":
         res = run_recipe(url, [], tmp)
     else:
@@ -151,6 +174,7 @@ def _store_row(store: DocumentStore, medicine: dict, source_id: str, candidate,
         "country": candidate.country or src_meta.get("country", ""),
         "publication_date": candidate.publication_date,
         "holder": candidate.extra.get("holder", ""),
+        "strength_form": candidate.strength_form or "",
     })
     if candidate.note:
         row["reviewer_notes"] = (note + " | " if note else "") + candidate.note
@@ -196,7 +220,7 @@ def _record(store: DocumentStore, row: dict) -> bool:
     if mask.any():
         # the same document may already be known: refresh its metadata
         # (title, holder, notes) instead of adding a duplicate row
-        for field in ("title", "holder", "reviewer_notes", "relevance_status"):
+        for field in ("title", "holder", "strength_form", "reviewer_notes", "relevance_status"):
             value = str(row.get(field, "") or "")
             if value and value != str(df.loc[mask, field].iloc[-1] or ""):
                 store.update(df.loc[mask, "document_id"].iloc[-1], **{field: value})
@@ -359,7 +383,8 @@ def collect_medicine(medicine: dict, source_ids: list, registry: SourceRegistry,
             limiter.wait(url.split("/")[2])
             started = time.time()
             try:
-                tmp, res = _download_to_temp(session, url, candidate.method)
+                tmp, res = _download_to_temp(session, url, candidate.method,
+                                             candidate.local_path)
             except Exception as exc:
                 row = _blank_row(medicine, source_id, url)
                 row["document_id"] = store.next_document_id(medicine["medicine_id"], source_id)
@@ -425,7 +450,11 @@ def collect_medicine(medicine: dict, source_ids: list, registry: SourceRegistry,
             extra_meta = discovery_registry.document_metadata(source_id, res["file_path"])
             if extra_meta.get("publication_date"):
                 candidate.publication_date = extra_meta["publication_date"]
-            title = candidate.title or ""
+            if extra_meta.get("holder"):
+                candidate.extra["holder"] = extra_meta["holder"]
+            if extra_meta.get("strength_form"):
+                candidate.strength_form = extra_meta["strength_form"]
+            title = extra_meta.get("title") or candidate.title or ""
             if not title or title.startswith("ANPP RCP -"):
                 title = document_title(res["file_path"], text) or title
 
