@@ -302,7 +302,7 @@ function main() {
       checkHeader(header, root, layout, violations);
       if (proxy.includes("next-intl/middleware") || proxy.includes("[locale]"))
         violations.push("Next proxy must keep non-prefixed routes and avoid locale middleware");
-      requireText(proxy, 'new URL("/sign-in", request.url)', "Next proxy", violations);
+      requireText(proxy, 'new URL("/auth/sign-in", request.url)', "Next proxy", violations);
       if (combined.includes('from "@/lib/i18n"'))
         violations.push("Next source imports the TanStack i18n runtime");
       checkCatalogs(root, violations);

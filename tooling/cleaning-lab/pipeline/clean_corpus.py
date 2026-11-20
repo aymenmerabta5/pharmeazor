@@ -1,6 +1,6 @@
 """Build the clean PHARMEAZOR corpus.
 
-Usage (from ``tooling/corpus/``):
+Usage (from ``tooling/clearning-lab/``):
 
     python run.py                 # clean + preview chunks + validate
     python run.py --no-chunks     # clean + validate only
@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import re
 import shutil
 import sys
@@ -23,6 +22,8 @@ from typing import Any
 
 import pandas as pd
 import yaml
+
+from settings import DEFAULT_CONFIG, Settings, load_settings
 
 from .chunking import preview as chunk_preview
 from .dedupe import deduplicate
@@ -47,29 +48,12 @@ from .text_utils import (
 )
 
 CLEANER_VERSION = "1.0.0"
-BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_CONFIG = BASE_DIR / "config.yaml"
 SOURCE_TOKEN_RE = re.compile(r"__SRC_([A-Z0-9_]+?)__")
 STRENGTH_RE = re.compile(
     r"\b\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ml|cl|l|ui|iu|%|mg/ml|mg/g)"
     r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
     re.IGNORECASE,
 )
-
-
-def resolve_data_root(config_path: Path, override: str | None, configured: str) -> Path:
-    """Resolve the raw collection root.
-
-    Precedence is the CLI flag, then the ``PHARMEAZOR_DATA_ROOT`` environment
-    variable, then the configured value. A relative configured value resolves
-    against the config file's directory, so the committed default never has to
-    carry a machine-specific home directory.
-    """
-    raw = override or os.environ.get("PHARMEAZOR_DATA_ROOT") or configured
-    candidate = Path(raw).expanduser()
-    if not candidate.is_absolute():
-        candidate = config_path.resolve().parent / candidate
-    return candidate.resolve()
 
 
 def extract_strengths(*values: str | None) -> list[str]:
@@ -98,14 +82,22 @@ def infer_source_id(row: dict[str, Any], known_sources: dict[str, Any]) -> str:
 
 
 def load_groups(
-    data_root: Path,
-    config: dict[str, Any],
+    settings: Settings,
     *,
     only_med: str | None = None,
 ) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]]]:
-    documents_path = data_root / config["paths"]["documents_csv"]
+    documents_path = settings.paths.documents_csv
+    if not documents_path.exists():
+        raise FileNotFoundError(
+            f"raw collection not found: {documents_path}\n"
+            "The cleaning lab reads the corpus produced by the sibling retrieval "
+            "lab. Run the collection stage first:\n"
+            "  cd tooling/retrieval-lab && python main.py init\n"
+            "  cd tooling/retrieval-lab && python main.py collect-all\n"
+            "or point --data-root / PHARMEAZOR_DATA_ROOT at an existing collection."
+        )
     frame = pd.read_csv(documents_path, dtype=str).fillna("")
-    known_sources = config["sources"]
+    known_sources = settings.sources
     groups: dict[str, dict[str, Any]] = {}
     excluded: list[dict[str, Any]] = []
 
@@ -155,7 +147,7 @@ def load_groups(
             rel_path,
             {
                 "rel_path": rel_path,
-                "abs_path": data_root / rel_path,
+                "abs_path": settings.data_root / rel_path,
                 "source_ids": set(),
                 "document_ids": [],
                 "medicine_ids": set(),
@@ -233,16 +225,6 @@ def _revision_date(value: str | None) -> str | None:
     return normalize_date(value)
 
 
-def _source_info(config: dict[str, Any], source_id: str) -> dict[str, Any]:
-    info = config["sources"].get(source_id, {})
-    return {
-        "source_name": info.get("name", source_id),
-        "authority_level": int(info.get("rank", 99)),
-        "authority_tier": info.get("tier", "unknown"),
-        "jurisdiction": info.get("jurisdiction", ""),
-    }
-
-
 def _medicine_lookup(medicines: list[Medicine]) -> dict[str, Medicine]:
     return {medicine.medicine_id: medicine for medicine in medicines}
 
@@ -265,14 +247,13 @@ def build_artifact(
     group: dict[str, Any],
     part: ExtractedPart,
     *,
-    config: dict[str, Any],
+    settings: Settings,
     medicines_by_id: dict[str, Medicine],
-    drop_sections: set[str],
 ) -> dict[str, Any]:
     medicine_ids = group["medicine_ids"]
     medicine_names = [medicines_by_id[mid].inn for mid in medicine_ids if mid in medicines_by_id]
     inn = "; ".join(name for name in medicine_names if name)
-    source_info = _source_info(config, group["source_id"])
+    source_info = settings.source_info(group["source_id"])
     document_id = group["document_ids"][0]
     artifact_id = f"{document_id}__{part.part_id}"
     title = part.title or _first(group["titles"], "Document sans titre")
@@ -283,8 +264,13 @@ def build_artifact(
         # medicine identity rather than keeping a meaningless title.
         title = f"{inn} {_first(group['strength_forms'])}".strip() or title
     provenance = _provenance(group, source_info)
-    body, sections = render_markdown(title, part.blocks, provenance=provenance)
-    sections = [section for section in sections if section["code"] not in drop_sections]
+    body, sections = render_markdown(
+        title,
+        part.blocks,
+        provenance=provenance,
+        drop_line_patterns=settings.drop_line_patterns,
+        drop_section_codes=settings.drop_section_codes,
+    )
     body = body.strip() + "\n"
     present = sorted(
         {str(section["code"]) for section in sections if str(section["code"]) in KEY_CODES}
@@ -341,13 +327,19 @@ def build_artifact(
 def build_derived_artifact(
     document: dict[str, Any],
     *,
-    config: dict[str, Any],
+    settings: Settings,
     group: dict[str, Any],
     medicines_by_id: dict[str, Medicine],
 ) -> dict[str, Any]:
-    source_info = _source_info(config, document["source_id"])
+    source_info = settings.source_info(document["source_id"])
     title = document["title"]
-    body, sections = render_markdown(title, document["blocks"], provenance=_provenance(group, source_info))
+    body, sections = render_markdown(
+        title,
+        document["blocks"],
+        provenance=_provenance(group, source_info),
+        drop_line_patterns=settings.drop_line_patterns,
+        drop_section_codes=settings.drop_section_codes,
+    )
     body = body.strip() + "\n"
     present = sorted(
         {str(section["code"]) for section in sections if str(section["code"]) in KEY_CODES}
@@ -545,18 +537,21 @@ def run(
     no_chunks: bool = False,
     no_dedupe: bool = False,
 ) -> dict[str, Any]:
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    data_root = resolve_data_root(config_path, data_root_override, config["data_root"])
-    output_root = Path(output_root_override or (BASE_DIR / config["output_root"])).resolve()
+    settings = load_settings(
+        config_path,
+        data_root_override=data_root_override,
+        output_root_override=output_root_override,
+    )
+    output_root = settings.output_root
     reset_output(output_root)
     documents_dir = output_root / "documents"
     structured_dir = output_root / "structured"
     reports_dir = output_root / "reports"
     preview_dir = output_root / "preview"
 
-    medicines = load_medicines(data_root / config["paths"]["medicines_csv"])
+    medicines = load_medicines(settings.paths.medicines_csv)
     medicines_by_id = _medicine_lookup(medicines)
-    groups, excluded_rows = load_groups(data_root, config, only_med=only_med)
+    groups, excluded_rows = load_groups(settings, only_med=only_med)
 
     artifacts: list[dict[str, Any]] = []
     inventory: list[dict[str, Any]] = []
@@ -644,9 +639,8 @@ def run(
             artifact = build_artifact(
                 group,
                 part,
-                config=config,
+                settings=settings,
                 medicines_by_id=medicines_by_id,
-                drop_sections=set(config.get("drop_section_codes", [])),
             )
             # A scanned PDF has only page headers as text. Embedding that stub
             # is worse than reporting it for OCR, so it is excluded explicitly.
@@ -694,7 +688,7 @@ def run(
             artifacts.append(
                 build_derived_artifact(
                     document,
-                    config=config,
+                    settings=settings,
                     group=group,
                     medicines_by_id=medicines_by_id,
                 )
@@ -737,7 +731,7 @@ def run(
         )
 
     # ---- dedupe and status ------------------------------------------------
-    if no_dedupe:
+    if no_dedupe or not settings.dedupe.enabled:
         duplicate_info = {
             artifact["artifact_id"]: type(
                 "Info",
@@ -749,9 +743,9 @@ def run(
     else:
         duplicate_info = deduplicate(
             artifacts,
-            shingle_words=int(config["dedupe"]["shingle_words"]),
-            near_threshold=float(config["dedupe"]["near_threshold"]),
-            official_threshold=float(config["dedupe"]["official_threshold"]),
+            shingle_words=settings.dedupe.shingle_words,
+            near_threshold=settings.dedupe.near_threshold,
+            official_threshold=settings.dedupe.official_threshold,
         )
     manifest: list[dict[str, Any]] = []
     for artifact in artifacts:
@@ -931,7 +925,7 @@ def run(
     summary = {
         "cleaner_version": CLEANER_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "data_root": str(data_root),
+        "data_root": str(settings.data_root),
         "counts": {
             "raw_file_groups": len(groups),
             "excluded_rows": len(excluded_rows),
@@ -967,11 +961,11 @@ def run(
         summary["chunk_preview"] = chunk_preview(
             [(artifact["artifact_id"], artifact["body"], _chunk_metadata(artifact)) for artifact in clean_artifacts],
             preview_dir,
-            tokenizer_name=config["chunking"]["tokenizer"],
-            chunk_size=int(config["chunking"]["chunk_size_tokens"]),
-            chunk_overlap=int(config["chunking"]["chunk_overlap_tokens"]),
-            sample_per_document=int(config["chunking"].get("preview_chunks_per_document", 2)),
-            merge_min_tokens=int(config["chunking"].get("merge_min_tokens", 80)),
+            tokenizer_name=settings.chunking.tokenizer,
+            chunk_size=settings.chunking.chunk_size_tokens,
+            chunk_overlap=settings.chunking.chunk_overlap_tokens,
+            sample_per_document=settings.chunking.preview_chunks_per_document,
+            merge_min_tokens=settings.chunking.merge_min_tokens,
         )
 
     (reports_dir / "summary.json").write_text(

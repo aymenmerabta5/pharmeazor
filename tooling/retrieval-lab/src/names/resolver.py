@@ -132,7 +132,7 @@ def _nomenclature_evidence() -> list:
             "dci_code": record.get("dci_code", ""),
             "num_enregistrement": record.get("registration_number", ""),
             "source_id": "SANTE_MSP",
-            "source_url": f"Main_Arch/{record.get('source_file', '')}",
+            "source_url": record.get("source_file", ""),
             "document_id": record.get("dci_code", ""),
             "collected_at": record.get("collected_at", ""),
             "confidence": "official",

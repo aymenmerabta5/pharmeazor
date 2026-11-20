@@ -34,8 +34,8 @@ export function AppMenu(): React.JSX.Element {
         userLabel={menu.userLabel}
         signOutPending={menu.signOutPending}
         onNavigate={menu.go}
-        onSignIn={() => menu.go("/sign-in")}
-        onSignUp={() => menu.go("/sign-up")}
+        onSignIn={() => menu.go("/auth/sign-in")}
+        onSignUp={() => menu.go("/auth/sign-up")}
         onProfile={() => menu.go("/profile")}
         onSettings={() => menu.go("/settings")}
         onSignOut={menu.signOutFromMenu}

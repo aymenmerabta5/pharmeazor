@@ -26,7 +26,7 @@ export function TwoFactorForm({
         state.useBackupCode ? "twoFactor.backupCodeDescription" : "twoFactor.description",
       )}
       footer={
-        <Link href="/sign-in" asChild>
+        <Link href="/auth/sign-in" asChild>
           <Button variant="ghost">
             <Text>{t("twoFactor.backSignIn")}</Text>
           </Button>

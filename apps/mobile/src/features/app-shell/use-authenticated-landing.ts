@@ -10,12 +10,12 @@ import { usePathname, useRouter } from "expo-router";
 const AUTHENTICATED_ENTRY_PATHS = new Set([
   "/",
   "/2fa",
-  "/forgot-password",
-  "/magic-link",
-  "/reset-password",
-  "/sign-in",
-  "/sign-up",
-  "/verify-email",
+  "/auth/forgot-password",
+  "/auth/magic-link",
+  "/auth/reset-password",
+  "/auth/sign-in",
+  "/auth/sign-up",
+  "/auth/verify-email",
 ]);
 
 export function useAuthenticatedLanding(isAuthenticated: boolean): void {

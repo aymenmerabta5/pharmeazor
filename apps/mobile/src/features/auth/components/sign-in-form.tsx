@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { AuthFrame } from "./auth-frame";
+import { AuthCaptchaField } from "./auth-captcha-field";
 import { NativeFormField as AuthTextField } from "@/components/form-fields/native-field";
 import type { SignInFormState } from "../types";
 
 export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Element {
   const t = useSurfaceTranslations("auth");
-  const { methods, form } = state;
+  const { methods, form, captcha } = state;
   const error = state.error ?? methods.error;
   return (
     <AuthFrame
@@ -24,7 +25,7 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
               <Text>{t("signIn.backHome")}</Text>
             </Button>
           </Link>
-          <Link href="/sign-up" asChild>
+          <Link href="/auth/sign-up" asChild>
             <Button variant="ghost">
               <Text>{t("signIn.createAccountLink")}</Text>
             </Button>
@@ -84,21 +85,22 @@ export function SignInForm({ state }: { state: SignInFormState }): React.JSX.Ele
                 />
               )}
             </form.Field>
+            <AuthCaptchaField captcha={captcha} />
             <Button disabled={pending || methods.pending} onPress={() => void form.handleSubmit()}>
               <Text>{t("signIn.submit")}</Text>
             </Button>
             <View className="flex-row flex-wrap gap-2">
-              <Link href="/forgot-password" asChild>
+              <Link href="/auth/forgot-password" asChild>
                 <Button variant="ghost">
                   <Text>{t("signIn.forgotPassword")}</Text>
                 </Button>
               </Link>
-              <Link href="/magic-link" asChild>
+              <Link href="/auth/magic-link" asChild>
                 <Button variant="ghost">
                   <Text>{t("signIn.magicLink")}</Text>
                 </Button>
               </Link>
-              <Link href="/verify-email" asChild>
+              <Link href="/auth/verify-email" asChild>
                 <Button variant="ghost">
                   <Text>{t("signIn.verifyEmail")}</Text>
                 </Button>

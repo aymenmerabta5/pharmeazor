@@ -63,12 +63,12 @@ export function HeaderActions({
               className="hidden sm:inline-flex"
               variant="ghost"
               size="sm"
-              render={<Link href="/sign-in" />}
+              render={<Link href="/auth/sign-in" />}
               nativeButton={false}
             >
               {t("signIn")}
             </Button>
-            <Button size="sm" render={<Link href="/sign-up" />} nativeButton={false}>
+            <Button size="sm" render={<Link href="/auth/sign-up" />} nativeButton={false}>
               {t("signUp")}
             </Button>
           </div>

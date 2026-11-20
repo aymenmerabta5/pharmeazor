@@ -22,7 +22,7 @@ export function DashboardNavbar(): React.JSX.Element {
             </Button>
           </>
         ) : (
-          <Button size="sm" render={<Link href="/sign-in">Sign in</Link>} />
+          <Button size="sm" render={<Link href="/auth/sign-in">Sign in</Link>} />
         )}
       </div>
     </header>

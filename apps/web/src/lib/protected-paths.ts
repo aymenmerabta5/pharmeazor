@@ -27,27 +27,13 @@ export const PROTECTED_PATHS = [
 export const DESIGN_PREVIEW_PATHS = ["/agent"] as const;
 
 /** Routes that render an authentication screen. */
-export const AUTH_PATHS = [
-  "/login",
-  "/sign-in",
-  "/sign-up",
-  "/reset-password",
-  "/forgot-password",
-] as const;
+export const AUTH_PATHS = ["/login", "/auth"] as const;
 
 /** The public pages a payment rail returns the customer to. */
 export const PUBLIC_BILLING_PATHS: readonly string[] = ["/checkout/success", "/checkout/cancel"];
 
 /** Routes that stay reachable while maintenance mode is on. */
-export const MAINTENANCE_EXEMPT_PATHS = [
-  "/login",
-  "/sign-in",
-  "/sign-up",
-  "/reset-password",
-  "/forgot-password",
-  "/verify",
-  "/maintenance",
-] as const;
+export const MAINTENANCE_EXEMPT_PATHS = ["/login", "/auth", "/verify", "/maintenance"] as const;
 
 function matchesPath(path: string, base: string): boolean {
   if (path === base) return true;

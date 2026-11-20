@@ -9,13 +9,13 @@ data/raw/
 data/quarantine/
 data/.cache/
 data/logs/
+data/input/
 
 # reports (excluded from tracking)
 data/reports/
 
 # metadata (excluded from tracking)
 data/metadata/
-Main_Arch
 
 # local secrets
 .env

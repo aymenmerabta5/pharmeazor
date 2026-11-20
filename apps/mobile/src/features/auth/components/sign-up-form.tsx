@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { AuthFrame } from "./auth-frame";
+import { AuthCaptchaField } from "./auth-captcha-field";
 import { NativeFormField as AuthTextField } from "@/components/form-fields/native-field";
 import type { SignUpFormState } from "../types";
 
 export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Element {
   const t = useSurfaceTranslations("auth");
-  const { methods, form } = state;
+  const { methods, form, captcha } = state;
   const error = state.error ?? methods.error;
   return (
     <AuthFrame
@@ -24,7 +25,7 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
               <Text>{t("signUp.backHome")}</Text>
             </Button>
           </Link>
-          <Link href="/sign-in" asChild>
+          <Link href="/auth/sign-in" asChild>
             <Button variant="ghost">
               <Text>{t("signUp.signInLink")}</Text>
             </Button>
@@ -97,6 +98,7 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
                 />
               )}
             </form.Field>
+            <AuthCaptchaField captcha={captcha} />
             <Button disabled={pending || methods.pending} onPress={() => void form.handleSubmit()}>
               <Text>{t("signUp.submit")}</Text>
             </Button>

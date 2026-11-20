@@ -15,6 +15,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import type { ForgotPasswordFormState } from "../types";
 import { useSurfaceTranslations } from "@/lib/translations";
+import { AuthCaptchaField } from "./auth-captcha-field";
 
 export function ForgotPasswordView({
   state,
@@ -22,7 +23,7 @@ export function ForgotPasswordView({
   state: ForgotPasswordFormState;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("recovery");
-  const { form, error, success } = state;
+  const { form, error, success, captcha } = state;
   return (
     <main className="flex min-h-[calc(100svh-4rem)] items-start justify-center bg-background px-5 py-10 sm:px-8 sm:py-14">
       <div className="flex w-full max-w-[440px] flex-col gap-8">
@@ -71,6 +72,7 @@ export function ForgotPasswordView({
                     )}
                   </form.AppField>
                 </FieldGroup>
+                <AuthCaptchaField captcha={captcha} />
                 <form.SubmitButton
                   className="h-10 w-full"
                   pendingLabel={t("forgotPassword.submitting")}
@@ -83,13 +85,13 @@ export function ForgotPasswordView({
           <CardFooter className="mt-6 flex-col gap-3 border-t border-border/70 p-0 pt-5 sm:p-0 sm:pt-5">
             <div className="flex w-full flex-wrap justify-between gap-3 text-sm">
               <Link
-                href="/sign-in"
+                href="/auth/sign-in"
                 className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
                 {t("forgotPassword.backSignIn")}
               </Link>
               <Link
-                href="/sign-up"
+                href="/auth/sign-up"
                 className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
                 {t("forgotPassword.createAccount")}

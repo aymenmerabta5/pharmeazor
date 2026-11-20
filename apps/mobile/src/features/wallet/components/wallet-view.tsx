@@ -83,7 +83,7 @@ export function WalletView({
             <CardDescription>{t("signInDescription")}</CardDescription>
           </CardHeader>
           <View className="px-5">
-            <Link href="/(auth)/sign-in" asChild>
+            <Link href="/auth/sign-in" asChild>
               <Button>
                 <Text>{t("signIn")}</Text>
               </Button>

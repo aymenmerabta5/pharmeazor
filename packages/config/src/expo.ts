@@ -6,6 +6,7 @@ export const env = createEnv({
   client: {
     EXPO_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
     EXPO_PUBLIC_API_URL: z.string().url().optional(),
+    EXPO_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).default("REPLACE_WITH_TURNSTILE_SITE_KEY"),
     EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).default("pk_test_REPLACE"),
     EXPO_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
     EXPO_PUBLIC_POSTHOG_HOST: z.string().min(1).optional(),
@@ -16,6 +17,7 @@ export const env = createEnv({
   runtimeEnv: {
     EXPO_PUBLIC_APP_URL: process.env.EXPO_PUBLIC_APP_URL,
     EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+    EXPO_PUBLIC_TURNSTILE_SITE_KEY: process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY,
     EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     EXPO_PUBLIC_POSTHOG_KEY: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     EXPO_PUBLIC_POSTHOG_HOST: process.env.EXPO_PUBLIC_POSTHOG_HOST,

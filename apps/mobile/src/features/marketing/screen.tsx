@@ -60,12 +60,12 @@ export function MarketingScreen(): React.JSX.Element {
           </Text>
           <Text className="text-sm leading-6 text-primary-foreground/75">{t("subtitle")}</Text>
           <View className="gap-2 pt-1">
-            <Link href="/(auth)/sign-up" asChild>
+            <Link href="/auth/sign-up" asChild>
               <Button className="w-full bg-primary-foreground active:bg-primary-foreground/90">
                 <Text className="text-primary">{t("signUp")}</Text>
               </Button>
             </Link>
-            <Link href="/(auth)/sign-in" asChild>
+            <Link href="/auth/sign-in" asChild>
               <Button
                 variant="outline"
                 className="w-full border-primary-foreground/30 bg-primary-foreground/10 active:bg-primary-foreground/20"

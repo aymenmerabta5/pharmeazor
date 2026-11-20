@@ -5,6 +5,7 @@ import { createSignInSchema } from "@/lib/auth-validation";
 import { isEmailNotVerifiedError } from "@/lib/auth-model";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { signInWithEmail } from "./mutations";
+import { useAuthCaptcha } from "./use-auth-captcha";
 import { useAuthIntent } from "./use-auth-intent";
 import { useAuthMethods } from "./use-auth-methods";
 import { useAuthNavigation } from "./use-auth-navigation";
@@ -13,6 +14,7 @@ export function useSignInForm() {
   const intent = useAuthIntent();
   const navigation = useAuthNavigation();
   const t = useSurfaceTranslations("auth");
+  const captcha = useAuthCaptcha();
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
   const methods = useAuthMethods(intent, "signIn", () => setError(null));
@@ -27,13 +29,20 @@ export function useSignInForm() {
       }),
     },
     onSubmit: async ({ value }) => {
+      if (captcha.enabled && !captcha.token) {
+        setError(t("captcha.required"));
+        return;
+      }
       const ticket = intent.begin();
       if (!ticket) return;
       setError(null);
       setNeedsVerification(false);
       methods.reset();
       try {
-        const result = await signInWithEmail(value);
+        const result = await signInWithEmail({
+          ...value,
+          captchaToken: captcha.token ?? undefined,
+        });
         if (!ticket.isCurrent()) return;
         if (result.error) {
           if (isEmailNotVerifiedError(result.error)) {
@@ -54,9 +63,10 @@ export function useSignInForm() {
       } catch {
         if (ticket.isCurrent()) setError(t("signIn.genericError"));
       } finally {
+        captcha.reset();
         ticket.finish();
       }
     },
   });
-  return { form, error, needsVerification, methods };
+  return { form, error, needsVerification, methods, captcha };
 }

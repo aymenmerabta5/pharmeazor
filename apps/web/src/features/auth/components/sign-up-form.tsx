@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 import Link from "next/link";
+import { AuthCaptchaField } from "./auth-captcha-field";
 import { AuthOAuthButtons } from "./oauth-buttons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BrandMark } from "@/components/brand-wordmark";
@@ -20,7 +21,7 @@ import type { SignUpFormState } from "../types";
 
 export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Element {
   const t = useSurfaceTranslations("auth");
-  const { form, error, methods } = state;
+  const { form, error, methods, captcha } = state;
   return (
     <Card className="rounded-3xl border-border/80 bg-card p-6 shadow-surface sm:p-8">
       <CardHeader className="items-center gap-4 p-0 pb-7 text-center sm:p-0 sm:pb-7">
@@ -83,6 +84,7 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
                 )}
               </form.AppField>
             </FieldGroup>
+            <AuthCaptchaField captcha={captcha} />
             <form.SubmitButton
               disabled={methods.pending}
               className="h-11 w-full rounded-xl text-sm font-semibold"
@@ -97,7 +99,7 @@ export function SignUpForm({ state }: { state: SignUpFormState }): React.JSX.Ele
         <p className="text-center text-sm text-muted-foreground">
           {t("signUp.signInPrompt")}{" "}
           <Link
-            href="/sign-in"
+            href="/auth/sign-in"
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
             {t("signUp.signInLink")}

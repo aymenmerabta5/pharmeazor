@@ -13,7 +13,7 @@ const getCachedSession = cache(async () => {
 
 async function DashboardContent(): Promise<React.JSX.Element> {
   const session = await getCachedSession();
-  if (!session?.user) redirect("/sign-in");
+  if (!session?.user) redirect("/auth/sign-in");
   return (
     <DashboardView
       user={{

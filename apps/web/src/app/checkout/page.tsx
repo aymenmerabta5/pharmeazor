@@ -26,7 +26,7 @@ async function CheckoutData({ searchParams }: SearchProps): Promise<React.JSX.El
   const planId = first((await searchParams).plan) ?? "";
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
   const me = await application.me();
-  if (!me.user) redirect("/sign-in");
+  if (!me.user) redirect("/auth/sign-in");
   const [catalog, summary] = await Promise.all([
     application.billing.plans(),
     application.billing.manual.summary(),

@@ -2,8 +2,8 @@
 """PHARMEAZOR collection CLI.
 
   python main.py init
-  python main.py import-meds [--csv Main_Arch/targetMeds.csv]
-                             [--xlsx Main_Arch/Projet2_Liste_40_medicaments.xlsx]
+  python main.py import-meds [--csv data/input/targetMeds.csv]
+                             [--xlsx data/input/Projet2_Liste_40_medicaments.xlsx]
   python main.py sources
   python main.py source-audit
   python main.py approve --source DAILYMED --decision permitted --reviewer "your name"
@@ -91,7 +91,10 @@ def cmd_import_meds(args):
     if args.xlsx:
         paths += list(args.xlsx)
     if not paths:
-        paths = ["Main_Arch/targetMeds.csv"]
+        raise SystemExit(
+            "import-meds needs at least one input file: "
+            "pass --csv <targetMeds.csv> and/or --xlsx <medicine-list.xlsx>"
+        )
     rows = import_files(paths, merge=not args.replace)
     print(f"Imported {len(rows)} medicines -> {MEDICINES_CSV}")
     for r in rows:
@@ -437,7 +440,11 @@ def cmd_import_nomenclature(args):
 
     path = _Path(args.file)
     if not path.exists():
-        print(f"file not found: {path}")
+        print(
+            f"file not found: {path}\n"
+            "The official nomenclature is downloaded by hand and supplied with "
+            "--file; it is not part of the repository."
+        )
         return
     nomenclature = Nomenclature(path)
     meds = read_table(MEDICINES_CSV, MEDICINE_COLUMNS)
@@ -513,8 +520,8 @@ def cmd_import_nomenclature(args):
             "language": "fr",
             "country": "DZ",
             "source_id": "SANTE_MSP",
-            "source_url": f"Main_Arch/{path.name}",
-            "final_url": f"Main_Arch/{path.name}",
+            "source_url": path.name,
+            "final_url": path.name,
             "collection_method": "manual-download",
             "collected_at": collected_at,
             "publication_date": "2026-08",
@@ -1420,7 +1427,11 @@ def build_parser():
     n.set_defaults(func=cmd_names)
 
     nom = sub.add_parser("import-nomenclature")
-    nom.add_argument("--file", default="Main_Arch/nomenclature_algerienne.xlsx")
+    nom.add_argument(
+        "--file",
+        required=True,
+        help="official nomenclature workbook downloaded by hand",
+    )
     nom.set_defaults(func=cmd_import_nomenclature)
     sub.add_parser("revalidate").set_defaults(func=cmd_revalidate)
     sub.add_parser("status").set_defaults(func=cmd_status)

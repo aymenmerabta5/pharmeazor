@@ -1,13 +1,25 @@
 """Official Algerian nomenclature: parsing and matching tests."""
+import os
+from pathlib import Path
+
 import pytest
 
 from src.medicines.xlsx import find_header, read_rows, sheet_names
 from src.utils.text import contains_token, normalize
 
-NOMENCLATURE = "Main_Arch/nomenclature_algerienne.xlsx"
+# Operator-supplied workbook; never committed. Point the environment variable at
+# a local copy to run the register tests.
+NOMENCLATURE = Path(
+    os.environ.get("PHARMEAZOR_NOMENCLATURE_XLSX", "nomenclature_algerienne.xlsx")
+)
+requires_nomenclature = pytest.mark.skipif(
+    not NOMENCLATURE.exists(),
+    reason=f"official nomenclature workbook not found: {NOMENCLATURE}",
+)
 
 
 class TestXlsxReader:
+    @requires_nomenclature
     def test_reads_the_sheets(self):
         import zipfile
 
@@ -17,6 +29,7 @@ class TestXlsxReader:
         assert any("Non" in n for n in names)
         assert any("Retrait" in n for n in names)
 
+    @requires_nomenclature
     def test_finds_the_header_row(self):
         rows = read_rows(NOMENCLATURE)
         index = find_header(rows, ["DENOMINATION COMMUNE INTERNATIONALE", "NOM DE MARQUE"])
@@ -33,6 +46,7 @@ def nomenclature():
     return Nomenclature(NOMENCLATURE)
 
 
+@requires_nomenclature
 class TestNomenclatureMatching:
     def test_the_register_is_loaded(self, nomenclature):
         assert len(nomenclature.main) > 5000

@@ -1,14 +1,13 @@
-"""Load the medicine list from the professor's files into data/input/medicines.csv.
+"""Load the medicine list into data/input/medicines.csv.
 
 Supported inputs
 ----------------
-* Main_Arch/targetMeds.csv   (columns: Numero, Categorie, Medicament, Code ATC)
-* Main_Arch/Projet2_Liste_40_medicaments.xlsx
-  (columns: N, Classe, DCI (nom de la substance), Code ATC (indicatif),
-   Present dans la nomenclature algerienne ?, Remarques)
+* a CSV list (columns: Numero, Categorie, Medicament, Code ATC)
+* an XLSX list (columns: N, Classe, DCI (nom de la substance),
+  Code ATC (indicatif), Present dans la nomenclature algerienne ?, Remarques)
 
 Both are read with the standard library only (the xlsx is a zip of XML).
-The medicine id keeps the professor's list number: MED031 ... MED040.
+The medicine id keeps the source list number: MED031 ... MED040.
 """
 import csv
 import re

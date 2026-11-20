@@ -306,7 +306,7 @@ Mirror the `storage` capability rather than inventing a new shape.
 
 | Concern                                             | Location                                          |
 | --------------------------------------------------- | ------------------------------------------------- |
-| Offline raw-source cleaning (maintainer batch tool) | `tooling/corpus/`                                 |
+| Offline raw-source cleaning (maintainer batch tool) | `tooling/cleaning-lab/`                           |
 | Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                 |
 | Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                |
 | Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`       |
@@ -316,7 +316,7 @@ Mirror the `storage` capability rather than inventing a new shape.
 | Composition root                                    | `packages/api/src/composition/retrieval.ts`       |
 | Agent retrieval tool                                | `apps/harness/agent/tools/`                       |
 
-`tooling/corpus/` prepares the corpus offline: it turns the raw collection into
+`tooling/cleaning-lab/` prepares the corpus offline: it turns the raw collection into
 clean Markdown plus an import manifest and stops there. It is not a runtime
 path, so it never parses a document in a request. The chunk table, the chunk
 identifiers and the contextualization notes are owned by

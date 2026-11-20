@@ -1,8 +1,9 @@
 """Reader for the official Algerian national nomenclature.
 
-File: `Main_Arch/nomenclature_algerienne.xlsx` — "NOMENCLATURE NATIONALE
-DES PRODUITS PHARMACEUTIQUES" (Ministère de l'Industrie Pharmaceutique).
-The team downloaded it by hand, as the brief requires.
+File: the "NOMENCLATURE NATIONALE DES PRODUITS PHARMACEUTIQUES" workbook
+(Ministère de l'Industrie Pharmaceutique), downloaded by hand and passed with
+``import-nomenclature --file``. It is operator-supplied data and is not part of
+the repository.
 
 Sheets
 ------

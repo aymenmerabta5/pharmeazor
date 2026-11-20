@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 
+# Python (offline tooling)
+.venv/
+__pycache__/
+*.py[cod]
+
 # Framework and build artifacts
 /dist/
 /apps/*/dist/

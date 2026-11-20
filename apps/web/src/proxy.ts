@@ -64,7 +64,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isProtectedPath(pathname, designPreviewEnabled()) && !getSessionCookie(request)) {
-    const response = NextResponse.redirect(new URL("/sign-in", request.url));
+    const response = NextResponse.redirect(new URL("/auth/sign-in", request.url));
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     response.headers.set("CDN-Cache-Control", "no-store");
     return response;

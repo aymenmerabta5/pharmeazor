@@ -29,7 +29,7 @@ export function DashboardScreen(): React.JSX.Element {
         <Text className="text-xl font-bold">{t("unauthenticatedTitle")}</Text>
         <Text className="text-sm text-muted-foreground">{t("unauthenticatedDescription")}</Text>
         <View className="mt-4">
-          <Link href="/sign-in" asChild>
+          <Link href="/auth/sign-in" asChild>
             <Button>
               <Text>{t("signIn")}</Text>
             </Button>
