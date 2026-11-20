@@ -215,3 +215,25 @@ def normalize_date(value: Any, *, dayfirst: bool = True) -> str | None:
         except ValueError:
             return None
     return None
+
+
+# Dosage strengths ("20 mg", "12,5 mg", "100 mg/5 ml"), shared by the
+# artifact builder and the deduplicator: a strength is part of a product's
+# identity, and two documents that declare different strengths must never be
+# merged however similar their template text is.
+STRENGTH_RE = re.compile(
+    r"\b\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ml|cl|l|ui|iu|%|mg/ml|mg/g)"
+    r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
+    re.IGNORECASE,
+)
+
+
+def extract_strengths(*values: Any) -> list[str]:
+    """Strength tokens found in the given texts, normalized without spaces."""
+    found: set[str] = set()
+    for value in values:
+        if not value:
+            continue
+        for match in STRENGTH_RE.finditer(str(value)):
+            found.add(re.sub(r"\s+", "", match.group(0)).upper())
+    return sorted(found)

@@ -48,6 +48,9 @@ class DataPaths:
     documents_csv: Path
     sources_csv: Path
     medicines_csv: Path
+    # Patient notices carved from already-collected parents. Optional: the
+    # discovery audit uses it to account for every notice file on disk.
+    notices_csv: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -309,6 +312,7 @@ def load_settings(
     )
 
     paths_raw = _mapping(_required(data, "paths", str(path)), "paths")
+    notices_value = paths_raw.get("notices_csv")
     paths = DataPaths(
         documents_csv=data_root
         / _string(_required(paths_raw, "documents_csv", "paths"), "paths.documents_csv"),
@@ -316,6 +320,9 @@ def load_settings(
         / _string(_required(paths_raw, "sources_csv", "paths"), "paths.sources_csv"),
         medicines_csv=data_root
         / _string(_required(paths_raw, "medicines_csv", "paths"), "paths.medicines_csv"),
+        notices_csv=data_root / _string(notices_value, "paths.notices_csv")
+        if notices_value
+        else None,
     )
 
     sources_override = data.get("sources") or {}

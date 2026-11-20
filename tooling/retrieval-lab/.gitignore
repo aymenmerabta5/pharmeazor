@@ -10,6 +10,7 @@ data/quarantine/
 data/.cache/
 data/logs/
 data/input/
+data/evaluation/
 
 # reports (excluded from tracking)
 data/reports/
@@ -20,3 +21,4 @@ data/metadata/
 # local secrets
 .env
 *.key
+

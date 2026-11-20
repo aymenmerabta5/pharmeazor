@@ -295,23 +295,49 @@ def _daily_med_body_start(lines: list[str]) -> list[str]:
     return lines
 
 
+def _is_packaging_panel(upper: str) -> bool:
+    """True for the SPL display-panel heading in its observed wordings.
+
+    ``PACKAGE LABEL-PRINCIPAL DISPLAY PANEL``, ``PACKAGE LABEL.PRINCIPAL
+    DISPLAY PANEL``, ``PACKAGE/LABEL PRINCIPAL DISPLAY PANEL`` and the
+    strength-suffixed ``PRINCIPAL DISPLAY PANEL - 250 mg`` all mark the same
+    packaging tail. The phrase never introduces clinical text, so a prefix
+    match is safe.
+    """
+    return upper.startswith(
+        (
+            "PRINCIPAL DISPLAY PANEL",
+            "PACKAGE LABEL-PRINCIPAL DISPLAY PANEL",
+            "PACKAGE LABEL.PRINCIPAL DISPLAY PANEL",
+            "PACKAGE LABEL PRINCIPAL DISPLAY PANEL",
+            "PACKAGE/LABEL PRINCIPAL DISPLAY PANEL",
+        )
+    )
+
+
 def _daily_med_body_end(lines: list[str], *, has_full_pi: bool) -> list[str]:
-    """Cut the packaging/display-panel tail from a DailyMed PDF.
+    """Cut the packaging/display-panel tail from a DailyMed full-PI document.
 
     The tail repeats the same drug-facts text across dozens of package images
     ("Product Information", "Inactive Ingredients", "Package Description").
     It is not prescribing information and creates empty, duplicate sections.
-    OTC drug-facts labels keep their "Uses"/"Directions" before the principal
-    display panel, so the aggressive active-ingredient cut is only safe for
-    full prescribing information documents.
+
+    The cut only applies to full prescribing-information documents. OTC
+    drug-facts labels must keep their whole panel: the extraction order of an
+    OTC PDF is not stable, and in some layouts the entire Drug Facts block
+    (including the Directions and the age restrictions) follows the first
+    "PRINCIPAL DISPLAY PANEL" marker. Cutting there would remove the dosing
+    instructions, which is a clinical loss, not a cleaning win.
     """
+    if not has_full_pi:
+        return lines
     for index, line in enumerate(lines):
         if index < 40:
             continue
         upper = line.strip().upper()
-        if upper in {"PACKAGE DESCRIPTION", "PRINCIPAL DISPLAY PANEL"}:
+        if upper == "PACKAGE DESCRIPTION" or _is_packaging_panel(upper):
             return lines[:index]
-        if has_full_pi and index > 100 and (
+        if index > 100 and (
             upper.startswith("PRODUCT INFORMATION")
             or upper.startswith("ACTIVE INGREDIENTS:")
             or upper.startswith("INACTIVE INGREDIENTS:")

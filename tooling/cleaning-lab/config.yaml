@@ -27,6 +27,10 @@ paths:
   documents_csv: "data/metadata/documents.csv"
   sources_csv: "data/metadata/sources.csv"
   medicines_csv: "data/input/medicines.csv"
+  # Patient notices the collection lab carved out of already-collected
+  # parents. The discovery audit reads this table to account for every
+  # notice file on disk; the notices themselves are not ingested twice.
+  notices_csv: "data/metadata/notices.csv"
 
 # Source identity, authority and jurisdiction come from the collection lab's
 # registry (`data/metadata/sources.csv`). That file is authoritative; this block

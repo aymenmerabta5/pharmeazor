@@ -27,6 +27,7 @@ from settings import DEFAULT_CONFIG, Settings, load_settings
 
 from .chunking import preview as chunk_preview
 from .dedupe import deduplicate
+from .discovery import build_discovery
 from .extractors import ExtractedPart, extract_bdpm_html, extract_pdf, render_markdown
 from .sections import KEY_CODES, classify_heading
 from .structured import (
@@ -41,6 +42,7 @@ from .structured import (
 )
 from .text_utils import (
     clean_inline,
+    extract_strengths,
     normalize_date,
     normalize_key,
     sha256_file,
@@ -49,21 +51,6 @@ from .text_utils import (
 
 CLEANER_VERSION = "1.0.0"
 SOURCE_TOKEN_RE = re.compile(r"__SRC_([A-Z0-9_]+?)__")
-STRENGTH_RE = re.compile(
-    r"\b\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ml|cl|l|ui|iu|%|mg/ml|mg/g)"
-    r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
-    re.IGNORECASE,
-)
-
-
-def extract_strengths(*values: str | None) -> list[str]:
-    found: set[str] = set()
-    for value in values:
-        if not value:
-            continue
-        for match in STRENGTH_RE.finditer(str(value)):
-            found.add(re.sub(r"\s+", "", match.group(0)).upper())
-    return sorted(found)
 
 
 # ---------------------------------------------------------------------------
@@ -956,6 +943,16 @@ def run(
         "coverage_gaps": coverage_gaps,
         "coverage": coverage,
     }
+
+    # ---- discovery audit --------------------------------------------------
+    # Reconcile the raw tree on disk with everything this run produced, so
+    # no physical file is silently unaccounted for (loading-phase gate).
+    summary["discovery"] = build_discovery(
+        settings,
+        inventory=inventory,
+        manifest=manifest,
+        output_root=output_root,
+    )
 
     if not no_chunks:
         summary["chunk_preview"] = chunk_preview(
