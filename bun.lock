@@ -434,6 +434,10 @@
       "name": "@tooling/cleaning-lab",
       "version": "0.1.0",
     },
+    "tooling/retrieval-lab": {
+      "name": "@tooling/retrieval-lab",
+      "version": "0.1.0",
+    },
   },
   "patchedDependencies": {
     "braces@3.0.3": "patches/braces@3.0.3.patch",
@@ -1441,6 +1445,8 @@
     "@tooling/architecture": ["@tooling/architecture@workspace:tooling/architecture"],
 
     "@tooling/cleaning-lab": ["@tooling/cleaning-lab@workspace:tooling/cleaning-lab"],
+
+    "@tooling/retrieval-lab": ["@tooling/retrieval-lab@workspace:tooling/retrieval-lab"],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.11.11", "", { "os": "darwin", "cpu": "x64" }, "sha512-HMMeUIEAsmyIbSYn1ySvF/4gGMa0joiTMq4dQDuloIAnOpbtFT3JEiVsYnASdTWDXvplbRbZlqjU1EBeSR9G1A=="],
 

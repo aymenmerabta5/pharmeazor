@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "registry": "https://registry.npmjs.org",
   "minimumReleaseAgeSeconds": 604800,
-  "auditedAt": "2026-11-17T19:17:41.959Z",
-  "lockSha256": "861964e30f272590d016d40d73cae2889deaedc2047a688adbdd1553a085cb71",
+  "auditedAt": "2026-11-20T14:18:51.426Z",
+  "lockSha256": "70ac018ec3af3b77573a1fad407bf8590422152518c728110a08886c5797505f",
   "releases": [
     {
       "package": "@ai-sdk/gateway",
@@ -1702,6 +1702,12 @@
       "version": "0.2.11",
       "publishedAt": "2025-02-08T19:57:57.777Z",
       "integrity": "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow=="
+    },
+    {
+      "package": "@marsidev/react-turnstile",
+      "version": "1.6.3",
+      "publishedAt": "2026-10-21T19:24:59.142Z",
+      "integrity": "sha512-JdMMArjEVDMs5jnGMBeXl3y6dkMuIXPG4Tu88Uo2Rkf8ujEw/iJ2Yp/3n4kDF3BjJ+bJB9WC19LPWc5a7/4srA=="
     },
     {
       "package": "@napi-rs/wasm-runtime",
@@ -6790,6 +6796,12 @@
       "version": "0.21.4",
       "publishedAt": "2026-10-08T13:34:10.933Z",
       "integrity": "sha512-77B6KlalB4osNIck91TNFixPkYPsTbuNEvw8P7IV+4v4/5wZSBRKZnw0Zhx6YjuauDTz71gc8IW+fVhcBMjr5A=="
+    },
+    {
+      "package": "react-native-webview",
+      "version": "13.16.1",
+      "publishedAt": "2026-02-27T14:10:43.635Z",
+      "integrity": "sha512-If0eHhoEdOYDcHsX+xBFwHMbWBGK1BvGDQDQdVkwtSIXiq1uiqjkpWVP2uQ1as94J0CzvFE9PUNDuhiX0Z6ubw=="
     },
     {
       "package": "react-native-worklets",

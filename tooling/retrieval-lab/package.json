@@ -1,0 +1,14 @@
+{
+  "name": "@tooling/retrieval-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline collection lab that discovers, downloads and validates the PHARMEAZOR medicine corpus.",
+  "scripts": {
+    "collect": "python main.py collect-all",
+    "verify": "python main.py verify",
+    "report": "python main.py report",
+    "check:python": "python -m compileall -q main.py config.py src",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  }
+}
