@@ -668,3 +668,12 @@ the synonym table are the seed), retrieval over `sections.csv` (BM25 vs
 semantic vectors, compared quantitatively), source reconciliation, cited
 answering with the Gemini model, numeric verification, and the evaluation
 sets (≥30 questions, ≥40 name variants, ≥10 real disagreements).
+
+## 14. Cloudflare R2 upload, verification and download
+
+The collection lab owns the R2 transfer tool. It uploads the corpus to the
+`pharmeazor` bucket over the S3-compatible API, streams every object back to
+verify its SHA-256, and can restore the remote tree under `downloads/`.
+
+See [R2_UPLOAD.md](R2_UPLOAD.md) for configuration, commands and safety notes.
+`boto3` is included in `requirements.txt`.

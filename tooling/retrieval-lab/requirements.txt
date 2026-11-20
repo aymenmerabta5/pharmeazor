@@ -7,3 +7,6 @@ playwright>=1.44
 # language data); the normal extraction run does not need these packages.
 pytesseract>=0.3.10
 Pillow>=10.0
+# Cloudflare R2 upload / verify / download over the S3-compatible API.
+# `when_required` checksum settings need botocore >= 1.36.
+boto3>=1.36,<2

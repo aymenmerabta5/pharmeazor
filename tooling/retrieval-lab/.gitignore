@@ -22,3 +22,7 @@ data/metadata/
 .env
 *.key
 
+# R2 transfer reports and downloaded verification copies
+*.report.jsonl
+downloads/
+
