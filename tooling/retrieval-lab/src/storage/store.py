@@ -111,6 +111,21 @@ class DocumentStore:
             write_table(self.path, self.df)
         return removed
 
+    def drop_source(self, source_id: str) -> int:
+        """Remove every row of a source, whatever its collection status.
+
+        Used by imports that rewrite a whole snapshot: the new rows replace the
+        old ones instead of being appended next to them.
+        """
+        if self.df.empty:
+            return 0
+        mask = self.df["source_id"] == source_id
+        removed = int(mask.sum())
+        if removed:
+            self.df = self.df[~mask].reset_index(drop=True)
+            write_table(self.path, self.df)
+        return removed
+
     def add(self, row: dict) -> str:
         self.df = pd.concat([self.df, pd.DataFrame([row])], ignore_index=True)
         write_table(self.path, self.df)

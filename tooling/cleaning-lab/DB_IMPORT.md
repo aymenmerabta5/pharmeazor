@@ -1,14 +1,11 @@
 # Database import contract
 
-The pipeline does **not** write to PostgreSQL. It produces import-ready
-artifacts; this document defines the shape the loader should use. It follows the
-retrieval layout in `AGENTS.md` and keeps prices/stock out of the corpus.
+The pipeline does **not** write to PostgreSQL. It produces import-ready artifacts; this document defines the shape the loader should use. It follows the retrieval layout in
+`AGENTS.md` and keeps prices/stock out of the corpus.
 
 ## 1. Documents
 
-Source of truth: `output/manifest.jsonl` plus the Markdown file at
-`output/<output_path>`. Parse the YAML front matter for metadata and store the
-Markdown body without the front matter as `content_markdown`.
+Source of truth: `output/manifest.jsonl` plus the Markdown file at `output/<output_path>`. Parse the YAML front matter for metadata and store the Markdown body without the front matter as `content_markdown`.
 
 ```sql
 CREATE TABLE retrieval_documents (

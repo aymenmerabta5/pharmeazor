@@ -387,6 +387,28 @@ SECTION_DEFS: tuple[SectionDef, ...] = (
         ),
         tier=3,
     ),
+    SectionDef(
+        "nomenclature_registered",
+        "Produits enregistrés",
+        (
+            "produits enregistres",
+            "registered products",
+            "produits enregistres nomenclature",
+        ),
+        tier=3,
+    ),
+    SectionDef(
+        "nomenclature_non_renewed",
+        "Produits non renouvelés",
+        ("produits non renouveles", "non renewed products"),
+        tier=3,
+    ),
+    SectionDef(
+        "nomenclature_withdrawn",
+        "Produits retirés",
+        ("produits retires", "withdrawn products"),
+        tier=3,
+    ),
     # ---- excluded commercial / administrative blocks -----------------------
     # These are classified so the body renderer can drop the whole section
     # (price and stock are explicitly out of scope for the corpus).

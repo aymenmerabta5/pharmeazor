@@ -433,6 +433,246 @@ def build_nomenclature_documents(
 
 
 # ---------------------------------------------------------------------------
+# Pharm'Net catalogue (PHARMNET_CATALOG)
+# ---------------------------------------------------------------------------
+
+_PHARMNET_STATUS_GROUPS = (
+    ("registered", "Produits enregistrés"),
+    ("non_renewed", "Produits non renouvelés"),
+    ("withdrawn", "Produits retirés"),
+)
+
+
+def parse_pharmnet_catalogue(
+    path: Path,
+    medicines: list[Medicine],
+    *,
+    authority_level: int = 2,
+) -> list[dict[str, Any]]:
+    """Read the catalogue snapshot and attach the medicine identity.
+
+    The catalogue is a product register: brand, DCI, code, form, dosage,
+    pack, holder and registration dates.  It carries no clinical sections and
+    no leaflet URL, so nothing here may be treated as an SmPC.
+
+    It ranks at level 2: a register of the Algerian nomenclature, one notch
+    below the official ministry list, and never a clinical authority.
+    """
+    import pandas as pd
+
+    frame = pd.read_csv(path, dtype=str).fillna("")
+    matcher = MedicineMatcher(medicines)
+    records: list[dict[str, Any]] = []
+    for _, row in frame.iterrows():
+        record: dict[str, Any] = {
+            "source_id": "PHARMNET_CATALOG",
+            "product_id": clean_inline(str(row.get("product_id", ""))),
+            "registration_number": clean_inline(str(row.get("registration_number", ""))),
+            "dci_code": clean_inline(str(row.get("dci_code", ""))),
+            "dci": clean_inline(str(row.get("dci", ""))),
+            "brand": clean_inline(str(row.get("brand", ""))),
+            "form": clean_inline(str(row.get("form", ""))),
+            "dosage": clean_inline(str(row.get("dosage", ""))),
+            "pack": clean_inline(str(row.get("pack", ""))),
+            "schedule": clean_inline(str(row.get("schedule", ""))),
+            "holder": clean_inline(str(row.get("holder", ""))),
+            "holder_country": clean_inline(str(row.get("holder_country", ""))),
+            "registered_initial": normalize_date(row.get("registered_initial")),
+            "registered_final": normalize_date(row.get("registered_final")),
+            "product_type": clean_inline(str(row.get("product_type", ""))),
+            "status": clean_inline(str(row.get("status", ""))).lower() or "registered",
+            "shelf_life_months": clean_inline(str(row.get("shelf_life_months", ""))),
+            "observation": clean_inline(str(row.get("observation", ""))),
+            "authority_level": authority_level,
+        }
+        if not record["dci"] and not record["brand"]:
+            continue
+        record["medicine_ids"] = matcher.match(
+            " ".join(record[key] for key in ("dci", "brand", "holder"))
+        )
+        record["in_scope"] = bool(record["medicine_ids"])
+        record["is_combination"] = bool(re.search(r"[/+]", record["dci"]))
+        record["product_uid"] = stable_id(
+            "PHARMNET_CATALOG",
+            record["product_id"],
+            record["registration_number"],
+            record["brand"],
+            record["dosage"],
+            record["pack"],
+        )
+        records.append(record)
+    return records
+
+
+def write_pharmnet_outputs(
+    records: list[dict[str, Any]],
+    output_dir: Path,
+    *,
+    collected_at: str | None,
+) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = output_dir / "pharmnet_products.csv"
+    jsonl_path = output_dir / "pharmnet_products.jsonl"
+    columns = [
+        "product_uid",
+        "source_id",
+        "collected_at",
+        "authority_level",
+        "in_scope",
+        "is_combination",
+        "medicine_ids",
+        "product_id",
+        "registration_number",
+        "dci_code",
+        "dci",
+        "brand",
+        "form",
+        "dosage",
+        "pack",
+        "schedule",
+        "holder",
+        "holder_country",
+        "registered_initial",
+        "registered_final",
+        "product_type",
+        "status",
+        "shelf_life_months",
+        "observation",
+    ]
+    with csv_path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
+        writer.writeheader()
+        for record in records:
+            record.setdefault("collected_at", collected_at)
+            row = dict(record)
+            row["medicine_ids"] = ";".join(record.get("medicine_ids") or [])
+            writer.writerow(row)
+    with jsonl_path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+    return {
+        "artifact_id": "PHARMNET_CATALOG__NOMENCLATURE__PRODUCTS",
+        "artifact_type": "structured_reference",
+        "path": str(csv_path),
+        "jsonl_path": str(jsonl_path),
+        "rows": len(records),
+        "source_id": "PHARMNET_CATALOG",
+        "authority_level": 2,
+        "medicine_ids": sorted(
+            {med for record in records for med in (record.get("medicine_ids") or [])}
+        ),
+        "collected_at": collected_at,
+        "description": (
+            "Public Pharm'Net catalogue of the Algerian nomenclature: "
+            "registered, non-renewed and withdrawn products."
+        ),
+    }
+
+
+def _pharmnet_bullet(record: dict[str, Any]) -> str:
+    fields = [
+        ("DCI", record.get("dci")),
+        ("Forme", record.get("form")),
+        ("Dosage", record.get("dosage")),
+        ("Conditionnement", record.get("pack")),
+        ("Liste", record.get("schedule")),
+        ("Titulaire", record.get("holder")),
+        ("Pays", record.get("holder_country")),
+        (
+            "Enregistrement",
+            " → ".join(
+                item
+                for item in (record.get("registered_initial"), record.get("registered_final"))
+                if item
+            ),
+        ),
+        ("Association", "oui" if record.get("is_combination") else ""),
+        ("Type", record.get("product_type")),
+        ("Stabilité (mois)", record.get("shelf_life_months")),
+        ("Observation", record.get("observation")),
+        ("N° enregistrement", record.get("registration_number")),
+    ]
+    detail = " · ".join(f"{label}: {value}" for label, value in fields if value)
+    brand = record.get("brand") or record.get("dci") or "Produit"
+    return f"- **{brand}** — {detail}"
+
+
+def build_pharmnet_documents(
+    records: list[dict[str, Any]],
+    medicines: list[Medicine],
+    *,
+    source_document_ids: dict[str, list[str]],
+    collected_at: str | None,
+) -> list[dict[str, Any]]:
+    documents: list[dict[str, Any]] = []
+    for medicine in medicines:
+        rows = [row for row in records if medicine.medicine_id in (row.get("medicine_ids") or [])]
+        if not rows:
+            continue
+        blocks: list[Block] = [
+            Block(
+                "para",
+                "Source secondaire : catalogue public Pharm'Net de la nomenclature "
+                "nationale algérienne, données mises à jour le 8 septembre 2026. "
+                "Données d'identification produit ; elles ne remplacent pas le RCP "
+                "et n'ont pas valeur de source officielle.",
+            )
+        ]
+        counts = []
+        for status, heading in _PHARMNET_STATUS_GROUPS:
+            subset = [row for row in rows if row.get("status") == status]
+            counts.append(f"{len(subset)} {heading.lower()}")
+            if not subset:
+                continue
+            blocks.append(
+                Block("heading", heading, level=1, code=f"nomenclature_{status}")
+            )
+            subset.sort(
+                key=lambda item: (
+                    normalize_key(item.get("brand", "")),
+                    normalize_key(item.get("dosage", "")),
+                )
+            )
+            for row in subset:
+                blocks.append(Block("bullet", _pharmnet_bullet(row)))
+        blocks.insert(
+            1,
+            Block(
+                "para",
+                f"Cette fiche recense {len(rows)} produit(s) du catalogue Pharm'Net "
+                f"contenant ou correspondant à {medicine.inn} "
+                f"({', '.join(counts)}).",
+            ),
+        )
+        document_id = f"{medicine.medicine_id}__SRC_PHARMNET_CATALOG__NOMENCLATURE"
+        documents.append(
+            {
+                "document_id": document_id,
+                "part_id": "nomenclature",
+                "source_id": "PHARMNET_CATALOG",
+                "title": f"Catalogue Pharm'Net de la nomenclature — {medicine.inn}",
+                "blocks": blocks,
+                "document_type": "nomenclature",
+                "language": "fr",
+                "country": "DZ",
+                "medicine_ids": [medicine.medicine_id],
+                "source_document_ids": sorted(
+                    set(source_document_ids.get(medicine.medicine_id, []))
+                ),
+                "collected_at": collected_at,
+                "publication_date": "2026-09-08",
+                "original_files": sorted(
+                    {row.get("source_file", "") for row in rows if row.get("source_file")}
+                ),
+                "warnings": [],
+                "method": "pharmnet_catalog:csv",
+                "extra": {"product_count": len(rows)},
+            }
+        )
+    return documents
+
+
+# ---------------------------------------------------------------------------
 # BDPM register dumps
 # ---------------------------------------------------------------------------
 

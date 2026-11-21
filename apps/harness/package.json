@@ -25,6 +25,7 @@
     "@repo/database": "workspace:*",
     "@repo/kernel": "workspace:*",
     "@repo/modules": "workspace:*",
+    "@repo/services": "workspace:*",
     "@repo/workflows": "workspace:*",
     "@vercel/connect": "2.9.4",
     "ai": "7.0.173",
@@ -43,5 +44,5 @@
   "engines": {
     "node": "24.19.0"
   },
-  "packageManager": "bun@1.4.4"
+  "packageManager": "bun@1.4.5"
 }

@@ -21,3 +21,7 @@ data/metadata/
 # local secrets
 .env
 *.key
+
+# R2 transfer reports and downloaded verification copies
+*.report.jsonl
+downloads/

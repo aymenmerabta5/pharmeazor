@@ -27,20 +27,27 @@ paths:
   documents_csv: "data/metadata/documents.csv"
   sources_csv: "data/metadata/sources.csv"
   medicines_csv: "data/input/medicines.csv"
+  # Patient notices the collection lab carved out of already-collected
+  # parents. The discovery audit reads this table to account for every
+  # notice file on disk; the notices themselves are not ingested twice.
+  notices_csv: "data/metadata/notices.csv"
 
 # Source identity, authority and jurisdiction come from the collection lab's
 # registry (`data/metadata/sources.csv`). That file is authoritative; this block
 # only relabels the cleaning-specific `tier` where the default derived from
 # `source_type` is not precise enough. A source missing here still works.
 #
-# Authority ranking (from the project brief, lower wins):
-#   1 = official Algerian SmPC / package leaflet (ANPP)
-#   2 = official Algerian nomenclature (Ministry of Pharmaceutical Industry)
+# Authority ranking (lower wins):
+#   1 = official Algerian sources: ANPP SmPC / package leaflet, and the
+#       Ministry of Health nomenclature
+#   2 = Algerian nomenclature register (Pharm'Net catalogue: names and status)
 #   3 = foreign institutional reference (ANSM/BDPM, DailyMed, EMA)
-#   4 = Algerian professional website (Pharm'Net, secondary only)
+#   4 = Algerian professional website (secondary only)
 sources:
   ANPP_RCP:
     tier: official_algerian_smpc
+  PHARMNET_CATALOG:
+    tier: nomenclature_register
 
 # Chunking preview only. Final chunking belongs to the retrieval pipeline;
 # this proves the clean files split cleanly with the intended settings.

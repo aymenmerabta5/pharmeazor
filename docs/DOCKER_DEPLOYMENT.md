@@ -12,7 +12,7 @@ where the daemon can reach it. The image then assembles the artifacts it
 produced and installs the production dependency graph.
 
 The build also requires a regular root `bun.lock`. If this project was created
-with `--no-install`, run `bun run install:bootstrap` using Bun `1.4.4` before
+with `--no-install`, run `bun run install:bootstrap` using Bun `1.4.5` before
 building. The Dockerfile checks this before its frozen install and rejects a
 missing lock, directory, or symbolic link with corrective guidance.
 Both container installs read the generated `bunfig.toml`, enforcing a
@@ -51,9 +51,10 @@ automatically. For a database that already exists, run
 `bun run db:ensure-extensions` once; it is idempotent.
 
 `docker-compose.yml` and `start-database.sh` are generator-owned and are
-rewritten by `ghostinit sync`. `docker-compose.override.yml` repeats the
-pgvector service fields so they survive that regeneration. Do not run
-`docker compose -f docker-compose.yml` without the override file.
+rewritten by `ghostinit sync`. There is one compose file and no override:
+Postgres with pgvector, Redis, and the Upstash-compatible REST proxy all live
+in `docker-compose.yml`, so a regeneration must be re-applied with the same
+contents. Keep the pgvector build and the digest pins when you restore it.
 
 ## Continuous integration environment
 

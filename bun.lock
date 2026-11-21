@@ -5,7 +5,7 @@
     "": {
       "name": "pharmeazor",
       "devDependencies": {
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "husky": "9.1.7",
         "oxc-parser": "0.159.0",
         "oxfmt": "0.79.0",
@@ -24,6 +24,7 @@
         "@repo/database": "workspace:*",
         "@repo/kernel": "workspace:*",
         "@repo/modules": "workspace:*",
+        "@repo/services": "workspace:*",
         "@repo/workflows": "workspace:*",
         "@vercel/connect": "2.9.4",
         "ai": "7.0.173",
@@ -158,7 +159,7 @@
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",
         "@types/react-is": "19.3.0",
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "oxfmt": "0.79.0",
         "oxlint": "1.94.0",
         "postcss": "8.5.33",
@@ -181,7 +182,7 @@
       "devDependencies": {
         "@types/node": "24.19.2",
         "@types/react": "19.3.0",
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "oxfmt": "0.79.0",
         "oxlint": "1.94.0",
         "typescript": "7.0.2",
@@ -205,6 +206,7 @@
         "@repo/billing": "workspace:*",
         "@repo/config": "workspace:*",
         "@repo/database": "workspace:*",
+        "@repo/modules": "workspace:*",
         "@repo/observability": "workspace:*",
         "@repo/services": "workspace:*",
         "@repo/storage": "workspace:*",
@@ -265,7 +267,7 @@
       },
       "devDependencies": {
         "@types/node": "24.19.2",
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "typescript": "7.0.2",
       },
     },
@@ -277,7 +279,7 @@
       },
       "devDependencies": {
         "@types/node": "24.19.2",
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "typescript": "7.0.2",
       },
     },
@@ -327,7 +329,7 @@
       "devDependencies": {
         "@types/node": "24.19.2",
         "@types/react": "19.3.0",
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "oxfmt": "0.79.0",
         "oxlint": "1.94.0",
         "typescript": "7.0.2",
@@ -346,7 +348,7 @@
         "@repo/services": "workspace:*",
       },
       "devDependencies": {
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "typescript": "7.0.2",
       },
     },
@@ -373,7 +375,7 @@
         "@types/node": "24.19.2",
         "@types/qrcode": "1.5.6",
         "@types/react": "19.3.0",
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "typescript": "7.0.2",
       },
     },
@@ -413,7 +415,7 @@
       "name": "@repo/testing",
       "version": "0.1.0",
       "devDependencies": {
-        "bun-types": "1.4.4",
+        "bun-types": "1.4.5",
         "typescript": "7.0.2",
       },
     },
@@ -447,6 +449,10 @@
     },
     "tooling/cleaning-lab": {
       "name": "@tooling/cleaning-lab",
+      "version": "0.1.0",
+    },
+    "tooling/retrieval-lab": {
+      "name": "@tooling/retrieval-lab",
       "version": "0.1.0",
     },
   },
@@ -1459,6 +1465,8 @@
 
     "@tooling/cleaning-lab": ["@tooling/cleaning-lab@workspace:tooling/cleaning-lab"],
 
+    "@tooling/retrieval-lab": ["@tooling/retrieval-lab@workspace:tooling/retrieval-lab"],
+
     "@turbo/darwin-64": ["@turbo/darwin-64@2.11.11", "", { "os": "darwin", "cpu": "x64" }, "sha512-HMMeUIEAsmyIbSYn1ySvF/4gGMa0joiTMq4dQDuloIAnOpbtFT3JEiVsYnASdTWDXvplbRbZlqjU1EBeSR9G1A=="],
 
     "@turbo/darwin-arm64": ["@turbo/darwin-arm64@2.11.11", "", { "os": "darwin", "cpu": "arm64" }, "sha512-+8iySNgqYWY6PZYUQzYu6zn0C04z2OEq1vQ6oMGsJ9sxN6wOpg1gzi1AJ5VKDHviWvMUjhqng51hTEQZOuiqYQ=="],
@@ -1667,7 +1675,7 @@
 
     "buffer-from": ["buffer-from@1.1.2", "", {}, "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ=="],
 
-    "bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
+    "bun-types": ["bun-types@1.4.5", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-ECHn+9dhL3wv0G6u0+7dQvrnaimXiRDxxerYBmhTaLyJEEuvTPWk2Fye3XIf5Y++JIIiHKfQw4Z7V5D8KuiXbg=="],
 
     "bytes": ["bytes@3.1.2", "", {}, "sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg=="],
 

@@ -1,6 +1,6 @@
 """Build the clean PHARMEAZOR corpus.
 
-Usage (from ``tooling/clearning-lab/``):
+Usage (from ``tooling/cleaning-lab/``):
 
     python run.py                 # clean + preview chunks + validate
     python run.py --no-chunks     # clean + validate only
@@ -27,20 +27,25 @@ from settings import DEFAULT_CONFIG, Settings, load_settings
 
 from .chunking import preview as chunk_preview
 from .dedupe import deduplicate
+from .discovery import build_discovery
 from .extractors import ExtractedPart, extract_bdpm_html, extract_pdf, render_markdown
 from .sections import KEY_CODES, classify_heading
 from .structured import (
     Medicine,
     bdpm_register_kind,
     build_nomenclature_documents,
+    build_pharmnet_documents,
     load_medicines,
     parse_bdpm_register,
     parse_nomenclature,
+    parse_pharmnet_catalogue,
     write_bdpm_outputs,
     write_nomenclature_outputs,
+    write_pharmnet_outputs,
 )
 from .text_utils import (
     clean_inline,
+    extract_strengths,
     normalize_date,
     normalize_key,
     sha256_file,
@@ -49,23 +54,6 @@ from .text_utils import (
 
 CLEANER_VERSION = "1.0.0"
 SOURCE_TOKEN_RE = re.compile(r"__SRC_([A-Z0-9_]+?)__")
-STRENGTH_RE = re.compile(
-    r"\b\d+(?:[.,]\d+)?\s*(?:mg|g|mcg|µg|ml|cl|l|ui|iu|%|mg/ml|mg/g)"
-    r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
-    re.IGNORECASE,
-)
-
-
-def extract_strengths(*values: str | None) -> list[str]:
-    found: set[str] = set()
-    for value in values:
-        if not value:
-            continue
-        for match in STRENGTH_RE.finditer(str(value)):
-            found.add(re.sub(r"\s+", "", match.group(0)).upper())
-    return sorted(found)
-
-
 # ---------------------------------------------------------------------------
 # Inventory
 # ---------------------------------------------------------------------------
@@ -233,7 +221,11 @@ def _provenance(group: dict[str, Any], source_info: dict[str, Any]) -> str:
     collected = _latest_date(group["collected_ats"])
     published = _latest_date(group["publication_dates"])
     pieces = [
-        f"Source: {source_info['source_name']} (autorité {source_info['authority_level']}/4)",
+        # The authority level is stored on the artifact and on every chunk row.
+        # It must not enter the Markdown body: the body is embedded, and a
+        # constant per-source token biases every vector and forces a full
+        # re-embed whenever the policy changes.
+        f"Source: {source_info['source_name']}",
         f"collecté le {collected[:10]}" if collected else "date de collecte inconnue",
     ]
     if published:
@@ -241,6 +233,31 @@ def _provenance(group: dict[str, Any], source_info: dict[str, Any]) -> str:
     language = _first(group["language"], "?")
     pieces.append(f"langue: {language}")
     return " · ".join(pieces)
+
+
+PART_DOCUMENT_TYPES = {
+    "smpc": "smpc",
+    "rcp": "smpc",  # the French name for the same document type
+    "label": "label",
+    "notice": "notice",
+    "fiche_info": "notice",  # patient-facing summary used when rcp/notice are absent
+    "nomenclature": "nomenclature",
+}
+
+
+def document_type_for(part: ExtractedPart, group: dict[str, Any]) -> str:
+    """Return the type of this document, not of the source that carried it.
+
+    One source can carry several parts: a single BDPM page yields both the SmPC
+    and the patient notice. The group-level type is therefore identical for
+    both, which labelled every patient notice an SmPC and made notices
+    indistinguishable from the professional summary in any type filter. The part
+    decides whenever it is a known one, and the group is only a fallback.
+    """
+    part_id = (part.part_id or "").strip().lower()
+    if part_id in PART_DOCUMENT_TYPES:
+        return PART_DOCUMENT_TYPES[part_id]
+    return str(_first(group["document_types"], "unknown") or "unknown").strip().lower()
 
 
 def build_artifact(
@@ -286,7 +303,7 @@ def build_artifact(
         "part_id": part.part_id,
         "source_id": group["source_id"],
         **source_info,
-        "document_type": _first(group["document_types"], "unknown"),
+        "document_type": document_type_for(part, group),
         "language": _first(group["language"], "?"),
         "country": source_info.get("jurisdiction", ""),
         "medicine_ids": medicine_ids,
@@ -417,8 +434,68 @@ def manifest_row(artifact: dict[str, Any], *, output_path: str | None) -> dict[s
     return row
 
 
-def write_markdown(artifact: dict[str, Any], documents_dir: Path) -> str:
-    path = documents_dir / f"{artifact['artifact_id']}.md"
+def raw_folder(artifact: dict[str, Any]) -> str | None:
+    """Return the single ``data/raw/<dir>`` grouping this artifact came from."""
+    folders: set[str] = set()
+    for entry in artifact.get("original_files") or []:
+        parts = str(entry).replace("\\", "/").split("/")
+        if len(parts) > 3 and parts[0] == "data" and parts[1] == "raw":
+            folders.add(parts[2])
+    return folders.pop() if len(folders) == 1 else None
+
+
+def medicine_folder_map(artifacts: list[dict[str, Any]]) -> dict[str, str]:
+    """Map every medicine id to the raw directory that holds its files.
+
+    Most artifacts live under ``data/raw/<medicine>/`` and give this mapping for
+    free. A source that spans the whole corpus -- the Algerian nomenclature
+    workbook is one file covering all forty medicines -- produces one artifact
+    per medicine but no directory of its own, so the mapping has to be learnt
+    from the artifacts that do have one. Directories starting with ``_`` are
+    collector groupings, not medicines.
+    """
+    mapping: dict[str, str] = {}
+    for artifact in artifacts:
+        folder = raw_folder(artifact)
+        if folder is None or folder.startswith("_"):
+            continue
+        medicine_ids = artifact.get("medicine_ids") or []
+        if len(medicine_ids) == 1:
+            mapping.setdefault(medicine_ids[0], folder)
+    return mapping
+
+
+def medicine_folder(artifact: dict[str, Any], mapping: dict[str, str]) -> str:
+    """Return the directory this artifact belongs to.
+
+    The collector groups every source file under ``data/raw/<medicine>/``, and
+    the cleaned corpus mirrors that grouping: one medicine's SmPC, RCP, patient
+    notice, DailyMed label and nomenclature entry stay together instead of being
+    flattened into a single list of ``MED001__…`` files.
+
+    The artifact's own medicine id decides, not its source path. The
+    nomenclature workbook is one shared file whose forty artifacts each belong
+    to a different medicine, so keying on the source directory would bury them
+    all in ``_shared``. Anything that genuinely spans several medicines falls
+    back to ``_shared``, the convention the collector already uses.
+    """
+    medicine_ids = artifact.get("medicine_ids") or []
+    if len(medicine_ids) == 1:
+        folder = mapping.get(medicine_ids[0])
+        if folder:
+            return folder
+    folder = raw_folder(artifact)
+    if folder is not None and not folder.startswith("_"):
+        return folder
+    return "_shared"
+
+
+def write_markdown(
+    artifact: dict[str, Any], documents_dir: Path, mapping: dict[str, str]
+) -> str:
+    folder = documents_dir / medicine_folder(artifact, mapping)
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{artifact['artifact_id']}.md"
     front_matter = {
         key: value
         for key, value in artifact.items()
@@ -558,6 +635,7 @@ def run(
     structured_artifacts: list[dict[str, Any]] = []
     xlsx_groups: list[dict[str, Any]] = []
     bdpm_groups: list[dict[str, Any]] = []
+    pharmnet_groups: list[dict[str, Any]] = []
 
     for rel_path, group in sorted(groups.items()):
         abs_path: Path = group["abs_path"]
@@ -586,6 +664,18 @@ def run(
                     **base_inventory,
                     "status": "structured",
                     "reason": "official_nomenclature_workbook",
+                    "sha256_actual": group["sha256_actual"],
+                }
+            )
+            continue
+        if suffix == ".csv" and group["source_id"] == "PHARMNET_CATALOG":
+            group["kind"] = "pharmnet_catalogue"
+            pharmnet_groups.append(group)
+            inventory.append(
+                {
+                    **base_inventory,
+                    "status": "structured",
+                    "reason": "pharmnet_catalogue_snapshot",
                     "sha256_actual": group["sha256_actual"],
                 }
             )
@@ -694,6 +784,37 @@ def run(
                 )
             )
 
+    # ---- structured Pharm'Net catalogue ----------------------------------
+    for group in pharmnet_groups:
+        path = group["abs_path"]
+        collected_at = _latest_date(group["collected_ats"])
+        records = parse_pharmnet_catalogue(path, medicines)
+        for record in records:
+            record["source_file"] = group["rel_path"]
+        structured_artifacts.append(
+            write_pharmnet_outputs(records, structured_dir, collected_at=collected_at)
+        )
+        source_document_ids: dict[str, list[str]] = defaultdict(list)
+        for row in group["rows"]:
+            source_document_ids[clean_inline(str(row.get("medicine_id", "")))].append(
+                clean_inline(str(row.get("document_id", "")))
+            )
+        documents = build_pharmnet_documents(
+            records,
+            medicines,
+            source_document_ids=source_document_ids,
+            collected_at=collected_at,
+        )
+        for document in documents:
+            artifacts.append(
+                build_derived_artifact(
+                    document,
+                    settings=settings,
+                    group=group,
+                    medicines_by_id=medicines_by_id,
+                )
+            )
+
     # ---- structured BDPM register dumps ----------------------------------
     # The file name is not enough: the register type is in the document title
     # (e.g. "BDPM CIS_COMPO_bdpm.txt - ..."). Parse CIS first so composition
@@ -748,6 +869,7 @@ def run(
             official_threshold=settings.dedupe.official_threshold,
         )
     manifest: list[dict[str, Any]] = []
+    medicine_dirs = medicine_folder_map(artifacts)
     for artifact in artifacts:
         info = duplicate_info[artifact["artifact_id"]]
         artifact["status"] = info.status
@@ -757,7 +879,7 @@ def run(
             artifact["warnings"] = sorted(set(artifact["warnings"]) | {f"duplicate:{info.reason}"})
             manifest.append(manifest_row(artifact, output_path=None))
         else:
-            output_path = write_markdown(artifact, documents_dir)
+            output_path = write_markdown(artifact, documents_dir, medicine_dirs)
             manifest.append(manifest_row(artifact, output_path=output_path))
 
     for artifact in structured_artifacts:
@@ -956,6 +1078,16 @@ def run(
         "coverage_gaps": coverage_gaps,
         "coverage": coverage,
     }
+
+    # ---- discovery audit --------------------------------------------------
+    # Reconcile the raw tree on disk with everything this run produced, so
+    # no physical file is silently unaccounted for (loading-phase gate).
+    summary["discovery"] = build_discovery(
+        settings,
+        inventory=inventory,
+        manifest=manifest,
+        output_root=output_root,
+    )
 
     if not no_chunks:
         summary["chunk_preview"] = chunk_preview(

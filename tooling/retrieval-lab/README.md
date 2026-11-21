@@ -165,18 +165,19 @@ This table is the seed of the name-normalisation component (brief, feature 3).
 
 ## 5. Sources
 
-Authority levels follow the brief: **1** official Algerian, **2** official
-nomenclature, **3** foreign institutional, **4** Algerian professional.
+Authority levels: **1** official Algerian (ANPP SmPC/leaflet and the Ministry
+of Health nomenclature), **2** Algerian nomenclature register (Pharm'Net
+catalogue), **3** foreign institutional, **4** Algerian professional.
 
 | id                 | source                                                   | level | mode                           | what it gives today                                                                                                                                                                                                                                                                        |
 | ------------------ | -------------------------------------------------------- | ----- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ANPP_RCP`         | rcp.anpp.dz (official SmPC portal)                       | 1     | automated                      | **the priority source** — official Algerian SmPCs (RCP) as PDF. The portal's DCI field is matched **case-sensitively** (`LOSARTAN` finds RCPs, `losartan` does not), so the upper-case form is queried first; the Algerian commercial names are queried as well, and every query is cached |
 | `ANPP_SITE`        | anpp.dz product dossiers                                 | 1     | automated                      | only four product dossiers are published there (clamoxyl, ferolam, isotanak, arovan); works by brand name                                                                                                                                                                                  |
-| `SANTE_MSP`        | sante.gov.dz nomenclature                                | 2     | manual download, then ingested | the **official national nomenclature** (downloaded by hand): 78 records proving the DCI is registered, with the Algerian brand, code, holder and dosage. The _list page itself_ is never automated                                                                                         |
+| `SANTE_MSP`        | sante.gov.dz nomenclature                                | 1     | manual download, then ingested | the **official national nomenclature** (downloaded by hand): 78 records proving the DCI is registered, with the Algerian brand, code, holder and dosage. The _list page itself_ is never automated                                                                                         |
 | `BDPM_FR`          | Base de données publique des médicaments (France)        | 3     | automated                      | **ANSM product pages** (full SmPC + patient notice, server-rendered) and the official register extracts (products, holder, dosage)                                                                                                                                                         |
 | `DAILYMED`         | DailyMed / NLM (US)                                      | 3     | automated                      | FDA approved labels (SPL) as PDF, several per DCI (queried under the English INN)                                                                                                                                                                                                          |
 | `EMA`              | EMA EPAR product information                             | 3     | automated                      | works for centrally authorised medicines; these generics have no EPAR                                                                                                                                                                                                                      |
-| `PHARMNET_CATALOG` | pharmnet-dz.com (catalogue of the Algerian nomenclature) | 4     | automated                      | **name source**: commercial name, DCI, nomenclature code, registration number, form, dosage, holder — no leaflets (name source only)                                                                                                                                                       |
+| `PHARMNET_CATALOG` | pharmnet-dz.com (catalogue of the Algerian nomenclature) | 2     | automated                      | **register source**: commercial name, DCI, nomenclature code, registration number, form, dosage, holder, status — no leaflets, never a clinical authority                                                                                                                                  |
 | `PHARMNET`         | pharmnet.dz                                              | 4     | manual                         | was under maintenance during reconnaissance; superseded by `PHARMNET_CATALOG`                                                                                                                                                                                                              |
 
 ### Official first, foreign as a complement
@@ -362,43 +363,40 @@ product pages came back after the integrity rule was corrected).
 python main.py report
 ```
 
-The corpus holds **552 verified documents** for the 40 medicines of the
-professor's list, stored as 422 physical files (identical bytes shared by
+The corpus holds **454 verified document rows** for the 40 medicines of the
+professor's list, stored as 338 physical files (identical bytes shared by
 hash, one provenance row per medicine and per source).
 
-| source                                       | authority | verified documents | role                                               |
-| -------------------------------------------- | --------- | ------------------ | -------------------------------------------------- |
-| SANTE_MSP — official Algerian nomenclature   | 2         | 78                 | the official register (downloaded by hand, parsed) |
-| ANPP RCP — official Algerian SmPC            | 1         | 48                 | the priority clinical source                       |
-| BDPM_FR — ANSM product pages (SmPC + notice) | 3         | 210                | French institutional reference                     |
-| DailyMed — US FDA labels                     | 3         | 216                | US institutional reference                         |
+| source                                       | authority | verified rows | role                                               |
+| -------------------------------------------- | --------- | ------------- | -------------------------------------------------- |
+| SANTE_MSP — official Algerian nomenclature   | 1         | 39            | the official register (downloaded by hand, parsed) |
+| ANPP RCP — official Algerian SmPC            | 1         | 36            | the priority clinical source                       |
+| Pharm'Net catalogue — Algerian register      | 2         | 40            | names and registration status, no leaflets         |
+| BDPM_FR — ANSM product pages (SmPC + notice) | 3         | 190           | French institutional reference                     |
+| DailyMed — US FDA labels                     | 3         | 149           | US institutional reference                         |
 
-**38 of the 40 medicines** meet the brief's rule (three verified sources, one
-of them official). The two that do not are real-world facts, not gaps in the
-collector:
+**39 of the 40 medicines** meet the brief's rule at the collection level (three
+verified rows, one of them official). The one exception is a collection artefact,
+not a missing source:
 
-- **nifédipine (MED028)** — the Algerian register lists it only as withdrawn
-  or non-renewed (29 historical products, none currently registered), so there
-  is no current official Algerian document to collect. Column E says
-  `a verifier`.
-- **néfopam (MED012)** — registered in Algeria (official evidence present)
-  and in France, but DailyMed has no US label for it and the ANPP portal has
-  no RCP: a third source would have to come from ANSM or EMA directly.
+- **nifédipine (MED028)** — its `SANTE_MSP` row is `MANUAL`, because that source
+  is downloaded by hand, so it is not counted among the verified rows. The shared
+  nomenclature workbook is nevertheless parsed for all 40 medicines, so the
+  cleaned corpus does contain an official Algerian register document for
+  nifédipine (5 products on the registered sheet with status I/F, 24 on the
+  withdrawn sheet). There is no ANPP RCP for it.
 
-**Section extraction** (`python main.py extract`) yields **6 678 sections** from
-394 documents — 3 564 parsed with BeautifulSoup (the ANSM pages) and 3 114 with
-pymupdf (the RCPs and the US labels) — and **all 40 medicines** have the four
-sections the brief requires (indications, posology, contre-indications,
-interactions).
+**Section extraction** (`python main.py extract`) yields **3,360 sections** from
+336 documents, all with the heading-based extractor, and **all 40 medicines**
+have the four sections the brief requires (indications, posologie,
+contre-indications, interactions) found in at least one source.
 
-The ANPP RCP portal was queried **462 times** (DCI spellings + every official
-Algerian brand name) and answered for 58 of them, which is why the official
-clinical coverage stops at 15 medicines.
-
-Reruns are safe: re-running the collection leaves the corpus untouched — the
-portal queries are cached, so a rerun costs no new requests. `python main.py
-verify` checks the corpus invariants (every file present, every hash matching,
-no duplicated id) and exits with code 1 if something is inconsistent.
+The ANPP RCP portal covers **14 medicines** (36 verified RCP rows); the official
+nomenclature workbook covers **all 40**. Reruns are safe: re-running the
+collection leaves the corpus untouched — the portal queries are cached, so a
+rerun costs no new requests. `python main.py verify` checks the corpus
+invariants (every file present, every hash matching, no duplicated id) and
+exits with code 1 if something is inconsistent.
 
 Per-medicine numbers, the source matrix and the review queues are written to
 `data/reports/` on every `report` run:
@@ -650,16 +648,17 @@ Report: `data/reports/usage_report.csv` — one row per document
 (document id, medicine id, source, type, title, **usage status**, confidence,
 the evidence that decided it, file path, source URL, check date).
 
-Today: **432 HUMAN_MEDICINE**, **122 REGISTER_RECORD**, **1 VETERINARY**
-(quarantined), 0 administrative, 0 undetermined — 555 documents checked.
+Today: **345 HUMAN_MEDICINE**, **118 REGISTER_RECORD**, 0 veterinary, 0
+administrative, 0 undetermined — 463 collected documents checked. The
+`REGISTER_RECORD` count rose with the Pharm'Net catalogue and the Ministry
+nomenclature sheets, which are product lists rather than leaflets.
 
-The single veterinary document was **MED025__SRC_DAILYMED__DOC007**
+One veterinary document was found earlier: **MED025__SRC_DAILYMED__DOC007**
 ("GENTAMICIN SULFATE SOLUTION [HUVEPHARMA INC]", DailyMed) — the label says
-"for use in horses only / not for use in humans". It has been taken out of the
-corpus: the file is in `data/quarantine/`, its provenance row stays in
-`documents.csv` marked `rejected` (555 rows, 552 verified, 422 files).
-Quarantining is idempotent — a second run of the check keeps the name and the
-path, it never renames a document.
+"for use in horses only / not for use in humans". It is out of the corpus: the
+file is in `data/quarantine/`, its provenance row stays in `documents.csv`
+marked `rejected`. Quarantining is idempotent — a second run of the check keeps
+the name and the path, it never renames a document.
 
 ## 13. Next stages (not implemented here)
 
@@ -668,3 +667,12 @@ the synonym table are the seed), retrieval over `sections.csv` (BM25 vs
 semantic vectors, compared quantitatively), source reconciliation, cited
 answering with the Gemini model, numeric verification, and the evaluation
 sets (≥30 questions, ≥40 name variants, ≥10 real disagreements).
+
+## 14. Cloudflare R2 upload, verification and download
+
+The collection lab owns the R2 transfer tool. It uploads the corpus to the
+`pharmeazor` bucket over the S3-compatible API, streams every object back to
+verify its SHA-256, and can restore the remote tree under `downloads/`.
+
+See [R2_UPLOAD.md](R2_UPLOAD.md) for configuration, commands and safety notes.
+`boto3` is included in `requirements.txt`.

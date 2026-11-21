@@ -21,6 +21,9 @@ class Candidate:
     method: str = "requests"         # requests | playwright
     note: str = ""
     extra: dict = field(default_factory=dict)
+    # A copy already fetched for this exact URL (the shared register file).
+    # The collector uses it instead of downloading the same bytes again.
+    local_path: str = ""
 
     def as_dict(self) -> dict:
         return {

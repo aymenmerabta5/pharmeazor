@@ -10,6 +10,9 @@
     "./email": "./src/email/index.ts",
     "./harness": "./src/harness/index.ts",
     "./identity": "./src/identity/index.ts",
+    "./retrieval": "./src/retrieval/index.ts",
+    "./retrieval/authority": "./src/retrieval/authority.ts",
+    "./retrieval/tokenize": "./src/retrieval/tokenize.ts",
     "./storage": "./src/storage/index.ts"
   },
   "scripts": {

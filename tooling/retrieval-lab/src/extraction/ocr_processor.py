@@ -30,6 +30,27 @@ def _pytesseract():
     return pytesseract
 
 
+def _is_missing_binary(pytesseract, exc: BaseException) -> bool:
+    """True when the failure means the Tesseract *binary* is unavailable.
+
+    ``pytesseract`` imports fine without the binary and then raises its own
+    ``TesseractNotFoundError`` on the first call.  That is a host limitation,
+    not a parsing bug, so callers must be able to fall back to the text layer
+    instead of failing the whole document.
+    """
+    missing = getattr(pytesseract, "TesseractNotFoundError", None)
+    if isinstance(missing, type) and isinstance(exc, missing):
+        return True
+    return isinstance(exc, FileNotFoundError)
+
+
+def _ocr_error(pytesseract, exc: BaseException) -> OCRError:
+    return OCRError(
+        "the Tesseract binary is not installed or not on PATH; install it to "
+        "read scanned pages (the page text layer, when present, is still used)"
+    )
+
+
 def installed_languages() -> list[str]:
     try:
         return sorted(_pytesseract().get_languages(config=""))
@@ -61,10 +82,15 @@ def ocr_pdf_page(page, languages: str = "fra+ara+eng", dpi: int = 300) -> OCRRes
     chosen = choose_languages(languages)
     pix = page.get_pixmap(dpi=dpi, alpha=False)
     image = Image.open(io.BytesIO(pix.tobytes("png")))
-    data = pytesseract.image_to_data(
-        image, lang=chosen, output_type=pytesseract.Output.DICT,
-        config="--psm 3",
-    )
+    try:
+        data = pytesseract.image_to_data(
+            image, lang=chosen, output_type=pytesseract.Output.DICT,
+            config="--psm 3",
+        )
+    except Exception as exc:
+        if _is_missing_binary(pytesseract, exc):
+            raise _ocr_error(pytesseract, exc) from exc
+        raise
 
     lines: dict[tuple, list[str]] = {}
     confidences = []
@@ -94,10 +120,15 @@ def ocr_image(path: Path, languages: str = "fra+ara+eng") -> OCRResult:
 
     chosen = choose_languages(languages)
     image = Image.open(path)
-    data = pytesseract.image_to_data(
-        image, lang=chosen, output_type=pytesseract.Output.DICT,
-        config="--psm 3",
-    )
+    try:
+        data = pytesseract.image_to_data(
+            image, lang=chosen, output_type=pytesseract.Output.DICT,
+            config="--psm 3",
+        )
+    except Exception as exc:
+        if _is_missing_binary(pytesseract, exc):
+            raise _ocr_error(pytesseract, exc) from exc
+        raise
     words, confidences = [], []
     for index, word in enumerate(data.get("text", [])):
         token = (word or "").strip()

@@ -130,14 +130,24 @@ def search_rcp(medicine: dict, session, limiter, max_results: int = 10) -> list:
         recipe = [dict(step, values=missing) if step.get("action") == "search" else step
                   for step in RCP_SEARCH_RECIPE]
         dest = CACHE / "rcp_probe.pdf"
-        try:
-            result = run_recipe(RCP_BASE, recipe, dest)
-        except Exception as exc:
-            raise DiscoveryError(f"ANPP RCP search failed: {exc}")
-        for query, urls in (result.get("search_results") or {}).items():
-            cache[query] = urls
-        _save_search_cache(cache)
-        dest.unlink(missing_ok=True)
+        last_error = None
+        # The portal regularly needs more than 60 s to answer a batch of
+        # queries; one retry with a longer budget recovers it instead of
+        # dropping every ANPP document for the medicine.
+        for timeout_ms in (60000, 90000):
+            try:
+                result = run_recipe(RCP_BASE, recipe, dest, timeout_ms=timeout_ms)
+            except Exception as exc:
+                last_error = exc
+                continue
+            for query, urls in (result.get("search_results") or {}).items():
+                cache[query] = urls
+            _save_search_cache(cache)
+            dest.unlink(missing_ok=True)
+            last_error = None
+            break
+        if last_error is not None:
+            raise DiscoveryError(f"ANPP RCP search failed: {last_error}")
 
     urls = []
     for query in queries:

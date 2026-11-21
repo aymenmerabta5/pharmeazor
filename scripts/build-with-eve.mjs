@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-const EXPECTED_BUN_VERSION = "1.4.4";
+const EXPECTED_BUN_VERSION = "1.4.5";
 const MODE = "monorepo";
 const FRAMEWORK = "nextjs";
 const EVE_PACKAGE_NAME = "pharmeazor-eve";

@@ -1,9 +1,9 @@
 import { lstatSync } from "node:fs";
 import { resolve } from "node:path";
 
-const EXPECTED_BUN_VERSION = "1.4.4";
+const EXPECTED_BUN_VERSION = "1.4.5";
 const GUIDANCE =
-  "Deployment requires a verified regular root bun.lock; run bun run install:bootstrap using Bun 1.4.4 in fresh --no-install output before Vercel, Docker, Fly, or Cloudflare.";
+  "Deployment requires a verified regular root bun.lock; run bun run install:bootstrap using Bun 1.4.5 in fresh --no-install output before Vercel, Docker, Fly, or Cloudflare.";
 const lockfilePath = resolve(process.cwd(), "bun.lock");
 
 function fail(message) {

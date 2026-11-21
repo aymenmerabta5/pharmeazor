@@ -68,11 +68,21 @@ def inn_variants(inn: str) -> list:
 
 
 def strength_variants(value: str) -> list:
-    """'500 mg' -> ['500 mg', '500mg'] so '500mg' in the leaflet still matches."""
+    """'500 mg' -> ['500 mg', '500mg'] so '500mg' in the leaflet still matches.
+
+    The registers also store the galenic form in the same field
+    ('20 mg, comprimés non pelliculés').  The dosage before the first comma is
+    the identity-critical token; the form wording ("comprimé sécable" vs
+    "comprimés non pelliculés") is not, and matching it rejects valid
+    documents.  Both the full value and the dosage part are returned.
+    """
     norm = normalize(value)
     if not norm:
         return []
+    dosage = normalize(str(value).split(",")[0])
     out = {norm, norm.replace(" ", "")}
+    if dosage:
+        out.update({dosage, dosage.replace(" ", "")})
     return sorted(out)
 
 

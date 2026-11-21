@@ -36,12 +36,13 @@ http:
 authority:
   levels:
     official_algerian: "1"
-    official_nomenclature: "2"
+    official_nomenclature: "1"
+    nomenclature_register: "2"
     foreign_institutional: "3"
     algerian_professional: "4"
   names:
-    "1": "official Algerian (ANPP)"
-    "2": "official Algerian nomenclature"
+    "1": "official Algerian (ANPP, Ministry of Health)"
+    "2": "Algerian nomenclature register (Pharm'Net)"
     "3": "foreign institutional reference"
     "4": "Algerian professional website (secondary)"
 
@@ -118,8 +119,8 @@ sources:
     country: DZ
     language: fr
     source_type: official_ministry
-    authority_level: "2"
-    authority_notes: "Priority source 2: official nomenclature (manual download only for the list page)."
+    authority_level: "1"
+    authority_notes: "Priority source 1: official Ministry of Health nomenclature (manual download only for the list page)."
     jurisdiction: Algeria
     robots_url: "https://sante.gov.dz/robots.txt"
     terms_url: "https://sante.gov.dz/"
@@ -200,11 +201,12 @@ sources:
     country: DZ
     language: fr
     source_type: algerian_professional
-    authority_level: "4"
+    authority_level: "2"
     authority_notes: >-
-      Priority source 4: secondary mirror of the official Algerian
-      nomenclature; used as a NAME source (commercial name, DCI, nomenclature
-      code, registration number).
+      Priority source 2: public catalogue of the Algerian nomenclature. A
+      NAME/REGISTER source (commercial name, DCI, nomenclature code,
+      registration number, holder, status); it hosts no leaflet and never
+      overrides an ANPP SmPC or the Ministry nomenclature.
     jurisdiction: Algeria
     robots_url: "https://pharmnet-dz.com/robots.txt"
     terms_url: "https://pharmnet-dz.com/"

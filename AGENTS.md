@@ -7,9 +7,9 @@
 ## Snapshot
 
 - Mode: monorepo with `apps/*`, `packages/*`, and `tooling/*` workspaces.
-- Package manager: Bun 1.4.4 (`packageManager: bun@1.4.4`). Do not use npm, pnpm, or Yarn.
+- Package manager: Bun 1.4.5 (`packageManager: bun@1.4.5`). Do not use npm, pnpm, or Yarn.
 - Supply-chain delay: `bunfig.toml` still sets `minimumReleaseAge = 0` under the project-owner-authorized exception created for the `eve@1.0.0-rc.6` prerelease. Eve is now stable at 1.0.1, so the seven-day delay and the commented release-age checks in the audit scripts are due to be restored as a follow-up; the empty exclusion list is already the intended policy.
-- Backend execution target: Bun 1.4.4. Installation and repository scripts still use Bun.
+- Backend execution target: Bun 1.4.5. Installation and repository scripts still use Bun. `ghostinit.config.json` keeps `packageManager.version` at `1.4.4` because the pinned `ghostinit@0.1.0` schema validates that field against its own runtime pin; do not raise it until a GhostInit release supports 1.4.5.
 - Frontend apps: mobile, web.
 - Web framework: Next.js 16.4.6.
 - Database: PostgreSQL 18.7 through Drizzle in `packages/database`, with pgvector 0.8.7 enabled. The image is built from `docker/postgres/Dockerfile` and pins both the server patch and the extension build.
@@ -53,8 +53,8 @@ extract → chunk → contextualize → embed + index → hybrid retrieve → re
 
 ### Index and retrieval
 
-- Store vectors and lexical terms in the PostgreSQL the application already runs. The vector extension is already installed; add the `pgvector` and `tsvector` columns in `packages/database`. Do not introduce Pinecone, Qdrant, Weaviate, or Elasticsearch while Postgres holds the corpus; leave only for a measured limit, not an assumed one.
-- Retrieve in two arms: dense over `pgvector` (HNSW, `halfvec`, iterative scans) and lexical over `tsvector` (GIN). Dense retrieval misses identifiers, lexical retrieval misses paraphrases. A pharmacy corpus is full of drug codes, SKU, lot numbers, and dosage strings, so the lexical arm is mandatory.
+- Store vectors and lexical terms in the PostgreSQL the application already runs. The vector extension is already installed; add the `pgvector`/`halfvec` columns and the BM25 postings tables in `packages/database`. Do not introduce Pinecone, Qdrant, Weaviate, or Elasticsearch while Postgres holds the corpus; leave only for a measured limit, not an assumed one.
+- Retrieve in two arms: dense over `pgvector` (HNSW, `halfvec`, iterative scans) and lexical over a BM25 postings index scored in SQL. Dense retrieval misses identifiers, lexical retrieval misses paraphrases. A pharmacy corpus is full of drug codes, SKU, lot numbers, and dosage strings, so the lexical arm is mandatory.
 - Fuse the arms with Reciprocal Rank Fusion over rank positions, not raw scores. `k = 60` is the starting constant.
 - Apply every authorization filter inside both arms, before ranking. A chunk the caller may not read must never reach the candidate set, and asking the model to ignore it is not access control.
 - Rerank the fused candidates with a cross-encoder before composing the answer: roughly 50 candidates in, the top 5-10 out. Reranking is the largest single quality lift in the pipeline and it costs less than an extra agent loop.
@@ -137,7 +137,7 @@ Fixes retain the seven-day delay and empty exclusions. High/critical or unknown 
 
 `scripts/audit-dependencies.ts` and the copy of it embedded in `policy.auditScriptContent` must stay byte-identical, because the dependency-security runtime rewrites the file from the embedded copy during a repair. `bun scripts/sync-audit-script-policy.mjs` verifies that and `--write` resynchronises it.
 
-Bun 1.4.4 writes a v3 lockfile whenever it has to resolve a changed graph, and the v3 package map has the same shape as v2, so the audit accepts all three lockfile versions. A v2 lockfile is only preserved while the resolved graph stays unchanged.
+Bun 1.4.5 writes a v3 lockfile whenever it has to resolve a changed graph, and the v3 package map has the same shape as v2, so the audit accepts all three lockfile versions. A v2 lockfile is only preserved while the resolved graph stays unchanged.
 
 After a failed install, source changes may already be applied. Inspect `.ghostinit/security-installation.json` and retry the fix after resolving the reported cause; installed dependencies are not rolled back. A `CLEANUP_UNVERIFIED` journal blocks mutation until process cleanup is independently verified and the journal is explicitly reconciled.
 If `init` fails after attempting installation in an initially empty directory, it preserves the incomplete project and its recovery record. A dependency fix alone does not finish creation state or local secrets; resolve the cause, repeat the original `init` selections with `--force`, and follow any bootstrap instruction.
@@ -155,7 +155,7 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - `packages/email`: `@repo/email/templates` (with `@repo/email` as its compatibility alias) is the environment-neutral React template surface; `@repo/email/server` is the guarded delivery boundary.
 - `packages/services`: capability use cases and ports, including the retrieval ports (embedding, reranking, vector search) and the authorization filters those ports take.
 - `packages/ui`: shared design tokens, contracts, and utilities; web primitives stay app-local.
-- `packages/database`: selected database adapter or the explicit disabled stub. Retrieval tables and the `pgvector`/`tsvector` columns live here.
+- `packages/database`: selected database adapter or the explicit disabled stub. Retrieval tables and the `pgvector`/`halfvec` columns plus the BM25 postings table live here.
 - `packages/modules`: domain and application modules, including the retrieval use-cases and the pure chunking, contextualization, and scoring models.
 - `packages/testing`, `packages/workflows`, and `packages/typescript-config`: shared tooling foundations.
 - `tooling/architecture`: generated import-boundary policy and checker configuration.
@@ -184,7 +184,7 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - Self-hosting must follow `docs/EVE_SELF_HOSTING.md`, including persistent Workflow state and both proxy route families for a separate Eve service.
 - Database scripts are `bun run db:generate`, `bun run db:migrate`, and `bun run db:push`. Run `bun run db:ensure-extensions` on a database that predates the vector extension; it is idempotent.
 - A database that already holds subscriptions carries them over with `bun run db:migrate:billing` before `bun run db:push`. The script is idempotent and a no-op on a fresh database. It seeds the plan catalog, backfills the plan and the period of every legacy subscription, and recreates the `billing_provider` enum without the rails this application does not offer. It reports the subscription rows it drops, because a dropped row can be a live provider subscription that keeps charging the customer.
-- The development database is Postgres 18.7 with pgvector 0.8.7, built from `docker/postgres/Dockerfile`. `docker-compose.yml` and `start-database.sh` are generator-owned, so `docker-compose.override.yml` repeats the pgvector service fields and survives `ghostinit sync`. Never run `docker compose -f docker-compose.yml` without the override file.
+- The development database is Postgres 18.7 with pgvector 0.8.7, built from `docker/postgres/Dockerfile`. `docker-compose.yml` is generator-owned and is the only compose file: Postgres, Redis, and the Upstash-compatible REST proxy all live in it, with third-party images pinned by digest. A `ghostinit sync` may rewrite it; restore it from version control afterwards.
 - Retrieval follows `docs/RETRIEVAL.md` and the "Retrieval Architecture" section. It is not a GhostInit capability; it is assembled from the existing packages on owner approval.
 
 ## Frontend Conventions

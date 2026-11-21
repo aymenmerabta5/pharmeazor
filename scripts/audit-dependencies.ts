@@ -117,7 +117,7 @@ const HTTP_CACHE_SEMANTICS_PATCH_SHA256 =
 const PATCHED_HTTP_CACHE_SEMANTICS_FILES = new Map<string, string>([
   ["index.js", "ede1cc404a492fa348eb9d97a3007a0d72aa717bd22cd86a56bd0824c19729ca"],
 ]);
-const EXPECTED_BUN_VERSION = "1.4.4";
+const EXPECTED_BUN_VERSION = "1.4.5";
 const MINIMUM_RELEASE_AGE_SECONDS = 604800;
 const PUBLIC_REGISTRY = "https://registry.npmjs.org";
 const LOCK_EVIDENCE_PATH = "dependency-lock-evidence.json";
@@ -165,7 +165,7 @@ const severityRank = new Map<string, number>([
   ["high", 3],
   ["critical", 4],
 ]);
-// Bun 1.4.4 reads existing v1 text locks and v2 JSONC locks, and emits v3
+// Bun 1.4.5 reads existing v1 text locks and v2 JSONC locks, and emits v3
 // JSONC when it has to rewrite a resolved graph. All three are structural
 // JSONC variants of the same package map: the `packages` entries keep the
 // same [resolution, "", {dependencies}, integrity] tuple, and `workspaces`,

@@ -19,6 +19,8 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+from bs4 import BeautifulSoup
+
 from config import CACHE_DIR
 from src.discovery.base import Candidate, DiscoveryError
 from src.utils.text import (
@@ -34,6 +36,14 @@ FILES = {
 CACHE = CACHE_DIR / "bdpm"
 MAX_PRODUCTS = 4          # product pages collected per medicine
 DATE_RE = re.compile(r"ANSM\s*-\s*Mis\s*à\s*jour\s*le\s*:?\s*([0-9]{2}/[0-9]{2}/[0-9]{4})", re.I)
+DENOMINATION_RE = re.compile(r"^\s*1\.\s*DENOMINATION\s+DU\s+MEDICAMENT\s*$", re.I)
+FORM_RE = re.compile(r"^\s*3\.\s*FORME\s+PHARMACEUTIQUE\s*$", re.I)
+HOLDER_RE = re.compile(r"Titulaire\s+de\s+l['’]autorisation\s*:\s*(.+)$", re.I)
+STRENGTH_RE = re.compile(
+    r"\b\d+(?:[.,]\d+)?\s*(?:mg/ml|mg/g|mcg|µg|mg|g|ml|cl|l|ui|iu|%)"
+    r"(?:\s*/\s*\d+(?:[.,]\d+)?\s*(?:mg|g|ml|%))?",
+    re.I,
+)
 
 
 # --------------------------------------------------------------- live search
@@ -222,6 +232,7 @@ def search(medicine: dict, session, limiter, max_results: int = 6) -> list:
                 method="requests",
                 note="Extract of the official French register (products, holder, dosage)",
                 extra={"matched_products": [r[1] for r in matched[:40]]},
+                local_path=str(path),
             ))
     except DiscoveryError:
         pass
@@ -229,14 +240,61 @@ def search(medicine: dict, session, limiter, max_results: int = 6) -> list:
     return candidates
 
 
+def _rcp_section(soup: BeautifulSoup, heading_re) -> str:
+    """Body of an RCP section, e.g. section 3 (forme pharmaceutique)."""
+    heading = soup.find("span", string=heading_re)
+    if heading is None:
+        return ""
+    body_classes = {"AmmCorpsTexte", "AmmCorpsTexteGras"}
+    for node in heading.find_all_next(limit=10):
+        if node.name == "p" and body_classes & set(node.get("class") or []):
+            return re.sub(r"\s+", " ", node.get_text("")).strip()
+    return ""
+
+
 def document_metadata(path: Path) -> dict:
-    """The ANSM update date printed on the product page."""
+    """Metadata printed on the ANSM product page.
+
+    The page carries the update date, the marketing-authorisation holder, the
+    denomination and the pharmaceutical form; the collector stores them in
+    ``documents.csv`` so a downstream stage never has to re-parse the HTML.
+    """
     try:
-        text = path.read_bytes().decode("utf-8", errors="replace")
+        raw = path.read_bytes()
     except OSError:
         return {}
+    text = raw.decode("utf-8", errors="replace")
+    meta: dict = {}
+
     match = DATE_RE.search(text)
-    if not match:
-        return {}
-    day, month, year = match.group(1).split("/")
-    return {"publication_date": f"{year}-{month}-{day}"}
+    if match:
+        day, month, year = match.group(1).split("/")
+        meta["publication_date"] = f"{year}-{month}-{day}"
+
+    try:
+        soup = BeautifulSoup(text, "html.parser")
+    except Exception:
+        return meta
+
+    for item in soup.find_all("li"):
+        line = re.sub(r"\s+", " ", item.get_text(" ")).strip()
+        holder = HOLDER_RE.search(line)
+        if holder:
+            meta["holder"] = holder.group(1).strip()
+            break
+
+    denomination = _rcp_section(soup, DENOMINATION_RE)
+    if denomination:
+        meta["title"] = denomination
+
+    form = _rcp_section(soup, FORM_RE).split(",")[0].strip().rstrip(".")
+    if form:
+        form = form[:1].lower() + form[1:]
+    strength = ""
+    if denomination:
+        found = STRENGTH_RE.search(denomination)
+        strength = re.sub(r"\s+", " ", found.group(0)).strip().lower() if found else ""
+    if strength or form:
+        meta["strength_form"] = ", ".join(part for part in (strength, form) if part)
+
+    return meta

@@ -1,7 +1,8 @@
 # Retrieval (RAG) strategy
 
-Status: **not implemented**. This document is the design contract for retrieval in
-pharmeazor. It exists so that the first implementation follows a measured,
+Status: **implemented** — dense + BM25 + RRF + optional cross-encoder reranker,
+with the evaluation baseline still to be established. This document is the design
+contract for retrieval in pharmeazor. It exists so that the first implementation follows a measured,
 maintained strategy instead of a re-invented one.
 
 Retrieval is not a GhostInit capability in this configuration. It is an
@@ -19,8 +20,8 @@ extract → chunk → contextualize → embed + index → hybrid retrieve → re
 1. **Contextualize at ingest.** Prepend a short model-written note that situates
    each chunk inside its source document, and index the contextualized text in
    both the dense and the lexical arm.
-2. **Retrieve hybrid.** Dense vectors (pgvector) and lexical terms (Postgres
-   `tsvector`) in parallel, fused with Reciprocal Rank Fusion.
+2. **Retrieve hybrid.** Dense vectors (pgvector) and lexical terms (a BM25
+   postings index) in parallel, fused with Reciprocal Rank Fusion.
 3. **Rerank.** A cross-encoder reorders the fused candidates down to the
    handful that actually reach the model.
 4. **Answer adaptively.** The agent decides whether to retrieve at all, cites
@@ -131,13 +132,16 @@ one transactional store.
 
 - `pgvector` for dense vectors. HNSW index, `halfvec` to halve storage,
   iterative scans (pgvector 0.8+) when a filter is applied after the index scan.
-- `tsvector` with a GIN index for the lexical arm.
+- A real BM25 postings index for the lexical arm: one row per `(chunk, term)`
+  in `retrieval_chunk_terms`, document length on the chunk, corpus statistics in
+  `retrieval_index_meta`, and the BM25 score computed in SQL. A `tsvector` GIN
+  index is a fine candidate filter, but `ts_rank` is not BM25: it discards
+  term frequency saturation and document-length normalization, which is exactly
+  what makes drug codes and dosage strings rank correctly.
 - One query with two subqueries and a RRF fusion expression. Roughly thirty
   lines we own and can test.
-- Postgres full-text search is not BM25 — there is no document-length
-  normalization and no corpus-level IDF in `ts_rank`. If lexical quality
-  becomes the bottleneck, the escalation path is the `pg_search` extension
-  inside Postgres first, a dedicated engine second.
+- If lexical quality becomes the bottleneck, the escalation path is the
+  `pg_search` extension inside Postgres first, a dedicated engine second.
 
 Practical ceiling: comfortable through a few million chunks at normal SaaS
 query rates. Watch for HNSW build times measured in hours, filtered recall
@@ -167,10 +171,11 @@ Going from PostgreSQL 18.6 to 18.7 is a patch bump inside major 18. It needs
 no `pg_upgrade`, and an existing data directory opens on the new image
 unchanged.
 
-`docker-compose.yml` and `start-database.sh` are generator-owned, so
-`docker-compose.override.yml` repeats the pgvector service fields and keeps
-them in place across a `ghostinit sync`. Never run
-`docker compose -f docker-compose.yml` without the override file.
+`docker-compose.yml` and `start-database.sh` are generator-owned, so a
+`ghostinit sync` may rewrite the compose file. It is the only compose file in
+the repository: the pgvector service, Redis, and the Upstash-compatible REST
+proxy all live in it, with the two third-party images pinned by digest. Restore
+it from version control after a regeneration rather than splitting it again.
 
 ## Model choices
 
@@ -190,6 +195,51 @@ Serving notes: use Text Embeddings Inference or vLLM for self-hosted models.
 Set the embedding `input_type` (query vs document) — omitting it cost 7 to 12
 precision@1 points in the OpenRouter run. Keep the dimension stable; changing
 it invalidates every vector.
+
+## Authority precedence
+
+`authority_level` is source metadata, not chunk content. It is stored in
+`retrieval_documents` / `retrieval_chunks`, copied into every retrieval
+response, and **never** prepended to the embedded text: a constant header per
+source would bias every vector toward that source and would force a full
+re-embed whenever the policy changes.
+
+Lower wins:
+
+| Level | Source                         | Meaning                                         |
+| ----- | ------------------------------ | ----------------------------------------------- |
+| 1     | ANPP, Ministry of Health       | Official Algerian SmPC/leaflet and nomenclature |
+| 2     | Pharm'Net catalogue            | Algerian nomenclature register (names, status)  |
+| 3     | BDPM, DailyMed, EMA            | Foreign institutional reference                 |
+| 4     | Other professional / secondary | Never overrides an official source              |
+
+Every returned chunk carries `authority: { level, tier, label, official,
+description }`, and the citation label includes `(autorité N/4)`. When two
+returned chunks cover the same medicine and section at different levels, the
+service also returns an `authorityOverlaps` entry naming the `preferredChunkId`.
+The model must follow the lower number, cite the source it followed, and state
+the discrepancy. Ranking still follows relevance; authority resolves conflicts,
+it does not replace retrieval scores.
+
+An overlap also carries a `claimScope`. Clinical sources (`ANPP`, `BDPM`,
+`DailyMed`, `EMA`) make clinical claims; register sources (`SANTE_MSP`,
+`PHARMNET_CATALOG`) state names, strengths and registration status. The two are
+never compared: a register row cannot contradict a leaflet on an indication or a
+dose, and treating them as rivals produced false conflicts. Register-vs-register
+overlaps are reported so the model can reconcile names and statuses, but they
+skip the numeric heuristic entirely, because a register chunk is a list of
+products and its numbers are not one claim.
+
+For clinical overlaps the service extracts canonical `value unit` tokens
+(`500 mg`, `2 fois`) from both passages and reports `numericDivergence` — the
+values that appear on one side and not the other, restricted to units both sides
+use. `numbersCompared: false` means no comparison was possible. This is
+deterministic evidence, not a verdict: the model still reads both passages and
+applies the precedence rule.
+
+The per-source assignment is owned by
+`tooling/retrieval-lab/data/metadata/sources.csv`. Changing a level updates the
+manifest and the next ingest; it does not require re-embedding.
 
 ## Security
 
@@ -283,7 +333,7 @@ No labels required, and they catch drift that a static golden set cannot:
 
 Each step is measurable on its own. Do not combine steps.
 
-1. **Index.** `pgvector` + `tsvector` schema, structure-aware chunking, stable
+1. **Index.** `pgvector` + BM25 postings schema, structure-aware chunking, stable
    chunk IDs and content hashes, incremental re-embedding.
 2. **Baseline retrieval.** Dense + lexical + RRF, no reranker. Build the golden
    set and record the baseline metrics. This is the reference for everything
@@ -307,7 +357,7 @@ Mirror the `storage` capability rather than inventing a new shape.
 | Concern                                             | Location                                          |
 | --------------------------------------------------- | ------------------------------------------------- |
 | Offline raw-source cleaning (maintainer batch tool) | `tooling/cleaning-lab/`                           |
-| Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                 |
+| Chunking and retrieval text models                  | `packages/modules/src/retrieval/`                 |
 | Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                |
 | Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`       |
 | oRPC contract and procedures                        | `packages/api/src/retrieval/`                     |
@@ -325,3 +375,76 @@ a preview that proves the documents split cleanly, not the production chunker.
 
 Provider SDKs stay in the adapters. Domain code depends on ports, never on an
 SDK, a vector client, or an embedding API.
+
+## Implemented pipeline
+
+The current slice owns stages 1 to 3 and exposes them to the agent. It does not
+yet own the golden set gate or model-written contextualization.
+
+```text
+offline:  manifest.jsonl -> structure-aware chunker -> contextual note
+          -> BGE-M3 embed -> pgvector halfvec(1024) + BM25 postings
+online:   query -> BGE-M3 embed ─┬─> dense search (cosine, HNSW)
+                                 └─> BM25 search (postings, k1=1.2, b=0.75)
+          -> reciprocal rank fusion (k=60) -> cross-encoder rerank -> top-k
+          -> injection scan -> citation-labelled passages
+```
+
+| Concern                       | Implementation                                                  |
+| ----------------------------- | --------------------------------------------------------------- |
+| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                       |
+| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`          |
+| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts` |
+| Tables                        | `packages/database/src/schema/retrieval.ts`                     |
+| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`    |
+| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`               |
+| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`   |
+| Composition root              | `packages/api/src/composition/retrieval.ts`                     |
+| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`  |
+| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                  |
+| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`             |
+
+`ghostinit sync` owns `packages/database/src/schema/index.ts` and
+`packages/modules/src/index.ts`, so the retrieval module and schema are
+registered by the generator, not by hand.
+
+The generated oRPC router cannot take a new procedure without drift. The agent
+therefore reaches retrieval through a signed server-to-server route. The harness
+resolves the principal from its own session, signs the envelope with
+`EVE_INTERNAL_AUTH_SECRET`, and the route trusts only that signature. The
+principal is never read from model output or a public request body.
+
+### Commands
+
+```bash
+bun run retrieval:ensure-schema   # create tables, GIN/HNSW indexes, extension
+bun run retrieval:ingest:dry      # chunk and report; no database, no embedding server
+bun run retrieval:ingest          # embed changed chunks and rebuild postings
+bun run retrieval:ingest --force  # re-embed every selected chunk
+bun run retrieval:ingest --prune  # delete documents absent from the manifest
+```
+
+The indexer is incremental: a chunk is re-embedded only when its content hash or
+embedding model changed, and its postings are rebuilt only when the chunk or the
+tokenizer version changed. Documents that disappear from the manifest are
+deleted only under `--prune`, on an unfiltered run.
+
+### Configuration
+
+Server-only variables, read by `packages/api/src/adapters/retrieval/config.ts`:
+
+| Variable                         | Default       | Meaning                                                  |
+| -------------------------------- | ------------- | -------------------------------------------------------- |
+| `RETRIEVAL_EMBEDDING_URL`        | required      | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings` |
+| `RETRIEVAL_EMBEDDING_MODE`       | `tei`         | `tei` or `openai`                                        |
+| `RETRIEVAL_EMBEDDING_MODEL`      | `BAAI/bge-m3` | Stored on every chunk; changing it forces re-embedding   |
+| `RETRIEVAL_EMBEDDING_DIMENSIONS` | `1024`        | Must stay 1024 to match the `halfvec` column             |
+| `RETRIEVAL_RERANKER_URL`         | unset         | TEI `/rerank`; unset returns fusion order                |
+| `RETRIEVAL_REQUIRE_RERANK`       | `false`       | Fail the request instead of degrading                    |
+
+### What is deliberately deferred
+
+- The golden set and the recall/precision/MRR/nDCG@10 gate from the sections
+  above. No tuning change should be trusted before that exists.
+- Query reformulation. The agent gets one tool call budget, not a retrieval
+  loop; add a second round only when the golden set shows multi-hop misses.
