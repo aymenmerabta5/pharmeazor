@@ -160,6 +160,12 @@ bun run retrieval:contextualize -- export --out tooling/cleaning-lab/output/cont
 that silently wrote nothing is visible immediately. `--require-context` turns a
 gap into a non-zero exit.
 
+The chunk export is part of the `cleaning-output` dataset, so
+`python tooling/run_pipeline.py` pushes `context/embed-input.jsonl`,
+`context/notes.jsonl`, `context/packets/` and `preview/` to R2 together with the
+clean documents. On a fresh checkout the same script pulls them back before it
+considers running the pipeline.
+
 The note store is append-only JSONL; the last row for a `context_key` wins, so a
 note can be corrected without rewriting the file.
 

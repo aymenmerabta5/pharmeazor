@@ -1,12 +1,25 @@
 #!/usr/bin/env python3
-"""Upload, verify and download the PHARMEAZOR corpus through Cloudflare R2.
+"""Mirror the PHARMEAZOR corpus between the local tree and Cloudflare R2.
 
-The R2 API is S3-compatible, so boto3/botocore provides signing, retries and
-multipart transfers. Commands:
+This is the single shared bucket module for both labs. The R2 API is
+S3-compatible, so boto3/botocore provides signing, retries and multipart
+transfers.
 
-* ``upload`` (default) - upload the local corpus under a prefix;
-* ``verify`` - download every object, hash it and compare with the local tree;
-* ``download`` - restore the remote tree under ``downloads/`` and verify hashes.
+Dataset commands (the normal entry point):
+
+* ``status`` - compare every known dataset locally and remotely;
+* ``pull``   - download every dataset into its local root;
+* ``push``   - upload every dataset under its canonical prefix;
+* ``sync``   - pull missing remote objects, then push local objects;
+* ``organize`` - copy legacy prefixes to the canonical layout;
+* ``reset``  - delete the selected prefixes, but only after confirming that a
+  complete local copy exists (requires ``--yes``; ``--dry-run`` lists first).
+
+Single-tree commands (compatibility and ad-hoc transfers):
+
+* ``upload`` (default) - upload one local tree under ``--prefix``;
+* ``verify`` - read one remote prefix back and compare hashes;
+* ``download`` - restore one remote prefix under ``--dest``.
 
 Design notes
 ------------
@@ -22,8 +35,11 @@ Design notes
 * ``S3_PUBLIC_URL`` is the public read base URL (``r2.dev``). It is validated as
   optional configuration and is deliberately not used for transfers.
 
-Uploads only create or overwrite objects under the chosen prefix. Nothing in
-this tool deletes objects from the bucket.
+Every command except ``reset`` only creates or overwrites objects. ``reset`` is
+the single destructive command: it refuses to delete a dataset unless the local
+tree is present, non-empty and (for ``cleaning-output``) carries its manifest.
+Legacy prefixes are read as fallbacks by every other command and are deleted
+only when ``reset`` is explicitly asked to include them.
 """
 
 from __future__ import annotations
@@ -45,11 +61,15 @@ from typing import Any, Mapping, Sequence
 from urllib.parse import urlsplit, urlunsplit
 
 TOOL_ROOT = Path(__file__).resolve().parent
-REPO_ROOT = TOOL_ROOT.parents[1]
+REPO_ROOT = TOOL_ROOT.parent
+RETRIEVAL_ROOT = TOOL_ROOT / "retrieval-lab"
+CLEANING_ROOT = TOOL_ROOT / "cleaning-lab"
 DEFAULT_ENV_FILE = REPO_ROOT / ".env.local"
 DEFAULT_DOWNLOAD_ROOT = TOOL_ROOT / "downloads"
-PROCESSED_ROOT = REPO_ROOT / "tooling" / "cleaning-lab" / "output"
-RAW_ROOT = REPO_ROOT / "tooling" / "retrieval-lab" / "data" / "raw"
+PROCESSED_ROOT = CLEANING_ROOT / "output"
+DATA_ROOT = RETRIEVAL_ROOT / "data"
+RAW_ROOT = DATA_ROOT / "raw"
+BUCKET_MANIFEST_KEY = "manifest.json"
 
 PLACEHOLDER_PREFIX = "REPLACE_WITH"
 MAX_KEY_BYTES = 1024
@@ -57,6 +77,7 @@ STREAM_CHUNK_BYTES = 1024 * 1024
 WINDOWS_RESERVED = re.compile(r"^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$", re.IGNORECASE)
 SKIP_DIRS = frozenset(
     {
+        ".cache",
         ".git",
         ".hg",
         ".svn",
@@ -230,6 +251,17 @@ def resolve_config(
         assignments, "STORAGE_BUCKET", "R2_BUCKET", "S3_BUCKET", environ=environ
     ))
     if not bucket:
+        # The repository's S3_ENDPOINT ends in /<bucket>. When STORAGE_BUCKET is
+        # missing or still a placeholder, take the name from that path instead
+        # of forcing the operator to repeat it.
+        endpoint_hint = env_value(
+            assignments, "S3_ENDPOINT", "S3_URL", "R2_ENDPOINT", environ=environ
+        )
+        if endpoint_hint:
+            path = urlsplit(endpoint_hint.strip()).path.strip("/")
+            if path and "/" not in path:
+                bucket = path
+    if not bucket:
         raise ConfigError("STORAGE_BUCKET is not configured")
     bucket = bucket.strip()
     if bucket.startswith(PLACEHOLDER_PREFIX) or "/" in bucket or any(char.isspace() for char in bucket):
@@ -306,6 +338,143 @@ class UploadResult:
     error: str | None = None
 
 
+@dataclass(frozen=True)
+class OrganizeResult:
+    dataset: str
+    source_key: str
+    target_key: str
+    size: int
+    status: str
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class Dataset:
+    """One local tree mirrored to one bucket prefix.
+
+    ``legacy_prefixes`` are read fallbacks for buckets written before the
+    canonical layout existed. New uploads always use ``prefix``; nothing is
+    ever deleted from a legacy prefix. ``group`` lets a lab select all of its
+    trees with one flag (``--group retrieval`` or ``--group cleaning``).
+    """
+
+    name: str
+    local_root: Path
+    prefix: str
+    marker: str | None = None
+    legacy_prefixes: tuple[str, ...] = ()
+    description: str = ""
+    group: str = ""
+
+
+DATASETS: tuple[Dataset, ...] = (
+    Dataset(
+        "retrieval-raw",
+        DATA_ROOT / "raw",
+        "retrieval-lab/raw",
+        legacy_prefixes=("corpus/retrieval-lab/raw", "corpus/raw"),
+        description="collected source documents (HTML, PDF, OCR, text)",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-metadata",
+        DATA_ROOT / "metadata",
+        "retrieval-lab/metadata",
+        legacy_prefixes=("corpus/retrieval-lab/metadata",),
+        description="collection metadata and CSV tables",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-reports",
+        DATA_ROOT / "reports",
+        "retrieval-lab/reports",
+        legacy_prefixes=("corpus/retrieval-lab/reports",),
+        description="collection and validation reports",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-input",
+        DATA_ROOT / "input",
+        "retrieval-lab/input",
+        legacy_prefixes=("corpus/retrieval-lab/input",),
+        description="imported medicine lists and workbooks",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-recon",
+        DATA_ROOT / "recon",
+        "retrieval-lab/recon",
+        legacy_prefixes=("corpus/retrieval-lab/recon",),
+        description="site reconnaissance output",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-logs",
+        DATA_ROOT / "logs",
+        "retrieval-lab/logs",
+        legacy_prefixes=("corpus/retrieval-lab/logs",),
+        description="collection logs",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-quarantine",
+        DATA_ROOT / "quarantine",
+        "retrieval-lab/quarantine",
+        legacy_prefixes=("corpus/retrieval-lab/quarantine",),
+        description="documents quarantined during collection",
+        group="retrieval",
+    ),
+    Dataset(
+        "retrieval-evaluation",
+        DATA_ROOT / "evaluation",
+        "retrieval-lab/evaluation",
+        legacy_prefixes=("corpus/retrieval-lab/evaluation",),
+        description="extraction evaluation output",
+        group="retrieval",
+    ),
+    Dataset(
+        "cleaning-output",
+        PROCESSED_ROOT,
+        "cleaning-lab",
+        marker="manifest.jsonl",
+        legacy_prefixes=("corpus/cleaning-lab", "corpus/processed"),
+        description="clean Markdown, chunks, context notes, structured tables, reports",
+        group="cleaning",
+    ),
+)
+
+DATASETS_BY_NAME = {dataset.name: dataset for dataset in DATASETS}
+DATASET_GROUPS = tuple(sorted({dataset.group for dataset in DATASETS if dataset.group}))
+
+
+def select_datasets(
+    names: Sequence[str] | None = None,
+    groups: Sequence[str] | None = None,
+) -> list[Dataset]:
+    """Return the requested datasets.
+
+    ``--dataset`` selects exact trees and wins over ``--group``. With neither
+    flag, every dataset is selected.
+    """
+    if names:
+        selected: list[Dataset] = []
+        for name in names:
+            dataset = DATASETS_BY_NAME.get(name)
+            if dataset is None:
+                known = ", ".join(sorted(DATASETS_BY_NAME))
+                raise ConfigError(f"unknown dataset '{name}'; known datasets: {known}")
+            if dataset not in selected:
+                selected.append(dataset)
+        return selected
+    if groups:
+        unknown = [group for group in groups if group not in DATASET_GROUPS]
+        if unknown:
+            known = ", ".join(DATASET_GROUPS)
+            raise ConfigError(f"unknown group '{unknown[0]}'; known groups: {known}")
+        return [dataset for dataset in DATASETS if dataset.group in groups]
+    return list(DATASETS)
+
+
 def normalize_prefix(prefix: str) -> str:
     parts = [
         part
@@ -365,18 +534,18 @@ def resolve_source(
         if prefix_arg:
             prefix = prefix_arg
         elif _same_path(root, PROCESSED_ROOT):
-            prefix = "corpus/processed"
+            prefix = "cleaning-lab"
         elif _same_path(root, RAW_ROOT):
-            prefix = "corpus/raw"
+            prefix = "retrieval-lab/raw"
         else:
-            prefix = f"corpus/{root.name}"
+            prefix = root.name
     else:
         if PROCESSED_ROOT.is_dir():
             root = PROCESSED_ROOT.resolve()
-            prefix = prefix_arg or "corpus/processed"
+            prefix = prefix_arg or "cleaning-lab"
         elif RAW_ROOT.is_dir():
             root = RAW_ROOT.resolve()
-            prefix = prefix_arg or "corpus/raw"
+            prefix = prefix_arg or "retrieval-lab/raw"
         else:
             raise ConfigError(
                 "no corpus found. Run the cleaning lab first "
@@ -945,6 +1114,540 @@ def run_download(
 
 
 # ---------------------------------------------------------------------------
+# Dataset mirroring (pull / push / sync / status)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class DatasetState:
+    dataset: Dataset
+    remote_prefix: str | None
+    remote: dict[str, int]
+    local: list[PlannedFile]
+
+    @property
+    def remote_objects(self) -> int:
+        return len(self.remote)
+
+    @property
+    def remote_bytes(self) -> int:
+        return sum(self.remote.values())
+
+    @property
+    def local_objects(self) -> int:
+        return len(self.local)
+
+    @property
+    def complete(self) -> bool:
+        """True when the remote tree exists and carries the dataset marker."""
+        if not self.remote or self.remote_prefix is None:
+            return False
+        if self.dataset.marker is None:
+            return True
+        return f"{self.remote_prefix}/{self.dataset.marker}" in self.remote
+
+    @property
+    def state(self) -> str:
+        if self.complete and self.local:
+            return "in sync"
+        if self.complete:
+            return "remote only"
+        if self.local and self.remote:
+            return "local + partial"
+        if self.local:
+            return "local only"
+        if self.remote:
+            return "remote partial"
+        return "missing"
+
+
+def find_remote_objects(
+    client: Any, config: R2Config, dataset: Dataset
+) -> tuple[str | None, dict[str, int]]:
+    """Return the first non-empty prefix and its object map.
+
+    The canonical prefix wins; legacy prefixes are read fallbacks only. The
+    caller never deletes anything from a legacy prefix.
+    """
+    for prefix in (dataset.prefix, *dataset.legacy_prefixes):
+        remote = list_remote_objects(client, config, prefix)
+        if remote:
+            return prefix, remote
+    return None, {}
+
+
+def dataset_state(client: Any, config: R2Config, dataset: Dataset) -> DatasetState:
+    remote_prefix, remote = find_remote_objects(client, config, dataset)
+    local: list[PlannedFile] = []
+    if dataset.local_root.is_dir():
+        local = build_plan(dataset.local_root, remote_prefix or dataset.prefix)
+    return DatasetState(
+        dataset=dataset,
+        remote_prefix=remote_prefix,
+        remote=remote,
+        local=local,
+    )
+
+
+def pull_dataset(
+    client: Any,
+    config: R2Config,
+    dataset: Dataset,
+    *,
+    dest_root: Path | None = None,
+    workers: int = 4,
+    limit: int | None = None,
+    skip_existing: bool = True,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> tuple[DatasetState, list[UploadResult]]:
+    """Download a dataset into its local root (or ``dest_root``).
+
+    Nothing is deleted locally or remotely. Existing files are verified by
+    SHA-256 and skipped when they already match the bucket.
+    """
+    state = dataset_state(client, config, dataset)
+    if not state.remote:
+        return state, []
+    prefix = state.remote_prefix or dataset.prefix
+    destination = (dest_root or dataset.local_root).expanduser().resolve()
+    local_by_key: dict[str, PlannedFile] = {}
+    if destination.is_dir():
+        local_by_key = {item.key: item for item in build_plan(destination, prefix)}
+    results = run_download(
+        client,
+        config,
+        state.remote,
+        prefix=prefix,
+        dest_root=destination,
+        local_by_key=local_by_key,
+        workers=workers,
+        limit=limit,
+        skip_existing=skip_existing,
+        verbose=verbose,
+        quiet=quiet,
+    )
+    return state, results
+
+
+def push_dataset(
+    client: Any,
+    transfer_config: Any,
+    config: R2Config,
+    dataset: Dataset,
+    *,
+    workers: int = 4,
+    skip_existing: bool = True,
+    checksum: bool = True,
+    fail_fast: bool = False,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> tuple[list[PlannedFile], list[UploadResult]]:
+    """Upload a local dataset under its canonical prefix.
+
+    Uploads only create or overwrite objects; nothing is deleted remotely.
+    """
+    plan = dataset_local_plan(dataset)
+    if not plan:
+        return plan, []
+    results = run_uploads(
+        client,
+        transfer_config,
+        config,
+        plan,
+        workers=workers,
+        skip_existing=skip_existing,
+        checksum=checksum,
+        fail_fast=fail_fast,
+        verbose=verbose,
+        quiet=quiet,
+    )
+    return plan, results
+
+
+def dataset_local_plan(dataset: Dataset) -> list[PlannedFile]:
+    if not dataset.local_root.is_dir():
+        return []
+    return build_plan(dataset.local_root, dataset.prefix)
+
+
+def head_object_state(client: Any, config: R2Config, key: str) -> tuple[int, str | None]:
+    """Return the object size and stored SHA-256 metadata (when present)."""
+    response = client.head_object(Bucket=config.bucket, Key=key)
+    metadata = response.get("Metadata") or {}
+    return int(response.get("ContentLength", -1)), metadata.get("sha256")
+
+
+def legacy_objects(
+    client: Any, config: R2Config, dataset: Dataset
+) -> dict[str, tuple[str, int]]:
+    """Return every legacy key mapped to its prefix and size."""
+    found: dict[str, tuple[str, int]] = {}
+    for prefix in dataset.legacy_prefixes:
+        for key, size in list_remote_objects(client, config, prefix).items():
+            found[key] = (prefix, size)
+    return found
+
+
+def organize_dataset(
+    client: Any,
+    config: R2Config,
+    dataset: Dataset,
+    *,
+    dry_run: bool = False,
+    limit: int | None = None,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> list[OrganizeResult]:
+    """Copy legacy objects to the canonical prefix without overwriting.
+
+    The destination is never replaced. An object that already exists with a
+    different size or SHA-256 is reported as a conflict and both copies are
+    left in place. Source objects are never deleted.
+    """
+    legacy = legacy_objects(client, config, dataset)
+    if not legacy:
+        return []
+    canonical = list_remote_objects(client, config, dataset.prefix)
+    keys = sorted(legacy)
+    if limit is not None:
+        keys = keys[:limit]
+
+    results: list[OrganizeResult] = []
+    total = len(keys)
+    for index, source_key in enumerate(keys, start=1):
+        source_prefix, size = legacy[source_key]
+        try:
+            relative = safe_relative_key(source_key, source_prefix)
+            target_key = object_key(dataset.prefix, relative)
+        except ConfigError as error:
+            results.append(
+                OrganizeResult(
+                    dataset=dataset.name,
+                    source_key=source_key,
+                    target_key="",
+                    size=size,
+                    status="failed",
+                    error=str(error),
+                )
+            )
+            continue
+
+        if target_key in canonical:
+            try:
+                source_size, source_hash = head_object_state(client, config, source_key)
+                target_size, target_hash = head_object_state(client, config, target_key)
+            except Exception as error:  # noqa: BLE001 - reported per object
+                results.append(
+                    OrganizeResult(
+                        dataset.name,
+                        source_key,
+                        target_key,
+                        size,
+                        "failed",
+                        describe_error(error, config),
+                    )
+                )
+                continue
+            if source_size != target_size or (
+                source_hash and target_hash and source_hash != target_hash
+            ):
+                results.append(
+                    OrganizeResult(
+                        dataset.name,
+                        source_key,
+                        target_key,
+                        size,
+                        "conflict",
+                        "destination exists with different content; left untouched",
+                    )
+                )
+            else:
+                results.append(
+                    OrganizeResult(dataset.name, source_key, target_key, size, "present")
+                )
+        elif dry_run:
+            results.append(
+                OrganizeResult(dataset.name, source_key, target_key, size, "planned")
+            )
+        else:
+            try:
+                client.copy_object(
+                    Bucket=config.bucket,
+                    Key=target_key,
+                    CopySource={"Bucket": config.bucket, "Key": source_key},
+                )
+                source_size, source_hash = head_object_state(client, config, source_key)
+                target_size, target_hash = head_object_state(client, config, target_key)
+                if source_size != target_size or (
+                    source_hash and target_hash and source_hash != target_hash
+                ):
+                    results.append(
+                        OrganizeResult(
+                            dataset.name,
+                            source_key,
+                            target_key,
+                            size,
+                            "failed",
+                            "copied object does not match the source; source kept",
+                        )
+                    )
+                else:
+                    results.append(
+                        OrganizeResult(dataset.name, source_key, target_key, size, "copied")
+                    )
+                    canonical[target_key] = target_size
+            except Exception as error:  # noqa: BLE001 - reported per object
+                results.append(
+                    OrganizeResult(
+                        dataset.name,
+                        source_key,
+                        target_key,
+                        size,
+                        "failed",
+                        describe_error(error, config),
+                    )
+                )
+
+        if verbose and not quiet:
+            result = results[-1]
+            print(f"  [{index}/{total}] {result.status:<8} {result.source_key} -> {result.target_key}")
+
+    return results
+
+
+def print_organize_summary(
+    results: Sequence[OrganizeResult],
+    *,
+    dry_run: bool = False,
+) -> None:
+    counts = Counter(result.status for result in results)
+    if dry_run:
+        print(
+            f"\nPlanned: {counts.get('planned', 0)} copies, "
+            f"{counts.get('present', 0)} already present, "
+            f"{counts.get('conflict', 0)} conflicts, {counts.get('failed', 0)} failed"
+        )
+    else:
+        print(
+            f"\nOrganized: {counts.get('copied', 0)} copied, "
+            f"{counts.get('present', 0)} already present, "
+            f"{counts.get('conflict', 0)} conflicts, {counts.get('failed', 0)} failed"
+        )
+    for result in results:
+        if result.status in {"conflict", "failed"}:
+            print(
+                f"  {result.status}: {result.source_key} -> {result.target_key}: {result.error}",
+                file=sys.stderr,
+            )
+
+
+def write_organize_report(
+    path: Path,
+    config: R2Config,
+    results: Sequence[OrganizeResult],
+    *,
+    dry_run: bool = False,
+) -> None:
+    """Write one JSONL row per legacy object that was inspected."""
+    path = path.expanduser().resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        for result in results:
+            row = {
+                "timestamp": timestamp,
+                "command": "organize",
+                "bucket": config.bucket,
+                "dataset": result.dataset,
+                "source_key": result.source_key,
+                "target_key": result.target_key,
+                "bytes": result.size,
+                "status": "planned" if dry_run and result.status == "copied" else result.status,
+                "error": result.error,
+            }
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print(f"Report: {_display_path(path)}")
+
+
+def dataset_remote_objects(
+    client: Any, config: R2Config, dataset: Dataset
+) -> dict[str, tuple[str, int]]:
+    """Return every remote key for a dataset mapped to its prefix and size."""
+    found: dict[str, tuple[str, int]] = {}
+    for prefix in (dataset.prefix, *dataset.legacy_prefixes):
+        for key, size in list_remote_objects(client, config, prefix).items():
+            found[key] = (prefix, size)
+    return found
+
+
+def dataset_reset_guard(
+    dataset: Dataset,
+    remote: Mapping[str, tuple[str, int]] | None = None,
+    *,
+    allow_remote_only: bool = False,
+) -> tuple[bool, str]:
+    """Refuse to delete a dataset that cannot be rebuilt from the local tree.
+
+    When ``remote`` is supplied, every remote object must have a local
+    counterpart. A remote-only object would be lost by the reset, so it blocks
+    the run unless ``allow_remote_only`` is explicit.
+    """
+    if not dataset.local_root.is_dir():
+        return False, f"no local tree at {_display_path(dataset.local_root)}"
+    plan = dataset_local_plan(dataset)
+    if not plan:
+        return False, "local tree is empty"
+    if dataset.marker and not (dataset.local_root / dataset.marker).is_file():
+        return False, f"local marker {dataset.marker} is missing"
+
+    if remote and not allow_remote_only:
+        local_relatives = {item.relative for item in plan}
+        remote_only: list[str] = []
+        for key, (prefix, _size) in remote.items():
+            try:
+                relative = safe_relative_key(key, prefix).as_posix()
+            except ConfigError:
+                remote_only.append(key)
+                continue
+            if relative not in local_relatives:
+                remote_only.append(key)
+        if remote_only:
+            return (
+                False,
+                f"{len(remote_only)} remote object(s) have no local copy "
+                f"(first: {remote_only[0]}); pass --allow-remote-only to delete them",
+            )
+
+    detail = f"{len(plan)} local object(s) available to re-upload"
+    if remote is not None:
+        detail += f"; {len(remote)} remote object(s) checked"
+    return True, detail
+
+
+def reset_dataset(
+    client: Any,
+    config: R2Config,
+    dataset: Dataset,
+    *,
+    remote: Mapping[str, tuple[str, int]] | None = None,
+    dry_run: bool = False,
+    limit: int | None = None,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> list[UploadResult]:
+    """Delete every object under a dataset's canonical and legacy prefixes.
+
+    The caller must check :func:`dataset_reset_guard` first. Objects are deleted
+    one at a time so a failure names the exact key and stops nothing else.
+    """
+    if remote is None:
+        remote = dataset_remote_objects(client, config, dataset)
+
+    keys = sorted(remote)
+    if limit is not None:
+        keys = keys[:limit]
+    total = len(keys)
+    results: list[UploadResult] = []
+    for index, key in enumerate(keys, start=1):
+        prefix, size = remote[key]
+        try:
+            relative = safe_relative_key(key, prefix).as_posix()
+        except ConfigError:
+            relative = key
+
+        if dry_run:
+            status, error = "planned", None
+        else:
+            try:
+                client.delete_object(Bucket=config.bucket, Key=key)
+                status, error = "deleted", None
+            except Exception as failure:  # noqa: BLE001 - reported per object
+                status, error = "failed", describe_error(failure, config)
+
+        results.append(
+            UploadResult(
+                key=key,
+                relative=relative,
+                size=size,
+                status=status,
+                error=error,
+            )
+        )
+        if verbose and not quiet:
+            print(f"  [{index}/{total}] {status:<8} {key}")
+
+    return results
+
+
+def print_reset_summary(
+    results: Sequence[UploadResult],
+    *,
+    dry_run: bool = False,
+) -> None:
+    counts = Counter(result.status for result in results)
+    removed = counts.get("deleted", 0) + counts.get("planned", 0)
+    removed_bytes = sum(
+        result.size for result in results if result.status in {"deleted", "planned"}
+    )
+    label = "Planned deletion" if dry_run else "Deleted"
+    print(
+        f"\n{label}: {removed} objects ({human_bytes(removed_bytes)}), "
+        f"{counts.get('failed', 0)} failed"
+    )
+    for result in results:
+        if result.status == "failed":
+            print(f"  failed: {result.key}: {result.error}", file=sys.stderr)
+
+
+def print_dataset_state(state: DatasetState) -> None:
+    marker = "yes" if state.complete else "no"
+    prefix = state.remote_prefix or state.dataset.prefix
+    print(
+        f"  {state.dataset.name:<22} local {state.local_objects:>6}  "
+        f"remote {state.remote_objects:>6}  {state.state:<12} "
+        f"marker={marker}  prefix={prefix}/"
+    )
+
+
+def write_bucket_manifest(
+    client: Any,
+    config: R2Config,
+    states: Sequence[DatasetState],
+    *,
+    command: str,
+) -> str:
+    """Write a small index of every dataset. It never deletes objects."""
+    payload = {
+        "version": 1,
+        "bucket": config.bucket,
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "command": command,
+        "datasets": [
+            {
+                "name": state.dataset.name,
+                "prefix": state.remote_prefix or state.dataset.prefix,
+                "canonical_prefix": state.dataset.prefix,
+                "objects": state.remote_objects,
+                "bytes": state.remote_bytes,
+                "local_objects": state.local_objects,
+                "complete": state.complete,
+                "description": state.dataset.description,
+            }
+            for state in states
+        ],
+    }
+    body = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    client.put_object(
+        Bucket=config.bucket,
+        Key=BUCKET_MANIFEST_KEY,
+        Body=body.encode("utf-8"),
+        ContentType="application/json",
+    )
+    return BUCKET_MANIFEST_KEY
+
+
+# ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
 
@@ -985,6 +1688,15 @@ def print_header(
     print("Credentials: configured (values are never printed)")
 
 
+def print_dataset_header(config: R2Config, datasets: Sequence[Dataset], *, command: str) -> None:
+    print(f"Command:     {command}")
+    print(f"Bucket:      {config.bucket}")
+    print("Endpoint:    <configured R2 account endpoint>")
+    print(f"Region:      {config.region}")
+    print(f"Datasets:    {', '.join(dataset.name for dataset in datasets)}")
+    print("Credentials: configured (values are never printed)")
+
+
 def print_plan(plan: Sequence[PlannedFile], *, verbose: bool) -> None:
     print("\nDry run: no network calls and no objects written.")
     if not plan:
@@ -1005,7 +1717,7 @@ def print_summary(
 ) -> None:
     counts = Counter(result.status for result in results)
     failed = counts.get("failed", 0)
-    if command == "upload":
+    if command in {"upload", "push"}:
         uploaded = counts.get("uploaded", 0) + counts.get("planned", 0)
         uploaded_bytes = sum(
             result.size for result in results if result.status in {"uploaded", "planned"}
@@ -1072,15 +1784,41 @@ def write_report(
     print(f"Report: {_display_path(path)}")
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
+def write_dataset_report(
+    path: Path,
+    config: R2Config,
+    results: Sequence[tuple[str, str, UploadResult]],
+    *,
+    command: str,
+    dry_run: bool = False,
+) -> None:
+    """Write one JSONL report across datasets, with the dataset name per row."""
+    path = path.expanduser().resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        for dataset_name, prefix, result in results:
+            row = {
+                "timestamp": timestamp,
+                "command": command,
+                "bucket": config.bucket,
+                "dataset": dataset_name,
+                "prefix": prefix,
+                "key": result.key,
+                "relative_path": result.relative,
+                "bytes": result.size,
+                "status": "planned" if dry_run and result.status == "uploaded" else result.status,
+                "sha256": result.sha256,
+                "error": result.error,
+            }
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print(f"Report: {_display_path(path)}")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Upload, verify or download the PHARMEAZOR corpus through "
+            "Upload, verify, pull or push the PHARMEAZOR corpus through "
             "Cloudflare R2 (S3-compatible API)."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1088,20 +1826,45 @@ def build_parser() -> argparse.ArgumentParser:
             "Configuration is read from .env.local (S3_ACCESS_KEY_ID, "
             "S3_SECRET_ACCESS_KEY, S3_ENDPOINT, S3_REGION, STORAGE_BUCKET).\n"
             "Secret values are never printed.\n\n"
+            "Commands:\n"
+            "  upload (default)  upload one local tree under --prefix\n"
+            "  verify            read one remote prefix back and compare hashes\n"
+            "  download          restore one remote prefix under --dest\n"
+            "  status            compare every known dataset locally and remotely\n"
+            "  pull              download every dataset into its local root\n"
+            "  push              upload every dataset under its canonical prefix\n"
+            "  sync              pull missing remote objects, then push local objects\n"
+            "  organize          copy legacy prefixes to the canonical layout (no overwrite, no delete)\n"
+            "  reset             delete selected prefixes (requires --yes and a complete local copy)\n\n"
             "Examples:\n"
-            "  python r2_upload.py --dry-run\n"
-            "  python r2_upload.py\n"
-            "  python r2_upload.py verify\n"
-            "  python r2_upload.py download\n"
-            "  python r2_upload.py --source ../cleaning-lab/output --prefix corpus/processed\n"
+            "  python bucket_operations.py --dry-run\n"
+            "  python bucket_operations.py status\n"
+            "  python bucket_operations.py pull --group retrieval\n"
+            "  python bucket_operations.py push --group cleaning --skip-existing\n"
+            "  python bucket_operations.py organize --dry-run\n"
+            "  python bucket_operations.py organize --report organize.report.jsonl\n"
+            "  python bucket_operations.py reset --dry-run\n"
+            "  python bucket_operations.py reset --yes --report reset.report.jsonl\n"
+            "  python bucket_operations.py sync\n"
+            "  python bucket_operations.py --source ../cleaning-lab/output --prefix cleaning-lab\n"
         ),
     )
     parser.add_argument(
         "command",
         nargs="?",
         default="upload",
-        choices=("upload", "verify", "download"),
-        help="upload (default), verify, or download",
+        choices=(
+            "upload",
+            "verify",
+            "download",
+            "status",
+            "pull",
+            "push",
+            "sync",
+            "organize",
+            "reset",
+        ),
+        help="upload (default), verify, download, status, pull, push, sync, organize, or reset",
     )
     parser.add_argument(
         "--env-file",
@@ -1116,7 +1879,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--prefix",
-        help="object key prefix inside the bucket (default: corpus/processed or corpus/raw)",
+        help="object key prefix inside the bucket (default: cleaning-lab or retrieval-lab/raw)",
+    )
+    parser.add_argument(
+        "--dataset",
+        action="append",
+        choices=tuple(DATASETS_BY_NAME),
+        help="dataset for status/pull/push/sync/organize/reset (repeatable; default: all)",
+    )
+    parser.add_argument(
+        "--group",
+        action="append",
+        choices=DATASET_GROUPS,
+        help="select a lab group for status/pull/push/sync/organize/reset (repeatable)",
     )
     parser.add_argument("--bucket", help="override STORAGE_BUCKET")
     parser.add_argument(
@@ -1127,26 +1902,41 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="upload only: list planned keys without contacting R2",
+        help="upload/push/organize/reset only: list planned work without writing objects",
     )
     parser.add_argument(
         "--skip-existing",
         action="store_true",
-        help="upload/download: skip objects already matching size and SHA-256",
+        help="upload/download/push: skip objects already matching size and SHA-256",
     )
     parser.add_argument(
         "--checksum",
         action="store_true",
-        help="upload only: store SHA-256 as object metadata",
+        help="upload/push only: store SHA-256 as object metadata",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="pull/push/sync: re-transfer even when size and SHA-256 already match",
     )
     parser.add_argument("--workers", type=int, default=4, help="parallel transfers (default: 4)")
     parser.add_argument("--limit", type=int, help="process only the first N objects")
     parser.add_argument(
         "--fail-fast",
         action="store_true",
-        help="upload only: stop at the first failure (sequential)",
+        help="upload/push only: stop at the first failure (sequential)",
     )
     parser.add_argument("--report", type=Path, help="write a JSONL report of every object")
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="reset only: confirm permanent deletion of the selected remote objects",
+    )
+    parser.add_argument(
+        "--allow-remote-only",
+        action="store_true",
+        help="reset only: delete remote objects that have no local copy",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="print every object")
     parser.add_argument("--quiet", "-q", action="store_true", help="only print the summary")
     return parser
@@ -1163,10 +1953,228 @@ def _overlaps(left: Path, right: Path) -> bool:
     return False
 
 
+DATASET_COMMANDS = frozenset({"status", "pull", "push", "sync", "organize", "reset"})
+
+
+def _run_dataset_command(args: Any, config: R2Config, assignments: Mapping[str, Sequence[str]]) -> int:
+    """Run status/pull/push/sync/organize/reset across the known dataset trees."""
+    try:
+        datasets = select_datasets(args.dataset, args.group)
+    except ConfigError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    if args.dest is not None and len(datasets) != 1:
+        print("error: --dest requires exactly one --dataset", file=sys.stderr)
+        return 2
+    if args.command == "reset" and not args.yes and not args.dry_run:
+        print(
+            "note: reset without --yes only lists the objects; "
+            "pass --yes to delete them permanently"
+        )
+        args.dry_run = True
+
+    if not args.quiet:
+        print_dataset_header(config, datasets, command=args.command)
+        duplicates = [
+            key
+            for key in duplicate_keys(assignments)
+            if key.startswith(("S3_", "STORAGE_", "R2_"))
+        ]
+        if duplicates:
+            print(
+                "note:       duplicate keys in the environment file; the first "
+                f"configured value wins ({', '.join(duplicates)})"
+            )
+
+    if args.dry_run and args.command == "push":
+        planned: list[tuple[str, str, UploadResult]] = []
+        for dataset in datasets:
+            plan = dataset_local_plan(dataset)
+            if args.limit is not None:
+                plan = plan[: args.limit]
+            if not args.quiet:
+                print(f"\nDataset:     {dataset.name}")
+                print(f"Prefix:      {dataset.prefix}/")
+                print_plan(plan, verbose=args.verbose)
+            planned.extend(
+                (
+                    dataset.name,
+                    dataset.prefix,
+                    UploadResult(
+                        key=item.key,
+                        relative=item.relative,
+                        size=item.size,
+                        status="uploaded",
+                    ),
+                )
+                for item in plan
+            )
+        print_summary([result for _, _, result in planned], command="push", dry_run=True)
+        if args.report:
+            try:
+                write_dataset_report(
+                    args.report, config, planned, command=args.command, dry_run=True
+                )
+            except OSError as error:
+                print(f"error: cannot write report: {error}", file=sys.stderr)
+                return 1
+        return 0
+
+    try:
+        client, transfer_config = make_client(config, workers=args.workers)
+        verify_bucket(client, config)
+    except ConfigError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    states: list[DatasetState] = []
+    report_rows: list[tuple[str, str, UploadResult]] = []
+    organize_rows: list[OrganizeResult] = []
+    failures = 0
+
+    try:
+        for dataset in datasets:
+            if not args.quiet:
+                print(f"\nDataset:     {dataset.name}  ({dataset.description})")
+            state = dataset_state(client, config, dataset)
+
+            if args.command == "status":
+                print_dataset_state(state)
+                states.append(state)
+                continue
+
+            if args.command == "organize":
+                results = organize_dataset(
+                    client,
+                    config,
+                    dataset,
+                    dry_run=args.dry_run,
+                    limit=args.limit,
+                    verbose=args.verbose,
+                    quiet=args.quiet,
+                )
+                if results:
+                    print_organize_summary(results, dry_run=args.dry_run)
+                    organize_rows.extend(results)
+                    failures += sum(
+                        1 for result in results if result.status in {"conflict", "failed"}
+                    )
+                else:
+                    print("  no legacy objects")
+                continue
+
+            if args.command == "reset":
+                remote = dataset_remote_objects(client, config, dataset)
+                allowed, reason = dataset_reset_guard(
+                    dataset, remote, allow_remote_only=args.allow_remote_only
+                )
+                if not allowed:
+                    print(f"  skipped: {reason}; remote objects are left untouched")
+                    continue
+                print(f"  guard: {reason}")
+                results = reset_dataset(
+                    client,
+                    config,
+                    dataset,
+                    remote=remote,
+                    dry_run=args.dry_run,
+                    limit=args.limit,
+                    verbose=args.verbose,
+                    quiet=args.quiet,
+                )
+                if results:
+                    print_reset_summary(results, dry_run=args.dry_run)
+                    report_rows.extend(
+                        (dataset.name, dataset.prefix, result) for result in results
+                    )
+                    failures += sum(1 for result in results if result.status == "failed")
+                else:
+                    print("  no remote objects")
+                continue
+
+            if args.command in {"pull", "sync"} and state.remote:
+                destination = args.dest.expanduser().resolve() if args.dest else None
+                state, results = pull_dataset(
+                    client,
+                    config,
+                    dataset,
+                    dest_root=destination,
+                    workers=args.workers,
+                    limit=args.limit,
+                    skip_existing=not args.force,
+                    verbose=args.verbose,
+                    quiet=args.quiet,
+                )
+                if results:
+                    print(f"  pull: {len(results)} object(s) from {state.remote_prefix}/")
+                    print_summary(results, command="pull")
+                    report_rows.extend(
+                        (dataset.name, state.remote_prefix or dataset.prefix, result)
+                        for result in results
+                    )
+                    failures += sum(1 for result in results if result.status == "failed")
+
+            if args.command in {"push", "sync"}:
+                plan, results = push_dataset(
+                    client,
+                    transfer_config,
+                    config,
+                    dataset,
+                    workers=args.workers,
+                    skip_existing=not args.force,
+                    checksum=True,
+                    fail_fast=args.fail_fast,
+                    verbose=args.verbose,
+                    quiet=args.quiet,
+                )
+                if results:
+                    print(f"  push: {len(plan)} object(s) to {dataset.prefix}/")
+                    print_summary(results, command="push")
+                    report_rows.extend(
+                        (dataset.name, dataset.prefix, result) for result in results
+                    )
+                    failures += sum(1 for result in results if result.status == "failed")
+
+            states.append(dataset_state(client, config, dataset))
+    except ConfigError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("\ninterrupted; completed transfers remain in the bucket", file=sys.stderr)
+        return 130
+
+    if args.command in {"push", "sync"}:
+        try:
+            key = write_bucket_manifest(client, config, states, command=args.command)
+        except Exception as error:  # noqa: BLE001 - translated below
+            print(
+                f"error: cannot write {BUCKET_MANIFEST_KEY}: {describe_error(error, config)}",
+                file=sys.stderr,
+            )
+            return 1
+        if not args.quiet:
+            print(f"\nManifest:    {key}")
+
+    if args.report:
+        try:
+            if args.command == "organize":
+                write_organize_report(
+                    args.report, config, organize_rows, dry_run=args.dry_run
+                )
+            else:
+                write_dataset_report(args.report, config, report_rows, command=args.command)
+        except OSError as error:
+            print(f"error: cannot write report: {error}", file=sys.stderr)
+            return 1
+
+    return 1 if failures else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     command = args.command
+    dataset_command = command in DATASET_COMMANDS
 
     if args.workers < 1:
         parser.error("--workers must be at least 1")
@@ -1174,20 +2182,42 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--limit must be at least 1")
     if args.verbose and args.quiet:
         parser.error("--verbose and --quiet are mutually exclusive")
-    if args.dry_run and command != "upload":
-        parser.error("--dry-run is only valid for upload")
-    if args.dest is not None and command != "download":
-        parser.error("--dest is only valid for download")
-    if args.checksum and command != "upload":
-        parser.error("--checksum is only valid for upload")
-    if args.fail_fast and command != "upload":
-        parser.error("--fail-fast is only valid for upload")
+    if args.dry_run and command not in {"upload", "push", "organize", "reset"}:
+        parser.error("--dry-run is only valid for upload, push, organize and reset")
+    if args.dest is not None and command not in {"download", "pull"}:
+        parser.error("--dest is only valid for download and pull")
+    if args.checksum and command not in {"upload", "push"}:
+        parser.error("--checksum is only valid for upload and push")
+    if args.fail_fast and command not in {"upload", "push"}:
+        parser.error("--fail-fast is only valid for upload and push")
+    if args.force and command not in {"pull", "push", "sync"}:
+        parser.error("--force is only valid for pull, push and sync")
+    if args.force and args.skip_existing:
+        parser.error("--force and --skip-existing are mutually exclusive")
     if args.skip_existing and command == "verify":
         parser.error("--skip-existing is not valid for verify")
+    if args.yes and command != "reset":
+        parser.error("--yes is only valid for reset")
+    if args.allow_remote_only and command != "reset":
+        parser.error("--allow-remote-only is only valid for reset")
+    if dataset_command and (args.source is not None or args.prefix is not None):
+        parser.error("--source/--prefix are only valid for upload, verify and download")
+    if not dataset_command and args.dataset:
+        parser.error("--dataset is only valid for status, pull, push, sync, organize and reset")
+    if not dataset_command and args.group:
+        parser.error("--group is only valid for status, pull, push, sync, organize and reset")
 
     try:
         assignments = parse_env_file(args.env_file)
         config = resolve_config(assignments, bucket_override=args.bucket)
+    except ConfigError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    if dataset_command:
+        return _run_dataset_command(args, config, assignments)
+
+    try:
         source, prefix = resolve_source(args.source, args.prefix)
         plan = build_plan(source, prefix)
         if command == "upload" and args.limit is not None:

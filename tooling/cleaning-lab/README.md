@@ -403,15 +403,22 @@ A successful run ends with `"ok": true` and `0` uncovered raw documents.
 
 ### Upload the result to Cloudflare R2
 
-From the same folder, `r2_upload.py` uploads `output/` under the
+The shared module `tooling/bucket_operations.py` mirrors `output/` under the
 `cleaning-lab/` prefix, verifies every object by hashing it, and restores the
-remote tree under `downloads/`:
+remote tree. Run it from this folder:
 
 ```powershell
-.\.venv\Scripts\python.exe r2_upload.py --dry-run
-.\.venv\Scripts\python.exe r2_upload.py --checksum --report upload.report.jsonl
-.\.venv\Scripts\python.exe r2_upload.py verify --report verify.report.jsonl
-.\.venv\Scripts\python.exe r2_upload.py download --skip-existing --report download.report.jsonl
+.\.venv\Scripts\python.exe ..\bucket_operations.py status --group cleaning
+.\.venv\Scripts\python.exe ..\bucket_operations.py --dry-run --group cleaning push
+.\.venv\Scripts\python.exe ..\bucket_operations.py push --group cleaning --report upload.report.jsonl
+.\.venv\Scripts\python.exe ..\bucket_operations.py pull --group cleaning --report download.report.jsonl
+```
+
+The bucket-first runner at the repository root pulls the cleaned corpus when it
+is already in R2 and only runs the local pipeline when it is absent:
+
+```powershell
+python tooling/run_pipeline.py
 ```
 
 See [R2_UPLOAD.md](R2_UPLOAD.md) for the defaults, the shared connection
