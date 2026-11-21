@@ -34,11 +34,14 @@ from .structured import (
     Medicine,
     bdpm_register_kind,
     build_nomenclature_documents,
+    build_pharmnet_documents,
     load_medicines,
     parse_bdpm_register,
     parse_nomenclature,
+    parse_pharmnet_catalogue,
     write_bdpm_outputs,
     write_nomenclature_outputs,
+    write_pharmnet_outputs,
 )
 from .text_utils import (
     clean_inline,
@@ -218,7 +221,11 @@ def _provenance(group: dict[str, Any], source_info: dict[str, Any]) -> str:
     collected = _latest_date(group["collected_ats"])
     published = _latest_date(group["publication_dates"])
     pieces = [
-        f"Source: {source_info['source_name']} (autorité {source_info['authority_level']}/4)",
+        # The authority level is stored on the artifact and on every chunk row.
+        # It must not enter the Markdown body: the body is embedded, and a
+        # constant per-source token biases every vector and forces a full
+        # re-embed whenever the policy changes.
+        f"Source: {source_info['source_name']}",
         f"collecté le {collected[:10]}" if collected else "date de collecte inconnue",
     ]
     if published:
@@ -628,6 +635,7 @@ def run(
     structured_artifacts: list[dict[str, Any]] = []
     xlsx_groups: list[dict[str, Any]] = []
     bdpm_groups: list[dict[str, Any]] = []
+    pharmnet_groups: list[dict[str, Any]] = []
 
     for rel_path, group in sorted(groups.items()):
         abs_path: Path = group["abs_path"]
@@ -656,6 +664,18 @@ def run(
                     **base_inventory,
                     "status": "structured",
                     "reason": "official_nomenclature_workbook",
+                    "sha256_actual": group["sha256_actual"],
+                }
+            )
+            continue
+        if suffix == ".csv" and group["source_id"] == "PHARMNET_CATALOG":
+            group["kind"] = "pharmnet_catalogue"
+            pharmnet_groups.append(group)
+            inventory.append(
+                {
+                    **base_inventory,
+                    "status": "structured",
+                    "reason": "pharmnet_catalogue_snapshot",
                     "sha256_actual": group["sha256_actual"],
                 }
             )
@@ -749,6 +769,37 @@ def run(
                 clean_inline(str(row.get("document_id", "")))
             )
         documents = build_nomenclature_documents(
+            records,
+            medicines,
+            source_document_ids=source_document_ids,
+            collected_at=collected_at,
+        )
+        for document in documents:
+            artifacts.append(
+                build_derived_artifact(
+                    document,
+                    settings=settings,
+                    group=group,
+                    medicines_by_id=medicines_by_id,
+                )
+            )
+
+    # ---- structured Pharm'Net catalogue ----------------------------------
+    for group in pharmnet_groups:
+        path = group["abs_path"]
+        collected_at = _latest_date(group["collected_ats"])
+        records = parse_pharmnet_catalogue(path, medicines)
+        for record in records:
+            record["source_file"] = group["rel_path"]
+        structured_artifacts.append(
+            write_pharmnet_outputs(records, structured_dir, collected_at=collected_at)
+        )
+        source_document_ids: dict[str, list[str]] = defaultdict(list)
+        for row in group["rows"]:
+            source_document_ids[clean_inline(str(row.get("medicine_id", "")))].append(
+                clean_inline(str(row.get("document_id", "")))
+            )
+        documents = build_pharmnet_documents(
             records,
             medicines,
             source_document_ids=source_document_ids,

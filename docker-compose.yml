@@ -1,6 +1,20 @@
-version: "3.8"
-# Supply interpolation values without injecting the complete application environment:
-# docker compose --env-file .env.local up -d
+# Complete local infrastructure for pharmeazor.
+#
+#   docker compose --env-file .env.local up -d --build
+#
+# Everything the application needs to run locally lives here: Postgres 18.7
+# with pgvector 0.8.7, Redis 7.4.12, and the Upstash-compatible REST proxy the
+# cache adapter talks to. There is deliberately no `docker-compose.override.yml`:
+# a second file let the two drift, and the pgvector build is not optional for
+# this project.
+#
+# `docker-compose.yml` is generator-owned. A `ghostinit sync` may rewrite it;
+# re-apply this file afterwards. The build stays reproducible because
+# `docker/postgres/Dockerfile` pins both the server patch and the extension, and
+# the two third-party images are pinned by digest, not by a floating tag.
+
+name: pharmeazor
+
 services:
   postgres:
     # Postgres 18.7 with pgvector 0.8.7. Both versions are pinned: the base is
@@ -17,14 +31,14 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
       POSTGRES_DB: "${POSTGRES_DB:?POSTGRES_DB is required}"
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
     volumes:
       # Postgres 18 stores versioned data below /var/lib/postgresql/18/docker.
       # Mount the parent so upgrades retain the image-managed directory layout.
       - postgres_data:/var/lib/postgresql
       # Registers the vector extension on first initialization. The entrypoint
       # runs this directory only for an empty PGDATA; an existing database gets
-      # the extension from its Drizzle migration.
+      # the extension from `bun run db:ensure-extensions`.
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -32,5 +46,40 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+
+  redis:
+    # Pinned by digest: `7-alpine` is a moving tag, and a silent Redis minor
+    # bump must not change the cache semantics under a running deployment.
+    image: redis@sha256:c5d34a98396a4775e223c74e929162c35c5a2182901ba26b50ade939941ce14b
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  serverless-redis-http:
+    # Upstash-compatible REST front end for Redis. The cache adapter speaks the
+    # Upstash protocol, so the application talks to this service, never to Redis
+    # directly. It reaches Redis by service name, not through the host.
+    image: hiett/serverless-redis-http@sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
+    restart: unless-stopped
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: "${UPSTASH_REDIS_REST_TOKEN:?UPSTASH_REDIS_REST_TOKEN is required}"
+      SRH_CONNECTION_STRING: "redis://redis:6379/0"
+    ports:
+      - "127.0.0.1:${SRH_PORT:-8079}:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  redis_data:

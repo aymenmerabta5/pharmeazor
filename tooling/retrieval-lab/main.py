@@ -293,6 +293,205 @@ def cmd_collect_all(args):
     print(f"done: {total} document(s) collected")
 
 
+def cmd_import_pharmnet(args):
+    """Import the public Pharm'Net catalogue as a register snapshot.
+
+    The catalogue is a *name/registration* source: it lists the Algerian
+    nomenclature products (brand, DCI, code, form, dosage, pack, holder,
+    dates, status) and hosts no leaflet.  The full register is kept, one
+    provenance row per medicine is written to ``documents.csv``, and the
+    cleaning lab turns it into one derived Markdown document per medicine -
+    exactly like the official nomenclature workbook.
+    """
+    import json
+    from pathlib import Path as _Path
+
+    from src.discovery import pharmnet_catalog
+    from src.storage.naming import shared_register_path
+    from src.utils.hashing import sha256_file
+    from src.utils.text import (
+        component_forms, contains_token, dci_head, dci_required_components,
+        normalize,
+    )
+
+    snapshot_path = _Path(args.snapshot) if args.snapshot else (
+        CACHE_DIR / "pharmnet" / "catalogue_snapshot.json")
+    snapshot = None
+    if snapshot_path.exists() and not args.refresh:
+        try:
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            print(f"snapshot: {snapshot_path}")
+        except ValueError:
+            snapshot = None
+    if snapshot is None:
+        from src.collectors import http as httpc
+
+        session = httpc.build_session()
+        snapshot = pharmnet_catalog.fetch_catalogue(session)
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_path.write_text(
+            json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
+        print(f"snapshot fetched -> {snapshot_path}")
+
+    produits = pd.DataFrame(snapshot.get("produits") or [])
+    dci = pd.DataFrame(snapshot.get("dci") or [])
+    labs = pd.DataFrame(snapshot.get("laboratoires") or [])
+    if produits.empty:
+        print("the catalogue returned no products")
+        return
+    produits["dci"] = produits["dci_code"].map(dci.set_index("code")["denomination"])
+    produits["holder"] = produits["laboratoire_id"].map(labs.set_index("id")["nom"])
+    produits["holder_country"] = produits["laboratoire_id"].map(labs.set_index("id")["pays"])
+
+    status_map = {"ENREGISTRE": "registered", "RETIRE": "withdrawn",
+                  "NON_RENOUVELE": "non_renewed"}
+    produits["status"] = produits["registre"].map(
+        lambda value: status_map.get(str(value).strip().upper(), str(value).strip().lower()))
+
+    meds = read_table(MEDICINES_CSV, MEDICINE_COLUMNS)
+    medicine_rows = meds.to_dict("records")
+
+    def matches(text: str) -> list:
+        low = normalize(text)
+        if not low:
+            return []
+        found = []
+        for medicine in medicine_rows:
+            components = [c for c in dci_required_components(medicine) if c]
+            if not components:
+                continue
+            ok = all(
+                any(contains_token(low, form) for form in component_forms(component))
+                for component in components
+            )
+            if not ok:
+                head = dci_head(medicine)
+                ok = bool(head) and any(
+                    contains_token(low, form) for form in component_forms(head))
+            if ok:
+                found.append(medicine["medicine_id"])
+        return sorted(found)
+
+    text = (produits["dci"].fillna("") + " " + produits["nom_commercial"].fillna("")
+            + " " + produits["holder"].fillna(""))
+    produits["medicine_ids"] = [matches(value) for value in text]
+    produits["in_scope"] = produits["medicine_ids"].map(bool)
+
+    columns = {
+        "id": "product_id",
+        "num_enregistrement": "registration_number",
+        "dci_code": "dci_code",
+        "dci": "dci",
+        "nom_commercial": "brand",
+        "forme": "form",
+        "dosage": "dosage",
+        "conditionnement": "pack",
+        "liste": "schedule",
+        "holder": "holder",
+        "holder_country": "holder_country",
+        "date_enr_initial": "registered_initial",
+        "date_enr_final": "registered_final",
+        "type": "product_type",
+        "status": "status",
+        "registre": "register_raw",
+        "stabilite_mois": "shelf_life_months",
+        "observation": "observation",
+        "Rcp_url": "rcp_url",
+        "notice_url": "notice_url",
+        "updated_at": "source_updated_at",
+    }
+    register = produits[list(columns)].rename(columns=columns)
+
+    stored = shared_register_path(
+        "PHARMNET_CATALOG",
+        "Nomenclature nationale des produits pharmaceutiques", ".csv")
+    stored.parent.mkdir(parents=True, exist_ok=True)
+    register.to_csv(stored, index=False, encoding="utf-8-sig")
+    digest = sha256_file(stored)
+    file_path = str(stored.relative_to(ROOT).as_posix())
+
+    meta_columns = list(columns.values()) + ["in_scope", "medicine_ids"]
+    meta_path = META_DIR / "pharmnet_catalog_products.csv"
+    in_scope = register.loc[produits["in_scope"].to_numpy()].copy()
+    in_scope["in_scope"] = "yes"
+    in_scope["medicine_ids"] = produits.loc[
+        produits["in_scope"], "medicine_ids"].map(lambda ids: ";".join(ids)).to_numpy()
+    write_table(meta_path, in_scope[meta_columns])
+
+    collected_at = time.strftime("%Y-%m-%dT%H:%M:%S")
+    publication_date = "2026-09-08"  # "MAJ du Data : 08/09/2026" on the page
+    store = DocumentStore()
+    removed = store.drop_source("PHARMNET_CATALOG")
+    # pharmnet.dz (PHARMNET) never answered and the public catalogue supersedes
+    # it, so its placeholders must not stay in the review queue forever.
+    superseded = 0
+    for index, row in store.df[store.df["source_id"] == "PHARMNET"].iterrows():
+        if row["collection_status"] not in ("MANUAL", "REVIEW_REQUIRED"):
+            continue
+        store.update(
+            row["document_id"],
+            collection_status="superseded",
+            reviewer_notes="superseded by PHARMNET_CATALOG (pharmnet-dz.com); "
+                           "pharmnet.dz never answered (under maintenance).",
+        )
+        superseded += 1
+    checks = read_table(CHECKS_CSV, ["check_id", "source_id", "target_url", "checked_at",
+                                     "robots_status", "robots_can_fetch", "terms_conclusion",
+                                     "decision", "reason", "reviewer"])
+    source_checks = checks[checks["source_id"] == "PHARMNET_CATALOG"]
+    check_id = source_checks["check_id"].iloc[-1] if not source_checks.empty else ""
+
+    written = 0
+    for medicine in medicine_rows:
+        rows = produits[produits["medicine_ids"].map(
+            lambda ids: medicine["medicine_id"] in ids)]
+        if rows.empty:
+            continue
+        counts = rows["status"].value_counts().to_dict()
+        brands = sorted({str(v).strip() for v in rows["nom_commercial"] if str(v).strip()})
+        row = {c: "" for c in DOCUMENT_COLUMNS}
+        row.update({
+            "document_id": store.next_document_id(medicine["medicine_id"],
+                                                  "PHARMNET_CATALOG"),
+            "medicine_id": medicine["medicine_id"],
+            "search_term": medicine["inn"],
+            "matched_inn": medicine["inn"],
+            "title": ("Nomenclature nationale des produits pharmaceutiques "
+                      f"(Pharm'Net) - {medicine['inn']}"),
+            "document_type": "nomenclature",
+            "language": "fr",
+            "country": "DZ",
+            "source_id": "PHARMNET_CATALOG",
+            "source_url": "https://pharmnet-dz.com/",
+            "final_url": "https://pharmnet-dz.com/",
+            "collection_method": "automated-api",
+            "collected_at": collected_at,
+            "publication_date": publication_date,
+            "file_path": file_path,
+            "content_type": "text/csv",
+            "file_size": str(stored.stat().st_size),
+            "sha256": digest,
+            "compliance_check_id": check_id,
+            "collection_status": "collected",
+            "relevance_status": "verified",
+            "reviewer_notes": (
+                f"catalogue public Pharm'Net (MAJ {publication_date}): "
+                f"{len(rows)} produit(s) pour {medicine['inn']}; "
+                f"statuts: {', '.join(f'{k}={v}' for k, v in sorted(counts.items()))}; "
+                f"marques: {', '.join(brands[:6])}"
+            ),
+        })
+        store.add(row)
+        written += 1
+
+    print(f"pharmnet catalogue -> {meta_path}")
+    print(f"raw register      -> {file_path} ({len(register)} products, "
+          f"{digest[:12]}...)")
+    print(f"documents         : {written} medicine rows "
+          f"({removed} placeholder rows replaced)")
+    print(f"in scope          : {int(produits['in_scope'].sum())} products")
+
+
 def cmd_revalidate(_args):
     """Re-check the identity of already collected files (no new requests)."""
     from src.storage.store import resolve_path
@@ -1464,6 +1663,15 @@ def build_parser():
         help="official nomenclature workbook downloaded by hand",
     )
     nom.set_defaults(func=cmd_import_nomenclature)
+    ph = sub.add_parser("import-pharmnet")
+    ph.add_argument(
+        "--snapshot",
+        default="",
+        help="JSON snapshot of the public catalogue (default: data/.cache/pharmnet)",
+    )
+    ph.add_argument("--refresh", action="store_true",
+                    help="fetch a fresh snapshot instead of using the cache")
+    ph.set_defaults(func=cmd_import_pharmnet)
     sub.add_parser("revalidate").set_defaults(func=cmd_revalidate)
     sub.add_parser("enrich-metadata").set_defaults(func=cmd_enrich_metadata)
     sub.add_parser("status").set_defaults(func=cmd_status)

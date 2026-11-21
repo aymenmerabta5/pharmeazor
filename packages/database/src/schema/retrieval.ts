@@ -70,6 +70,10 @@ export const retrievalChunks = pgTable(
       .notNull()
       .references(() => retrievalDocuments.artifactId, { onDelete: "cascade" }),
     sectionCode: text("section_code").notNull(),
+    sectionCodes: text("section_codes")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     sectionHeading: text("section_heading").notNull(),
     sectionPath: text("section_path").notNull(),
     ordinal: integer("ordinal").notNull(),

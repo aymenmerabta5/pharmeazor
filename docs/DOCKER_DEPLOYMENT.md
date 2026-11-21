@@ -51,9 +51,10 @@ automatically. For a database that already exists, run
 `bun run db:ensure-extensions` once; it is idempotent.
 
 `docker-compose.yml` and `start-database.sh` are generator-owned and are
-rewritten by `ghostinit sync`. `docker-compose.override.yml` repeats the
-pgvector service fields so they survive that regeneration. Do not run
-`docker compose -f docker-compose.yml` without the override file.
+rewritten by `ghostinit sync`. There is one compose file and no override:
+Postgres with pgvector, Redis, and the Upstash-compatible REST proxy all live
+in `docker-compose.yml`, so a regeneration must be re-applied with the same
+contents. Keep the pgvector build and the digest pins when you restore it.
 
 ## Continuous integration environment
 

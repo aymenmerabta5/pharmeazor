@@ -171,10 +171,11 @@ Going from PostgreSQL 18.6 to 18.7 is a patch bump inside major 18. It needs
 no `pg_upgrade`, and an existing data directory opens on the new image
 unchanged.
 
-`docker-compose.yml` and `start-database.sh` are generator-owned, so
-`docker-compose.override.yml` repeats the pgvector service fields and keeps
-them in place across a `ghostinit sync`. Never run
-`docker compose -f docker-compose.yml` without the override file.
+`docker-compose.yml` and `start-database.sh` are generator-owned, so a
+`ghostinit sync` may rewrite the compose file. It is the only compose file in
+the repository: the pgvector service, Redis, and the Upstash-compatible REST
+proxy all live in it, with the two third-party images pinned by digest. Restore
+it from version control after a regeneration rather than splitting it again.
 
 ## Model choices
 
@@ -194,6 +195,51 @@ Serving notes: use Text Embeddings Inference or vLLM for self-hosted models.
 Set the embedding `input_type` (query vs document) — omitting it cost 7 to 12
 precision@1 points in the OpenRouter run. Keep the dimension stable; changing
 it invalidates every vector.
+
+## Authority precedence
+
+`authority_level` is source metadata, not chunk content. It is stored in
+`retrieval_documents` / `retrieval_chunks`, copied into every retrieval
+response, and **never** prepended to the embedded text: a constant header per
+source would bias every vector toward that source and would force a full
+re-embed whenever the policy changes.
+
+Lower wins:
+
+| Level | Source                         | Meaning                                         |
+| ----- | ------------------------------ | ----------------------------------------------- |
+| 1     | ANPP, Ministry of Health       | Official Algerian SmPC/leaflet and nomenclature |
+| 2     | Pharm'Net catalogue            | Algerian nomenclature register (names, status)  |
+| 3     | BDPM, DailyMed, EMA            | Foreign institutional reference                 |
+| 4     | Other professional / secondary | Never overrides an official source              |
+
+Every returned chunk carries `authority: { level, tier, label, official,
+description }`, and the citation label includes `(autorité N/4)`. When two
+returned chunks cover the same medicine and section at different levels, the
+service also returns an `authorityOverlaps` entry naming the `preferredChunkId`.
+The model must follow the lower number, cite the source it followed, and state
+the discrepancy. Ranking still follows relevance; authority resolves conflicts,
+it does not replace retrieval scores.
+
+An overlap also carries a `claimScope`. Clinical sources (`ANPP`, `BDPM`,
+`DailyMed`, `EMA`) make clinical claims; register sources (`SANTE_MSP`,
+`PHARMNET_CATALOG`) state names, strengths and registration status. The two are
+never compared: a register row cannot contradict a leaflet on an indication or a
+dose, and treating them as rivals produced false conflicts. Register-vs-register
+overlaps are reported so the model can reconcile names and statuses, but they
+skip the numeric heuristic entirely, because a register chunk is a list of
+products and its numbers are not one claim.
+
+For clinical overlaps the service extracts canonical `value unit` tokens
+(`500 mg`, `2 fois`) from both passages and reports `numericDivergence` — the
+values that appear on one side and not the other, restricted to units both sides
+use. `numbersCompared: false` means no comparison was possible. This is
+deterministic evidence, not a verdict: the model still reads both passages and
+applies the precedence rule.
+
+The per-source assignment is owned by
+`tooling/retrieval-lab/data/metadata/sources.csv`. Changing a level updates the
+manifest and the next ingest; it does not require re-embedding.
 
 ## Security
 
@@ -400,7 +446,5 @@ Server-only variables, read by `packages/api/src/adapters/retrieval/config.ts`:
 
 - The golden set and the recall/precision/MRR/nDCG@10 gate from the sections
   above. No tuning change should be trusted before that exists.
-- Model-written contextualization. The current note is deterministic and only
-  states the document identity, source authority, and section path.
 - Query reformulation. The agent gets one tool call budget, not a retrieval
   loop; add a second round only when the golden set shows multi-hop misses.

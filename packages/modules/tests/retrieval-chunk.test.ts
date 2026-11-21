@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   chunkMarkdownDocument,
+  contextKeyFor,
   detectRetrievalInjection,
   sanitizeRetrievalText,
   sectionCodeForHeading,
@@ -63,24 +64,38 @@ describe("markdown chunking", () => {
     expect(sectionCodeForHeading("4.3 Contre-indications")).toBe("contraindications");
     expect(sectionCodeForHeading("4.1 Indications thérapeutiques")).toBe("indications");
     expect(sectionCodeForHeading("Dosage and administration")).toBe("dosage");
+    expect(sectionCodeForHeading("Produits enregistrés")).toBe("nomenclature_registered");
+    expect(sectionCodeForHeading("Produits enregistrés (nomenclature au 31 août 2026)")).toBe(
+      "nomenclature_registered",
+    );
+    expect(sectionCodeForHeading("Produits non renouvelés")).toBe("nomenclature_non_renewed");
+    expect(sectionCodeForHeading("Produits retirés")).toBe("nomenclature_withdrawn");
     expect(sectionCodeForHeading("Something unmapped")).toBe("other");
   });
 
-  it("keeps the heading hierarchy and a deterministic chunk identity", () => {
-    const first = chunkMarkdownDocument(DOCUMENT, MARKDOWN);
-    const second = chunkMarkdownDocument(DOCUMENT, MARKDOWN);
-    expect(first.map((chunk) => chunk.chunkId)).toEqual(second.map((chunk) => chunk.chunkId));
-    expect(first[0]).toMatchObject({
+  it("packs small sections into one chunk and keeps every section code", () => {
+    const chunks = chunkMarkdownDocument(DOCUMENT, MARKDOWN);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toMatchObject({
       chunkId: "ART_MED031_RCP#denomination-0#0",
       sectionCode: "denomination",
-      sectionHeading: "1. Dénomination du médicament",
+      sectionCodes: ["denomination", "indications", "dosage", "contraindications"],
     });
-    expect(first.some((chunk) => chunk.sectionCode === "other")).toBe(false);
-    const dosage = first.find((chunk) => chunk.sectionCode === "dosage");
-    expect(dosage?.sectionHeading).toBe("Adultes");
-    expect(dosage?.sectionPath).toBe(
-      "Résumé des caractéristiques du produit > 4.2 Posologie et mode d'administration > Adultes",
-    );
+    expect(chunks[0]?.content).toContain("### Adultes");
+    expect(chunks[0]?.content).toContain("500 mg à 1 g par prise");
+  });
+
+  it("keeps one chunk per section when packing is disabled", () => {
+    const chunks = chunkMarkdownDocument(DOCUMENT, MARKDOWN, { minGroupChars: 0 });
+    expect(chunks.map((chunk) => chunk.sectionCode)).toEqual([
+      "denomination",
+      "indications",
+      "dosage",
+      "contraindications",
+    ]);
+    const dosage = chunks.find((chunk) => chunk.sectionCode === "dosage");
+    expect(dosage?.sectionHeading).toBe("4.2 Posologie et mode d'administration");
+    expect(dosage?.sectionPath).toBe("4.2 Posologie et mode d'administration");
     expect(dosage?.content).toContain("### Adultes");
     expect(dosage?.content).toContain("500 mg à 1 g par prise");
   });
@@ -89,10 +104,10 @@ describe("markdown chunking", () => {
     const before = chunkMarkdownDocument(DOCUMENT, MARKDOWN);
     const after = chunkMarkdownDocument(
       DOCUMENT,
-      `${MARKDOWN}\n## 4.4 Mises en garde spéciales\n\nÀ prendre avec prudence.\n`,
+      `${MARKDOWN}\n## 4.4 Mises en garde spéciales\n\n${"À prendre avec prudence. ".repeat(80)}\n`,
     );
     const idsBefore = new Set(before.map((chunk) => chunk.chunkId));
-    for (const chunk of after.filter((entry) => entry.sectionCode !== "warnings")) {
+    for (const chunk of after.filter((entry) => entry.sectionCode === "denomination")) {
       expect(idsBefore.has(chunk.chunkId)).toBe(true);
     }
   });
@@ -104,7 +119,7 @@ describe("markdown chunking", () => {
       "## Posologie",
       "Deuxième posologie.",
     ].join("\n\n");
-    const chunks = chunkMarkdownDocument(DOCUMENT, markdown);
+    const chunks = chunkMarkdownDocument(DOCUMENT, markdown, { minGroupChars: 0 });
     expect(chunks.map((chunk) => chunk.chunkId)).toEqual([
       "ART_MED031_RCP#dosage-0#0",
       "ART_MED031_RCP#dosage-1#0",
@@ -118,17 +133,36 @@ describe("markdown chunking", () => {
       overlapChars: 60,
     });
     expect(chunks.length).toBeGreaterThan(1);
-    expect(chunks.every((chunk) => chunk.content.length <= 660)).toBe(true);
+    expect(chunks.every((chunk) => chunk.content.length <= 600)).toBe(true);
     expect(chunks.map((chunk) => chunk.ordinal)).toEqual(chunks.map((_, index) => index));
     expect(chunks.every((chunk) => chunk.tokenEstimate > 0)).toBe(true);
   });
 
-  it("prefixes each chunk with a document-aware context note", () => {
+  it("prefixes each chunk with a document-aware fallback note", () => {
     const [chunk] = chunkMarkdownDocument(DOCUMENT, MARKDOWN);
-    expect(chunk?.contextualizedContent).toContain("Paracétamol 500 mg comprimé");
-    expect(chunk?.contextualizedContent).toContain("paracetamol / Doliprane");
-    expect(chunk?.contextualizedContent).toContain("Source: ANPP (authority 1/4, DZ)");
+    expect(chunk?.contextNote).toContain("Paracétamol 500 mg comprimé");
+    expect(chunk?.contextNote).toContain("paracetamol / Doliprane");
+    expect(chunk?.contextNote).toContain("Source: ANPP (DZ)");
     expect(chunk?.contextualizedContent).toContain(chunk?.content ?? "\u0000");
+  });
+
+  it("replaces the fallback with a model-written note without moving the chunk", () => {
+    const [chunk] = chunkMarkdownDocument(DOCUMENT, MARKDOWN);
+    const note = "Ce chunk décrit la posologie adulte du paracétamol Doliprane 500 mg.";
+    const [withNote] = chunkMarkdownDocument(DOCUMENT, MARKDOWN, {
+      contextNotes: new Map([[chunk!.contextKey, note]]),
+    });
+    expect(withNote?.contextNote).toBe(note);
+    expect(withNote?.contextualizedContent.startsWith(note)).toBe(true);
+    expect(withNote?.contextKey).toBe(chunk?.contextKey);
+    expect(withNote?.content).toBe(chunk?.content);
+    expect(withNote?.contentHash).not.toBe(chunk?.contentHash);
+  });
+
+  it("keys a context note on the artifact and the raw chunk text", () => {
+    expect(contextKeyFor("ART", "texte")).toBe(contextKeyFor("ART", "texte"));
+    expect(contextKeyFor("ART", "texte")).not.toBe(contextKeyFor("ART", "autre texte"));
+    expect(contextKeyFor("ART", "texte")).not.toBe(contextKeyFor("AUTRE", "texte"));
   });
 
   it("rejects an invalid chunk window", () => {

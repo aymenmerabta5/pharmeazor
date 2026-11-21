@@ -5,6 +5,7 @@ import type {
   RetrievedChunk,
 } from "./contracts";
 import { RetrievalError, isRetrievalError } from "./errors";
+import { AUTHORITY_PRECEDENCE, authorityDescriptor, findAuthorityOverlaps } from "./authority";
 import { fuseRankedLists, type FusedCandidate } from "./fusion";
 import { normalizeRetrievalRequest, RETRIEVAL_LIMITS } from "./policy";
 import type { EmbeddingPort, RerankPort, RetrievalIndexPort } from "./ports";
@@ -94,6 +95,8 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
       if (fused.length === 0) {
         return {
           chunks: [],
+          authorityOverlaps: [],
+          authorityPolicy: AUTHORITY_PRECEDENCE,
           diagnostics: {
             embeddingModel: dependencies.embedding.model,
             rerankerModel: reranker?.model ?? null,
@@ -173,8 +176,16 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
         const count = perArtifact.get(candidate.artifactId) ?? 0;
         if (count >= RETRIEVAL_LIMITS.maxChunksPerArtifact) continue;
         perArtifact.set(candidate.artifactId, count + 1);
+        const descriptor = authorityDescriptor(candidate.authorityLevel);
         selected.push({
           ...candidate,
+          authority: {
+            level: descriptor.level,
+            tier: candidate.authorityTier,
+            label: descriptor.label,
+            official: descriptor.official,
+            description: descriptor.description,
+          },
           scores: scoresFor(candidate.chunkId, fused, score),
           citation: {
             chunkId: candidate.chunkId,
@@ -186,6 +197,8 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
 
       return {
         chunks: selected,
+        authorityOverlaps: findAuthorityOverlaps(selected),
+        authorityPolicy: AUTHORITY_PRECEDENCE,
         diagnostics: {
           embeddingModel: dependencies.embedding.model,
           rerankerModel: reranker?.model ?? null,
@@ -225,7 +238,18 @@ function citationLabel(candidate: {
   readonly sourceName: string;
   readonly documentType: string;
   readonly sectionHeading: string;
+  readonly authorityLevel: number;
 }): string {
-  const label = `${candidate.sourceName} · ${candidate.documentType} · ${candidate.sectionHeading}`;
-  return label.length > 180 ? `${label.slice(0, 177)}...` : label;
+  // The rank is part of the citation, so it must survive truncation: a long
+  // section heading may be cut, the authority marker may not.
+  const rank = `autorité ${candidate.authorityLevel}/4`;
+  const prefix = `${candidate.sourceName} · ${candidate.documentType} · `;
+  const suffix = ` (${rank})`;
+  const room = 180 - prefix.length - suffix.length;
+  if (room <= 0) return `${prefix}${suffix}`.slice(0, 180);
+  const heading =
+    candidate.sectionHeading.length > room
+      ? `${candidate.sectionHeading.slice(0, Math.max(0, room - 3))}...`
+      : candidate.sectionHeading;
+  return `${prefix}${heading}${suffix}`;
 }

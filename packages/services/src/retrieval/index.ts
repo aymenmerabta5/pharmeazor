@@ -11,9 +11,25 @@ export type {
   RetrievalRequest,
   RetrievalResult,
   RetrievalScores,
+  RetrievedAuthority,
   RetrievedChunk,
 } from "./contracts";
 export { RetrievalError, isRetrievalError, type RetrievalErrorCode } from "./errors";
+export {
+  AUTHORITY_PRECEDENCE,
+  authorityDescriptor,
+  authorityLabel,
+  claimScopeForSource,
+  compareAuthority,
+  findAuthorityOverlaps,
+  isOfficialAuthority,
+  numericClaims,
+  type AuthorityDescriptor,
+  type AuthorityOverlap,
+  type AuthorityOverlapEntry,
+  type AuthorityOverlapInput,
+  type ClaimScope,
+} from "./authority";
 export {
   DEFAULT_RRF_K,
   fuseRankedLists,

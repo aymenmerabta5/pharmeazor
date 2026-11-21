@@ -12,7 +12,8 @@ import pandas as pd
 from config import (
     BRAND_GAP_CSV, COVERAGE_REPORT_CSV, DOCUMENTS_CSV, MEDICINES_CSV,
     NEEDS_ATTENTION_CSV, PENDING_REVIEW_CSV, SOURCE_HEALTH_CSV,
-    SOURCES_CSV, DOCUMENT_COLUMNS, SOURCE_COLUMNS, MEDICINE_COLUMNS,
+    SOURCES_CSV, MANUAL_ACTIONS_CSV, DOCUMENT_COLUMNS, SOURCE_COLUMNS,
+    MEDICINE_COLUMNS,
     AUTHORITY_NAMES, AUTHORITY_OFFICIAL_ALGERIAN, AUTHORITY_OFFICIAL_NOMENCLATURE,
 )
 from src.storage.store import read_table, write_table
@@ -23,6 +24,62 @@ PENDING_STATUSES = [
 ]
 
 ALGERIAN_BRAND_TYPES = ("algerian_official", "algerian_secondary", "manual")
+
+MANUAL_ACTION_COLUMNS = ["medicine_id", "source_id", "url", "instruction",
+                         "recorded_at", "status", "notes"]
+
+
+def reconcile_manual_actions(docs=None) -> "object":
+    """Close the manual steps the corpus already answers.
+
+    The handoff list is append-only: a step stays ``to_do`` forever even after
+    the document it asked for was imported, and a superseded source keeps
+    asking for work nobody can do.  The status is derived from the provenance
+    table so the report can never contradict ``documents.csv``.
+
+    * a verified document for the same (medicine, source) -> ``done``
+    * a source whose registry notes say it was superseded -> ``superseded``
+    * anything else stays ``to_do``
+    """
+    import pandas as pd
+
+    if not MANUAL_ACTIONS_CSV.exists():
+        return pd.DataFrame(columns=MANUAL_ACTION_COLUMNS)
+    actions = read_table(MANUAL_ACTIONS_CSV, MANUAL_ACTION_COLUMNS)
+    if docs is None:
+        docs = read_table(DOCUMENTS_CSV, DOCUMENT_COLUMNS)
+    verified = docs[(docs["collection_status"] == "collected")
+                    & (docs["relevance_status"] == "verified")]
+    delivered = {}
+    for _, row in verified.iterrows():
+        delivered.setdefault((row["medicine_id"], row["source_id"]),
+                             row["document_id"])
+    srcs = read_table(SOURCES_CSV, SOURCE_COLUMNS)
+    superseded = {
+        row["source_id"] for _, row in srcs.iterrows()
+        if "superseded" in str(row.get("notes", "")).lower()
+    }
+
+    changed = 0
+    for i, row in actions.iterrows():
+        key = (row["medicine_id"], row["source_id"])
+        if key in delivered:
+            status = "done"
+            note = f"verified document {delivered[key]}"
+        elif row["source_id"] in superseded:
+            status = "superseded"
+            note = "source superseded; see the registry notes"
+        else:
+            continue
+        if row["status"] != status:
+            actions.at[i, "status"] = status
+            if note and note not in str(row["notes"]):
+                actions.at[i, "notes"] = (
+                    (str(row["notes"]) + " | " if row["notes"] else "") + note)
+            changed += 1
+    if changed:
+        write_table(MANUAL_ACTIONS_CSV, actions)
+    return actions
 
 
 def _name_map():
@@ -80,6 +137,7 @@ def build_coverage_report(min_sources: int = 3) -> "object":
     docs = read_table(DOCUMENTS_CSV, DOCUMENT_COLUMNS)
     srcs = read_table(SOURCES_CSV, SOURCE_COLUMNS)
     name_map = _name_map()
+    actions = reconcile_manual_actions(docs)
 
     src_meta = {}
     for _, row in srcs.iterrows():
@@ -188,6 +246,10 @@ def build_coverage_report(min_sources: int = 3) -> "object":
     print(f"Pending review  : {PENDING_REVIEW_CSV}")
     print(f"Needs attention : {NEEDS_ATTENTION_CSV}")
     print(f"Source health   : {SOURCE_HEALTH_CSV}")
+    if not actions.empty:
+        counts = actions["status"].value_counts().to_dict()
+        print(f"Manual actions  : {MANUAL_ACTIONS_CSV} "
+              f"({', '.join(f'{k}={v}' for k, v in sorted(counts.items()))})")
     print(f"Verified documents: {verified_total} | medicines with full coverage "
           f"(>= {min_sources} verified sources incl. 1 official): {ok}/{len(report)}")
     if not report.empty:

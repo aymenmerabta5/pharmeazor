@@ -33,32 +33,34 @@ you deliberately want to commit the 44 MB deliverable.
 
 ## 1. What the raw collection actually contains
 
-| Item                                                                             | Measured                                                             |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Rows in `documents.csv`                                                          | 800                                                                  |
-| Collected rows                                                                   | 555                                                                  |
-| Verified collected rows                                                          | 552                                                                  |
-| Rejected rows (kept out)                                                         | 3                                                                    |
-| `no_results` / `MANUAL` rows                                                     | 245                                                                  |
-| Unique raw files after grouping shared files                                     | 419                                                                  |
-| Raw file groups cleaned                                                          | 415                                                                  |
-| Raw file groups skipped (1 scanned PDF)                                          | 1                                                                    |
-| Raw file groups exported as structured reference (nomenclature + BDPM registers) | 3                                                                    |
-| Clean Markdown documents                                                         | **558**                                                              |
-| Near-duplicates removed (tracked, not deleted from raw)                          | **63**                                                               |
-| Structured reference artifacts                                                   | **3**                                                                |
-| Total clean text                                                                 | **19.6 M characters**, 21,608 headings, median 30,448 chars/document |
+| Item                                                                             | Measured                                                              |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Rows in `documents.csv`                                                          | 649                                                                   |
+| Collected rows                                                                   | 463                                                                   |
+| Verified collected rows                                                          | 454                                                                   |
+| Rejected rows (kept out)                                                         | 2                                                                     |
+| `no_results` / `MANUAL` / `superseded` rows                                      | 106 (26 + 40 + 40)                                                    |
+| Raw files discovered                                                             | 340                                                                   |
+| Raw file groups after grouping shared files                                      | 329                                                                   |
+| Raw file groups cleaned                                                          | 325                                                                   |
+| Raw file groups skipped (1 scanned PDF)                                          | 1                                                                     |
+| Raw file groups exported as structured reference (nomenclature, Pharm'Net, BDPM) | 3                                                                     |
+| Clean Markdown documents                                                         | **528**                                                               |
+| Near-duplicates removed (tracked, not deleted from raw)                          | **28**                                                                |
+| Structured reference artifacts                                                   | **3**                                                                 |
+| Total clean text                                                                 | **17.84 M characters**, 19,428 headings, median 28,877 chars/document |
 
 By source and language:
 
 | Source                                           | Clean docs | Rank |
 | ------------------------------------------------ | ---------: | ---: |
-| `BDPM_FR` (ANSM/BDPM RCP + patient notice)       |        310 |    3 |
-| `DAILYMED` (US labels)                           |        168 |    3 |
-| `SANTE_MSP` (derived official nomenclature docs) |         40 |    2 |
-| `ANPP_RCP` (Algerian SmPC PDFs)                  |         40 |    1 |
+| `BDPM_FR` (ANSM/BDPM RCP + patient notice)       |        296 |    3 |
+| `DAILYMED` (US labels)                           |        122 |    3 |
+| `PHARMNET_CATALOG` (derived register docs)       |         40 |    2 |
+| `SANTE_MSP` (derived official nomenclature docs) |         40 |    1 |
+| `ANPP_RCP` (Algerian SmPC PDFs)                  |         30 |    1 |
 
-`390` documents are French, `168` are English. No Arabic document was present in
+`406` documents are French, `122` are English. No Arabic document was present in
 this snapshot.
 
 The source formats are genuinely different, not variations of one template:
@@ -172,7 +174,7 @@ regardless of language, publisher or heading wording:
 | `overdose`                                                                      | Surdosage, Overdosage                                                     |
 | `pharmacodynamics` / `pharmacokinetics`                                         | Propriétés pharmacodynamiques / pharmacocinétiques                        |
 | `denomination`, `composition`, `excipients`, `storage`, `package`, …            | product/administrative sections                                           |
-| `nomenclature_registered`, `nomenclature_non_renewed`, `nomenclature_withdrawn` | derived official-register docs                                            |
+| `nomenclature_registered`, `nomenclature_non_renewed`, `nomenclature_withdrawn` | derived register docs (official list and Pharm'Net catalogue)             |
 
 The four sections required by the project brief are `indications`, `dosage`,
 `contraindications`, `interactions`. Their presence is recorded per document
@@ -190,12 +192,13 @@ the collection lab is picked up automatically. `config.yaml` only relabels the
 cleaning-specific `tier`; identity, authority and jurisdiction are never
 overridden there.
 
-| Rank | Tier                             | Sources                        |
-| ---: | -------------------------------- | ------------------------------ |
-|    1 | `official_algerian_smpc`         | `ANPP_RCP`, `ANPP_SITE`        |
-|    2 | `official_algerian_nomenclature` | `SANTE_MSP`                    |
-|    3 | `foreign_institutional`          | `BDPM_FR`, `DAILYMED`, `EMA`   |
-|    4 | `algerian_professional`          | `PHARMNET`, `PHARMNET_CATALOG` |
+| Rank | Tier                             | Sources                                    |
+| ---: | -------------------------------- | ------------------------------------------ |
+|    1 | `official_algerian_smpc`         | `ANPP_RCP`, `ANPP_SITE`                    |
+|    1 | `official_algerian_nomenclature` | `SANTE_MSP`                                |
+|    2 | `nomenclature_register`          | `PHARMNET_CATALOG`                         |
+|    3 | `foreign_institutional`          | `BDPM_FR`, `DAILYMED`, `EMA`               |
+|    4 | `algerian_professional`          | `PHARMNET` (under maintenance, superseded) |
 
 Every document carries `authority_level`, `authority_tier`, `source_name` and
 `jurisdiction`. When two sources disagree later, the lower rank wins, and the
@@ -270,7 +273,7 @@ they are different jurisdictions.
   before any collapse: a declared-strength mismatch vetoes the merge however
   high the template similarity is (ANPP SmPCs of two strengths score 0.98+).
 - Official Algerian docs only collapse at ≥ 0.985; foreign labels at ≥ 0.93.
-- 63 documents were marked duplicate and are listed in `reports/duplicates.csv`
+- 28 documents were marked duplicate and are listed in `reports/duplicates.csv`
   with `duplicate_of` and similarity. The raw files remain untouched.
 
 ---
@@ -294,7 +297,7 @@ tooling/cleaning-lab/
   output/
     documents/
       <medicine>/             # one directory per medicine, mirroring data/raw/
-        *.md                  # 478 clean documents: SmPC, RCP, notice, label, nomenclature
+        *.md                  # 528 clean documents: SmPC, RCP, notice, label, nomenclature
       _shared/                # artifacts that belong to no single medicine
     manifest.jsonl            # one row per artifact; the import contract
     inventory.jsonl           # one row per raw file group and its fate
@@ -434,12 +437,13 @@ computed. Final measured preview:
 
 | Metric              |      Value |
 | ------------------- | ---------: |
-| Documents           |        558 |
-| Chunks              | **15,226** |
-| Median chunk        | 269 tokens |
-| Max chunk           | 899 tokens |
+| Documents           |        528 |
+| Chunks              | **13,975** |
+| Median chunk        | 275 tokens |
+| Min chunk           |  59 tokens |
+| Max chunk           | 900 tokens |
 | Chunks > 900 tokens |      **0** |
-| Chunks < 40 tokens  |      **1** |
+| Chunks < 40 tokens  |      **0** |
 
 These numbers are a compatibility check, not the final retrieval chunk table.
 When the real ingestion job is built:
@@ -469,24 +473,25 @@ French or English embedder.
 ## 9. Coverage gaps and caveats (measured, not assumed)
 
 All 40 medicines have at least one clean document. All 40 have at least one
-Algerian official source (the Ministry nomenclature, rank 2) and at least one
-clinical document covering each of the four key sections across the medicine's
-documents.
+Algerian official source (ANPP SmPC or the Ministry nomenclature, rank 1) and at
+least one clinical document covering each of the four key sections across the
+medicine's documents.
 
-- **25 medicines have no ANPP SmPC in this snapshot.** They still have three
-  sources: the official nomenclature, BDPM and DailyMed. The gap is reported in
+- **26 medicines have no ANPP SmPC in this snapshot.** They still have at least
+  three sources, usually the official nomenclature, BDPM and DailyMed; néfopam
+  uses the Pharm'Net register in place of DailyMed. The gap is reported in
   `reports/coverage_gaps.csv`; it is a collection gap, not a cleaning gap.
-- **Only `MED012` (néfopam) has fewer than three sources** in the cleaned
-  corpus: `BDPM_FR` + `SANTE_MSP`. This matches the collection guide's note that
-  néfopam has no US label and no ANPP RCP. (`MED028` nifédipine has three sources
-  here: BDPM, DailyMed, SANTE.)
+- **Every medicine now has three to five clean sources.** The two thinnest are
+  `MED012` (néfopam: `BDPM_FR`, `SANTE_MSP`, `PHARMNET_CATALOG`) and `MED028`
+  (nifédipine: `BDPM_FR`, `DAILYMED`, `SANTE_MSP`, `PHARMNET_CATALOG`). Both
+  have an official Algerian register document; neither has an ANPP RCP.
 - **1 raw file was deliberately skipped** (`reports/skipped.csv`): a scanned
   DailyMed PDF with <200 extractable characters/page → OCR needed. Four very
   short DailyMed OTC labels with no structured clinical headings are kept in the
   corpus with `key_sections_missing` populated rather than discarded.
 - **2 rejected rows** from `documents.csv` are excluded (`rejected` in
-  `excluded.jsonl`), and **246 no_results/MANUAL rows** are excluded with their
-  status. No raw document was deleted or rewritten.
+  `excluded.jsonl`), and **106 no_results/MANUAL/superseded rows** are excluded
+  with their status. No raw document was deleted or rewritten.
 - **Nomenclature documents are reference lists, not clinical prose.** They are
   excluded from clinical section coverage, but counted as a source for
   medication identity/equivalence.

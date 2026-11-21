@@ -24,6 +24,7 @@
         "@repo/database": "workspace:*",
         "@repo/kernel": "workspace:*",
         "@repo/modules": "workspace:*",
+        "@repo/services": "workspace:*",
         "@repo/workflows": "workspace:*",
         "@vercel/connect": "2.9.4",
         "ai": "7.0.173",

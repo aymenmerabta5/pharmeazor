@@ -41,7 +41,7 @@ from typing import Any
 
 from .text_utils import normalize_key
 
-SUPPORTED_SUFFIXES = frozenset({".pdf", ".html", ".htm", ".txt", ".xlsx"})
+SUPPORTED_SUFFIXES = frozenset({".pdf", ".html", ".htm", ".txt", ".xlsx", ".csv"})
 _RAW_PREFIX = "data/raw/"
 _NOTICE_SEPARATOR_RE = re.compile(r"^-{10,}\s*$", re.MULTILINE)
 # BDPM notice .txt files start with "Notice patient ANSM - Mis à jour le : D/M/Y"

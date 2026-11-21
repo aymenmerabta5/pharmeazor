@@ -29,6 +29,15 @@ class TestNormalisation:
         assert "500 mg" in strength_variants("500 mg")
         assert "500mg" in strength_variants("500 mg")
 
+    def test_strength_variants_ignore_the_galenic_form(self):
+        # the register stores "20 mg, comprimés non pelliculés"; the page says
+        # "20 mg, comprimé sécable" - the dosage is the identity-critical part
+        variants = strength_variants("20 mg, comprimés non pelliculés")
+        assert "20 mg" in variants
+        assert "20mg" in variants
+        assert "10 mg/6 25 mg" in strength_variants(
+            "10 mg/6,25 mg, comprimé pelliculé blanc")
+
     def test_match_terms_contains_name_and_inn(self):
         terms = [t.lower() for t in match_terms({"inn": "losartan", "name": "Cozaar"})]
         assert any("losartan" in t for t in terms)

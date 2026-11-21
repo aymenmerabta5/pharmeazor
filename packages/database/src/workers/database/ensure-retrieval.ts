@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS retrieval_chunks (
   chunk_id               text PRIMARY KEY,
   artifact_id            text NOT NULL REFERENCES retrieval_documents(artifact_id) ON DELETE CASCADE,
   section_code           text NOT NULL,
+  section_codes          text[] NOT NULL DEFAULT '{}',
   section_heading        text NOT NULL,
   section_path           text NOT NULL,
   ordinal                integer NOT NULL,
@@ -88,8 +89,18 @@ CREATE TABLE IF NOT EXISTS retrieval_index_meta (
 CREATE INDEX IF NOT EXISTS retrieval_chunks_embedding_hnsw
   ON retrieval_chunks USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 16, ef_construction = 64);
+
+-- Packed chunks cover several sections, so the section filter is an overlap
+-- test over an array. The column is added separately for databases created
+-- before it existed.
+ALTER TABLE retrieval_chunks
+  ADD COLUMN IF NOT EXISTS section_codes text[] NOT NULL DEFAULT '{}';
+UPDATE retrieval_chunks SET section_codes = ARRAY[section_code] WHERE section_codes = '{}';
+
 CREATE INDEX IF NOT EXISTS retrieval_chunks_medicine_ids_idx
   ON retrieval_chunks USING gin (medicine_ids);
+CREATE INDEX IF NOT EXISTS retrieval_chunks_section_codes_idx
+  ON retrieval_chunks USING gin (section_codes);
 CREATE INDEX IF NOT EXISTS retrieval_chunks_artifact_idx
   ON retrieval_chunks (artifact_id);
 CREATE INDEX IF NOT EXISTS retrieval_chunks_source_idx

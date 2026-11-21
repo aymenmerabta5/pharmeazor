@@ -4,10 +4,20 @@ import { createHash } from "node:crypto";
  * Structure-aware Markdown chunking for the clinical corpus.
  *
  * The cleaner already produced Markdown with a real heading hierarchy. The
- * chunker preserves that hierarchy, maps headings to stable section codes, and
- * only falls back to a character window when a single section is oversized.
- * The chunk identity is `artifact + section code + occurrence + ordinal`, so an
- * edit near the top of a document does not renumber every later chunk.
+ * chunker keeps that hierarchy, packs consecutive subsections of one document
+ * section into chunks of 512-1024 tokens, and only falls back to a character
+ * window when a single section is oversized.
+ *
+ * Two identities are kept apart on purpose:
+ *
+ * - `contextKey` hashes the artifact plus the raw chunk text. It is the key a
+ *   model-written context note is stored under, so a note survives as long as
+ *   the chunk text does.
+ * - `contentHash` hashes the final contextualized text (note + content). It is
+ *   what decides re-embedding, because the embedding covers the note too.
+ *
+ * The chunk id is `artifact + primary section code + occurrence + ordinal`, so
+ * an edit near the top of a document does not renumber every later chunk.
  */
 
 export interface ChunkSourceDocument {
@@ -31,27 +41,44 @@ export interface ChunkSourceDocument {
 export interface ChunkDraft {
   readonly chunkId: string;
   readonly artifactId: string;
+  /** Primary section code: the first mapped code in the packed chunk. */
   readonly sectionCode: string;
+  /** Every section code the packed chunk covers, in document order. */
+  readonly sectionCodes: readonly string[];
   readonly sectionHeading: string;
   readonly sectionPath: string;
   readonly ordinal: number;
   readonly content: string;
+  /** The note actually prepended: model-written when available, else the fallback. */
+  readonly contextNote: string;
   readonly contextualizedContent: string;
+  /** Hash of `contextualizedContent`; decides re-embedding. */
   readonly contentHash: string;
+  /** Hash of `artifactId + content`; the key a model note is stored under. */
+  readonly contextKey: string;
   readonly tokenEstimate: number;
   readonly injectionRisk: boolean;
 }
 
 export interface ChunkingOptions {
-  /** Soft maximum characters per chunk. Defaults to 3,200 (~800 tokens). */
+  /** Soft maximum characters per chunk. Defaults to 4,096 (~1,024 tokens). */
   readonly maxChars?: number;
   /** Overlap between adjacent character windows. Defaults to 15% of max. */
   readonly overlapChars?: number;
+  /**
+   * Model-written context notes keyed by `contextKey`. A missing note falls
+   * back to the deterministic document note.
+   */
+  readonly contextNotes?: ReadonlyMap<string, string>;
+  /** Sections smaller than this are packed into a neighbour. Defaults to 800. */
+  readonly minGroupChars?: number;
 }
 
-const DEFAULT_MAX_CHARS = 3_200;
+const DEFAULT_MAX_CHARS = 4_096;
+const DEFAULT_MIN_GROUP_CHARS = 800;
 
 interface HeadingFrame {
+  readonly id: number;
   readonly level: number;
   readonly text: string;
   readonly code: string;
@@ -61,6 +88,13 @@ interface Segment {
   readonly frames: readonly HeadingFrame[];
   readonly headingLine: string;
   readonly body: string;
+}
+
+interface Group {
+  readonly segments: readonly Segment[];
+  /** One heading path per source section that was packed into this group. */
+  readonly headingPaths: readonly string[];
+  readonly chars: number;
 }
 
 const INJECTION_PATTERNS: readonly RegExp[] = [
@@ -98,6 +132,11 @@ export function detectRetrievalInjection(input: string): boolean {
   return INJECTION_PATTERNS.some((pattern) => pattern.test(input));
 }
 
+/** Stable key for a model-written context note. */
+export function contextKeyFor(artifactId: string, content: string): string {
+  return sha256(`${artifactId}\u0000${content}`);
+}
+
 export function chunkMarkdownDocument(
   document: ChunkSourceDocument,
   markdown: string,
@@ -105,6 +144,7 @@ export function chunkMarkdownDocument(
 ): ChunkDraft[] {
   const maxChars = options.maxChars ?? DEFAULT_MAX_CHARS;
   const overlapChars = options.overlapChars ?? Math.max(0, Math.floor(maxChars * 0.15));
+  const minGroupChars = options.minGroupChars ?? DEFAULT_MIN_GROUP_CHARS;
   if (!Number.isInteger(maxChars) || maxChars < 400) {
     throw new Error("Chunk maxChars must be an integer of at least 400");
   }
@@ -114,36 +154,43 @@ export function chunkMarkdownDocument(
 
   const body = sanitizeRetrievalText(stripFrontMatter(markdown));
   const segments = splitIntoSegments(body);
+  const groups = packGroups(
+    groupSegments(segments, document.title),
+    maxChars,
+    Math.min(minGroupChars, maxChars),
+  );
   const occurrences = new Map<string, number>();
   const chunks: ChunkDraft[] = [];
 
-  for (const segment of segments) {
-    const deepest = segment.frames.at(-1);
-    // A subsection such as `### Adultes` inherits the nearest mapped ancestor
-    // (`dosage`), so a section filter still finds it.
-    const sectionCode = deepestMappedCode(segment.frames);
-    const occurrence = occurrences.get(sectionCode) ?? 0;
-    occurrences.set(sectionCode, occurrence + 1);
-    const sectionPath =
-      segment.frames.length > 0
-        ? segment.frames.map((frame) => frame.text).join(" > ")
-        : document.title;
-    const sectionHeading = deepest?.text ?? document.title;
-    const parts = splitSection(segment.headingLine, segment.body, maxChars, overlapChars);
+  for (const group of groups) {
+    const codes = uniqueCodes(group.segments);
+    const primary = codes.find((code) => code !== "other") ?? "other";
+    const occurrence = occurrences.get(primary) ?? 0;
+    occurrences.set(primary, occurrence + 1);
+    const sectionPath = group.headingPaths.join(" | ") || document.title;
+    const sectionHeading = groupSectionHeading(group, document.title);
+    const parts = splitBody(groupText(group), maxChars, overlapChars);
 
     for (let ordinal = 0; ordinal < parts.length; ordinal += 1) {
       const content = parts[ordinal]!;
-      const contextualizedContent = contextualize(document, sectionPath, content);
+      const contextKey = contextKeyFor(document.artifactId, content);
+      const contextNote =
+        options.contextNotes?.get(contextKey) ??
+        buildDefaultContextNote(document, sectionPath, content);
+      const contextualizedContent = `${contextNote}\n\n${content}`;
       chunks.push({
-        chunkId: `${document.artifactId}#${sectionCode}-${occurrence}#${ordinal}`,
+        chunkId: `${document.artifactId}#${primary}-${occurrence}#${ordinal}`,
         artifactId: document.artifactId,
-        sectionCode,
+        sectionCode: primary,
+        sectionCodes: codes,
         sectionHeading,
         sectionPath,
         ordinal,
         content,
+        contextNote,
         contextualizedContent,
         contentHash: sha256(contextualizedContent),
+        contextKey,
         tokenEstimate: Math.ceil(content.length / 4),
         injectionRisk: detectRetrievalInjection(content),
       });
@@ -165,6 +212,7 @@ function splitIntoSegments(markdown: string): Segment[] {
   const stack: HeadingFrame[] = [];
   const segments: Segment[] = [];
   let body: string[] = [];
+  let nextHeadingId = 0;
 
   const flush = () => {
     const text = body.join("\n").trim();
@@ -189,7 +237,8 @@ function splitIntoSegments(markdown: string): Segment[] {
     const text = heading[2]!.trim();
     if (!text) continue;
     while (stack.length > 0 && stack[stack.length - 1]!.level >= level) stack.pop();
-    stack.push({ level, text, code: sectionCodeForHeading(text) });
+    stack.push({ id: nextHeadingId, level, text, code: sectionCodeForHeading(text) });
+    nextHeadingId += 1;
   }
   flush();
 
@@ -200,20 +249,138 @@ function splitIntoSegments(markdown: string): Segment[] {
   return segments;
 }
 
-function splitSection(
-  headingLine: string,
-  body: string,
-  maxChars: number,
-  overlapChars: number,
-): string[] {
-  const prefix = headingLine ? `${headingLine}\n\n` : "";
-  if (prefix.length + body.length <= maxChars) return [`${prefix}${body}`.trim()];
-  const parts = splitBody(body, Math.max(400, maxChars - prefix.length), overlapChars);
-  return parts.map((part) => `${prefix}${part}`.trim());
+/**
+ * Pick the heading level that actually divides the document. A lone H1 title
+ * does not count, so a SmPC with one title and thirty H2 sections groups by H2
+ * while a DailyMed label with twelve H1 sections groups by H1.
+ */
+function groupLevelFor(segments: readonly Segment[]): number | null {
+  const distinct = new Map<number, Set<string>>();
+  for (const segment of segments) {
+    for (const frame of segment.frames) {
+      const set = distinct.get(frame.level) ?? new Set<string>();
+      set.add(frame.text);
+      distinct.set(frame.level, set);
+    }
+  }
+  const levels = [...distinct.keys()].sort((a, b) => a - b);
+  for (const level of levels) {
+    if ((distinct.get(level)?.size ?? 0) >= 2) return level;
+  }
+  return levels[0] ?? null;
+}
+
+function groupSegments(segments: readonly Segment[], title: string): Group[] {
+  const groupLevel = groupLevelFor(segments);
+  const groups: Group[] = [];
+  let current: { key: string; segments: Segment[] } | null = null;
+
+  for (const segment of segments) {
+    const key = groupKey(segment, groupLevel);
+    if (!current || current.key !== key) {
+      if (current) groups.push(buildGroup(current.segments, groupLevel, title));
+      current = { key, segments: [segment] };
+      continue;
+    }
+    current.segments.push(segment);
+  }
+  if (current) groups.push(buildGroup(current.segments, groupLevel, title));
+  return groups;
+}
+
+function groupKey(segment: Segment, groupLevel: number | null): string {
+  if (groupLevel === null) return "";
+  const frame = frameAtOrAbove(segment.frames, groupLevel);
+  return frame ? `${frame.level}:${frame.id}` : "";
+}
+
+function buildGroup(segments: readonly Segment[], groupLevel: number | null, title: string): Group {
+  const first = segments[0]!;
+  const path = headingPath(first, groupLevel, title);
+  return {
+    segments,
+    headingPaths: path ? [path] : [],
+    chars: segments.reduce((total, segment) => total + segmentChars(segment), 0),
+  };
+}
+
+function headingPath(segment: Segment, groupLevel: number | null, title: string): string {
+  const frames =
+    groupLevel === null
+      ? segment.frames
+      : segment.frames.filter((frame) => frame.level <= groupLevel);
+  const texts = frames.map((frame) => frame.text);
+  // A single H1 above the grouping level is the document title, not a section.
+  if (groupLevel !== null && groupLevel > 1 && texts.length > 1) texts.shift();
+  if (texts[0] === title) texts.shift();
+  return texts.join(" > ");
+}
+
+function frameAtOrAbove(frames: readonly HeadingFrame[], level: number): HeadingFrame | undefined {
+  let candidate: HeadingFrame | undefined;
+  for (const frame of frames) {
+    if (frame.level <= level) candidate = frame;
+  }
+  return candidate;
+}
+
+function segmentChars(segment: Segment): number {
+  return segment.headingLine.length + segment.body.length + 2;
+}
+
+function groupText(group: Group): string {
+  return group.segments
+    .map((segment) => `${segment.headingLine}\n\n${segment.body}`.trim())
+    .join("\n\n");
+}
+
+/** Merge undersized groups into their predecessor while the budget allows. */
+function packGroups(groups: readonly Group[], maxChars: number, minGroupChars: number): Group[] {
+  const packed: Group[] = [];
+  for (const group of groups) {
+    const last = packed.at(-1);
+    if (last && group.chars < minGroupChars && last.chars + group.chars <= maxChars) {
+      packed[packed.length - 1] = {
+        segments: [...last.segments, ...group.segments],
+        headingPaths: [...last.headingPaths, ...group.headingPaths],
+        chars: last.chars + group.chars,
+      };
+      continue;
+    }
+    packed.push(group);
+  }
+  return packed;
+}
+
+function uniqueCodes(segments: readonly Segment[]): string[] {
+  const codes: string[] = [];
+  for (const segment of segments) {
+    const code = deepestMappedCode(segment.frames);
+    if (!codes.includes(code)) codes.push(code);
+  }
+  return codes.length > 0 ? codes : ["other"];
+}
+
+function deepestHeading(segments: readonly Segment[]): string | undefined {
+  const first = segments[0];
+  if (!first) return undefined;
+  return first.frames.at(-1)?.text;
+}
+
+/** The section-level heading a packed chunk belongs to. */
+function groupSectionHeading(group: Group, title: string): string {
+  const path = group.headingPaths[0];
+  if (!path) return deepestHeading(group.segments) ?? title;
+  const parts = path.split(" > ");
+  return parts.at(-1) ?? title;
 }
 
 function splitBody(body: string, maxChars: number, overlapChars: number): string[] {
   if (body.length <= maxChars) return [body];
+  // The overlap is carried inside the ceiling, not on top of it: each part is
+  // built to `budget` and the repeated tail brings the final text back up to
+  // `maxChars` at most.
+  const budget = Math.max(400, maxChars - overlapChars);
   const paragraphs = body
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
@@ -228,13 +395,13 @@ function splitBody(body: string, maxChars: number, overlapChars: number): string
   };
 
   for (const paragraph of paragraphs) {
-    if (paragraph.length > maxChars) {
+    if (paragraph.length > budget) {
       flush();
-      for (const piece of splitOversized(paragraph, maxChars)) parts.push(piece);
+      for (const piece of splitOversized(paragraph, budget)) parts.push(piece);
       continue;
     }
     const candidate = current ? `${current}\n\n${paragraph}` : paragraph;
-    if (candidate.length <= maxChars) {
+    if (candidate.length <= budget) {
       current = candidate;
       continue;
     }
@@ -300,15 +467,21 @@ function applyOverlap(parts: readonly string[], overlapChars: number, maxChars: 
     const boundary = tail.search(/\s/);
     const cleanTail = boundary >= 0 ? tail.slice(boundary + 1) : tail;
     const candidate = cleanTail ? `${cleanTail}\n\n${parts[index]}` : parts[index]!;
-    result.push(candidate.length <= maxChars + overlapChars ? candidate : parts[index]!);
+    result.push(candidate.length <= maxChars ? candidate : parts[index]!);
   }
   return result;
 }
 
-function contextualize(
+/**
+ * Deterministic fallback note. It is deliberately built from document metadata
+ * only: it names the medicine, the source and the section, which is the part
+ * the corpus already knows for certain. The model-written note replaces it
+ * whenever one exists for the chunk.
+ */
+function buildDefaultContextNote(
   document: ChunkSourceDocument,
   sectionPath: string,
-  content: string,
+  _content: string,
 ): string {
   const identity =
     [document.inn, document.brandName].filter(Boolean).join(" / ") ||
@@ -316,12 +489,12 @@ function contextualize(
     "unknown medicine";
   const strength = document.strengthForm ? `, ${document.strengthForm}` : "";
   const jurisdiction = document.jurisdiction ?? "unknown jurisdiction";
-  const note =
+  return (
     `${document.title} — ${identity}${strength}. ` +
     `${document.documentType} in ${document.language}. ` +
-    `Source: ${document.sourceName} (authority ${document.authorityLevel}/4, ${jurisdiction}). ` +
-    `Section: ${sectionPath}.`;
-  return `${note}\n\n${content}`;
+    `Source: ${document.sourceName} (${jurisdiction}). ` +
+    `Section: ${sectionPath}.`
+  );
 }
 
 const HEADING_CODES: ReadonlyArray<readonly [string, readonly string[]]> = [
@@ -350,6 +523,9 @@ const HEADING_CODES: ReadonlyArray<readonly [string, readonly string[]]> = [
   ["pharmacology", ["pharmacolog", "clinical pharmacology"]],
   ["composition", ["composition", "formule"]],
   ["denomination", ["denomination", "name of the medicinal product"]],
+  ["nomenclature_registered", ["produits enregistres", "registered products"]],
+  ["nomenclature_non_renewed", ["produits non renouveles", "non renewed products"]],
+  ["nomenclature_withdrawn", ["produits retires", "withdrawn products"]],
   ["storage", ["conservation", "stockage", "storage", "shelf life"]],
   ["package", ["emballage", "presentation", "package", "how supplied"]],
   ["excipients", ["excipient"]],

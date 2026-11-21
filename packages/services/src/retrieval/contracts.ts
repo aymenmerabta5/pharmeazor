@@ -7,6 +7,8 @@
  * may never widen what the principal is allowed to read.
  */
 
+import type { AuthorityOverlap } from "./authority";
+
 export interface RetrievalPrincipal {
   /** Authenticated actor id. Never taken from a request body. */
   readonly actorId: string;
@@ -42,13 +44,17 @@ export interface RetrievalCandidate {
   readonly documentId: string;
   readonly title: string;
   readonly sectionCode: string;
+  /** Every section the chunk covers; packed chunks cover more than one. */
+  readonly sectionCodes: readonly string[];
   readonly sectionHeading: string;
   readonly sectionPath: string;
   readonly content: string;
   readonly contextualizedContent: string;
   readonly sourceId: string;
   readonly sourceName: string;
+  /** Source authority rank; lower wins. Assigned by the source registry. */
   readonly authorityLevel: number;
+  readonly authorityTier: string | null;
   readonly documentType: string;
   readonly language: string;
   readonly medicineIds: readonly string[];
@@ -73,7 +79,17 @@ export interface RetrievalCitation {
   readonly label: string;
 }
 
+/** Authority metadata attached to every returned passage. */
+export interface RetrievedAuthority {
+  readonly level: number;
+  readonly tier: string | null;
+  readonly label: string;
+  readonly official: boolean;
+  readonly description: string;
+}
+
 export interface RetrievedChunk extends RetrievalCandidate {
+  readonly authority: RetrievedAuthority;
   readonly scores: RetrievalScores;
   readonly citation: RetrievalCitation;
 }
@@ -95,5 +111,12 @@ export interface RetrievalDiagnostics {
 
 export interface RetrievalResult {
   readonly chunks: readonly RetrievedChunk[];
+  /**
+   * Passages covering the same medicine and section from sources of different
+   * authority. The model follows `preferredChunkId` when they disagree.
+   */
+  readonly authorityOverlaps: readonly AuthorityOverlap[];
+  /** Prompt-ready precedence rule, so the model never has to infer it. */
+  readonly authorityPolicy: string;
   readonly diagnostics: RetrievalDiagnostics;
 }

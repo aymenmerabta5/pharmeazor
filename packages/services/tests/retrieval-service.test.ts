@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { retrieval } from "@repo/services";
 
-const { createRetrievalService, isRetrievalError } = retrieval;
+const { authorityDescriptor, createRetrievalService, isRetrievalError } = retrieval;
 type EmbeddingPort = retrieval.EmbeddingPort;
 type RankedCandidate = retrieval.RankedCandidate;
 type RerankPort = retrieval.RerankPort;
@@ -20,6 +20,7 @@ function candidate(
     documentId: `doc_${chunkId}`,
     title: `Document ${chunkId}`,
     sectionCode: "dosage",
+    sectionCodes: ["dosage"],
     sectionHeading: "Posologie",
     sectionPath: "Résumé > Posologie",
     content: `Content for ${chunkId}`,
@@ -27,6 +28,7 @@ function candidate(
     sourceId: "ANPP_RCP",
     sourceName: "ANPP",
     authorityLevel: 1,
+    authorityTier: "official_algerian_smpc",
     documentType: "rcp",
     language: "fr",
     medicineIds: ["MED031"],
@@ -118,13 +120,53 @@ describe("retrieval service", () => {
     expect(result.chunks.map((chunk) => chunk.chunkId)).toEqual(["c", "a"]);
     expect(result.chunks[0]?.citation).toEqual({
       chunkId: "c",
-      label: "ANPP · rcp · Posologie",
+      label: "ANPP · rcp · Posologie (autorité 1/4)",
     });
     expect(result.chunks[0]?.scores.rerank).toBe(0.9);
     expect(result.chunks[0]?.scores.denseRank).toBe(3);
     expect(result.chunks[0]?.scores.lexicalRank).toBe(3);
     expect(result.diagnostics.rerank).toBe("applied");
     expect(result.diagnostics.returnedChunks).toBe(2);
+  });
+
+  it("attaches authority metadata and reports cross-source overlaps", async () => {
+    const candidates = [
+      candidate("anpp", {
+        sourceId: "ANPP_RCP",
+        sourceName: "ANPP",
+        authorityLevel: 1,
+        authorityTier: "official_algerian_smpc",
+      }),
+      candidate("bdpm", {
+        sourceId: "BDPM_FR",
+        sourceName: "BDPM",
+        authorityLevel: 3,
+        authorityTier: "foreign_institutional",
+      }),
+    ];
+    const service = createRetrievalService({ index: index(candidates), embedding: embedding() });
+    const result = await service.search(PRINCIPAL, { query: "paracetamol dose", limit: 2 });
+
+    expect(result.chunks[0]?.authority).toEqual({
+      ...authorityDescriptor(1),
+      tier: "official_algerian_smpc",
+    });
+    expect(result.chunks[1]?.authority.official).toBe(false);
+    expect(result.authorityOverlaps).toHaveLength(1);
+    expect(result.authorityOverlaps[0]?.preferredChunkId).toBe("anpp");
+    expect(result.authorityPolicy).toContain("lower wins");
+  });
+
+  it("keeps the authority rank when the citation label is truncated", async () => {
+    const longHeading = "Posologie ".repeat(40).trim();
+    const candidates = [candidate("long", { sectionHeading: longHeading })];
+    const service = createRetrievalService({ index: index(candidates), embedding: embedding() });
+    const result = await service.search(PRINCIPAL, { query: "paracetamol" });
+
+    const label = result.chunks[0]?.citation.label ?? "";
+    expect(label.length).toBeLessThanOrEqual(180);
+    expect(label.endsWith("(autorité 1/4)")).toBe(true);
+    expect(label).toContain("...");
   });
 
   it("drops chunks flagged as instruction injection", async () => {

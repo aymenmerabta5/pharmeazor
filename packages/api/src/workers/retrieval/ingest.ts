@@ -78,11 +78,15 @@ interface IngestOptions {
   readonly force: boolean;
   readonly prune: boolean;
   readonly maxChars: number;
+  readonly notes: string | null;
+  readonly requireContext: boolean;
 }
 
 interface IngestSummary {
   readonly documents: number;
   readonly chunks: number;
+  readonly contextualizedChunks: number;
+  readonly fallbackChunks: number;
   readonly embeddedChunks: number;
   readonly retokenizedChunks: number;
   readonly reusedChunks: number;
@@ -90,19 +94,32 @@ interface IngestSummary {
   readonly deletedDocuments: number;
   readonly elapsedMs: number;
   readonly embeddingModel: string;
+  readonly notesPath: string | null;
 }
 
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const startedAt = performance.now();
+  const notes = await readContextNotes(options.notes);
   const rows = await readManifest(options);
   const selected = selectRows(rows, options);
-  const documents = await Promise.all(selected.map((row) => loadDocument(row, options)));
+  const documents = await Promise.all(selected.map((row) => loadDocument(row, options, notes)));
 
   if (options.dryRun) {
-    const summary = summarizeDryRun(documents, startedAt);
+    const summary = summarizeDryRun(documents, startedAt, options, notes);
     console.log(JSON.stringify({ ok: true, dryRun: true, ...summary }, null, 2));
     return;
+  }
+
+  if (options.requireContext) {
+    const missing = documents.flatMap((document) =>
+      document.chunks.filter((chunk) => !notes.has(chunk.contextKey)),
+    );
+    if (missing.length > 0) {
+      throw new Error(
+        `${missing.length} chunk(s) have no model-written context note; run retrieval:contextualize first or drop --require-context`,
+      );
+    }
   }
 
   const config = readRetrievalRuntimeConfig();
@@ -225,11 +242,13 @@ async function main(): Promise<void> {
           WHERE chunk_id = ANY(${textArray(retokenizedIds)})
         `);
         const postings = needsRetokenizing.flatMap((chunk) =>
-          [...termFrequencies(tokenizeForLexical(chunk.content))].map(([term, tf]) => ({
-            chunkId: chunk.chunkId,
-            term,
-            tf,
-          })),
+          [...termFrequencies(tokenizeForLexical(chunk.contextualizedContent))].map(
+            ([term, tf]) => ({
+              chunkId: chunk.chunkId,
+              term,
+              tf,
+            }),
+          ),
         );
         for (const batch of batchOf(postings, 1_000)) {
           await transaction.insert(retrievalChunkTerms).values(batch).onConflictDoNothing();
@@ -277,6 +296,12 @@ async function main(): Promise<void> {
   const summary: IngestSummary = {
     documents: documents.length,
     chunks: chunkCount,
+    contextualizedChunks: documents
+      .flatMap((document) => document.chunks)
+      .filter((chunk) => notes.has(chunk.contextKey)).length,
+    fallbackChunks: documents
+      .flatMap((document) => document.chunks)
+      .filter((chunk) => !notes.has(chunk.contextKey)).length,
     embeddedChunks,
     retokenizedChunks,
     reusedChunks,
@@ -284,6 +309,7 @@ async function main(): Promise<void> {
     deletedDocuments,
     elapsedMs: Math.round(performance.now() - startedAt),
     embeddingModel: embedding.model,
+    notesPath: options.notes,
   };
   console.log(JSON.stringify({ ok: true, ...summary }, null, 2));
 }
@@ -296,7 +322,9 @@ function parseOptions(argv: readonly string[]): IngestOptions {
   let dryRun = false;
   let force = false;
   let prune = false;
-  let maxChars = 3_200;
+  let maxChars = 4_096;
+  let notes: string | null = resolve("tooling/cleaning-lab/output/context/notes.jsonl");
+  let requireContext = false;
   const medicineIds: string[] = [];
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -330,6 +358,15 @@ function parseOptions(argv: readonly string[]): IngestOptions {
       case "--max-chars":
         maxChars = positiveInteger(next(), "--max-chars");
         break;
+      case "--notes":
+        notes = next();
+        break;
+      case "--no-notes":
+        notes = null;
+        break;
+      case "--require-context":
+        requireContext = true;
+        break;
       case "--dry-run":
         dryRun = true;
         break;
@@ -348,7 +385,10 @@ function parseOptions(argv: readonly string[]): IngestOptions {
             "  --limit <n>         index at most n documents",
             "  --medicine <id>     index one or more MEDxxx documents",
             "  --artifact <id>     index one artifact",
-            "  --max-chars <n>     chunk size ceiling (default 3200)",
+            "  --max-chars <n>     chunk size ceiling (default 4096)",
+            "  --notes <path>      model context notes (default tooling/cleaning-lab/output/context/notes.jsonl)",
+            "  --no-notes          ignore model context notes and use the fallback note",
+            "  --require-context   fail when any selected chunk has no model-written note",
             "  --dry-run           chunk and report without a database or embedding server",
             "  --force             re-embed every selected chunk",
             "  --prune             delete documents absent from the manifest (full run only)",
@@ -376,6 +416,8 @@ function parseOptions(argv: readonly string[]): IngestOptions {
     force,
     prune,
     maxChars,
+    notes: notes ? resolve(notes) : null,
+    requireContext,
   };
 }
 
@@ -431,7 +473,11 @@ interface LoadedDocument {
   readonly chunks: ChunkDraft[];
 }
 
-async function loadDocument(row: ManifestRow, options: IngestOptions): Promise<LoadedDocument> {
+async function loadDocument(
+  row: ManifestRow,
+  options: IngestOptions,
+  notes: ReadonlyMap<string, string>,
+): Promise<LoadedDocument> {
   const artifactId = stringValue(row.artifact_id);
   const outputPath = stringValue(row.output_path);
   const title = stringValue(row.title);
@@ -474,7 +520,10 @@ async function loadDocument(row: ManifestRow, options: IngestOptions): Promise<L
     revisionDate: dateValue(row.revision_date),
     contentSha256: stringValue(row.content_sha256) ?? sha256(stripFrontMatter(markdown)),
     markdown: stripFrontMatter(markdown),
-    chunks: chunkMarkdownDocument(source, markdown, { maxChars: options.maxChars }),
+    chunks: chunkMarkdownDocument(source, markdown, {
+      maxChars: options.maxChars,
+      contextNotes: notes,
+    }),
   };
 }
 
@@ -492,13 +541,14 @@ function chunkRow(chunk: ChunkDraft, source: ChunkSourceDocument, embeddingModel
     chunkId: chunk.chunkId,
     artifactId: chunk.artifactId,
     sectionCode: chunk.sectionCode,
+    sectionCodes: [...chunk.sectionCodes],
     sectionHeading: chunk.sectionHeading,
     sectionPath: chunk.sectionPath,
     ordinal: chunk.ordinal,
     content: chunk.content,
     contextualizedContent: chunk.contextualizedContent,
     contentHash: chunk.contentHash,
-    termCount: lexicalDocumentLength(tokenizeForLexical(chunk.content)),
+    termCount: lexicalDocumentLength(tokenizeForLexical(chunk.contextualizedContent)),
     tokenEstimate: chunk.tokenEstimate,
     language: source.language,
     medicineIds: [...source.medicineIds],
@@ -517,6 +567,7 @@ function chunkRow(chunk: ChunkDraft, source: ChunkSourceDocument, embeddingModel
 function buildChunkUpdateSet() {
   return {
     sectionCode: sql`excluded.section_code`,
+    sectionCodes: sql`excluded.section_codes`,
     sectionHeading: sql`excluded.section_heading`,
     sectionPath: sql`excluded.section_path`,
     ordinal: sql`excluded.ordinal`,
@@ -561,23 +612,64 @@ async function pruneDocuments(rows: readonly ManifestRow[]): Promise<number> {
   return result.rows.length;
 }
 
-function summarizeDryRun(documents: readonly LoadedDocument[], startedAt: number) {
+function summarizeDryRun(
+  documents: readonly LoadedDocument[],
+  startedAt: number,
+  options: IngestOptions,
+  notes: ReadonlyMap<string, string>,
+) {
   const chunks = documents.flatMap((document) => document.chunks);
   return {
     documents: documents.length,
     chunks: chunks.length,
+    contextualizedChunks: chunks.filter((chunk) => notes.has(chunk.contextKey)).length,
+    fallbackChunks: chunks.filter((chunk) => !notes.has(chunk.contextKey)).length,
+    notesPath: options.notes,
     injectionChunks: chunks.filter((chunk) => chunk.injectionRisk).length,
     terms: chunks.reduce(
-      (total, chunk) => total + lexicalDocumentLength(tokenizeForLexical(chunk.content)),
+      (total, chunk) =>
+        total + lexicalDocumentLength(tokenizeForLexical(chunk.contextualizedContent)),
       0,
     ),
     maximumChunkCharacters: chunks.reduce(
       (maximum, chunk) => Math.max(maximum, chunk.content.length),
       0,
     ),
-    sections: [...new Set(chunks.map((chunk) => chunk.sectionCode))].sort(),
+    sections: [...new Set(chunks.flatMap((chunk) => chunk.sectionCodes))].sort(),
     elapsedMs: Math.round(performance.now() - startedAt),
   };
+}
+
+/**
+ * Read the model-written context notes. The file is append-only JSONL and the
+ * last row for a key wins, so a re-contextualized chunk can be corrected
+ * without rewriting the file.
+ */
+async function readContextNotes(path: string | null): Promise<Map<string, string>> {
+  const notes = new Map<string, string>();
+  if (!path) return notes;
+  let text: string;
+  try {
+    text = await readFile(path, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return notes;
+    throw error;
+  }
+  for (const [index, line] of text.split(/\r?\n/).entries()) {
+    if (!line.trim()) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(line);
+    } catch (cause) {
+      throw new Error(`Context note line ${index + 1} is not valid JSON`, { cause });
+    }
+    if (!parsed || typeof parsed !== "object") continue;
+    const row = parsed as { context_key?: unknown; note?: unknown };
+    if (typeof row.context_key !== "string" || typeof row.note !== "string") continue;
+    const note = row.note.trim();
+    if (note) notes.set(row.context_key, note);
+  }
+  return notes;
 }
 
 function stringValue(value: unknown): string | null {

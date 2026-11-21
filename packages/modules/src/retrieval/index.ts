@@ -1,5 +1,6 @@
 export {
   chunkMarkdownDocument,
+  contextKeyFor,
   detectRetrievalInjection,
   sanitizeRetrievalText,
   sectionCodeForHeading,

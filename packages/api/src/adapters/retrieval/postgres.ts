@@ -20,7 +20,7 @@ function filterConditions(filter: RetrievalFilter): SQL[] {
     conditions.push(sql`c.medicine_ids && ${textArray(filter.medicineIds)}`);
   }
   if (filter.sectionCodes.length > 0) {
-    conditions.push(sql`c.section_code = ANY(${textArray(filter.sectionCodes)})`);
+    conditions.push(sql`c.section_codes && ${textArray(filter.sectionCodes)}`);
   }
   if (filter.languages.length > 0) {
     conditions.push(sql`c.language = ANY(${textArray(filter.languages)})`);
@@ -138,6 +138,7 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       document_id: string;
       title: string;
       section_code: string;
+      section_codes: string[];
       section_heading: string;
       section_path: string;
       content: string;
@@ -145,6 +146,7 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       source_id: string;
       source_name: string;
       authority_level: number;
+      authority_tier: string | null;
       document_type: string;
       language: string;
       medicine_ids: string[];
@@ -158,13 +160,15 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
         d.document_id,
         d.title,
         c.section_code,
+        c.section_codes,
         c.section_heading,
         c.section_path,
         c.content,
         c.contextualized_content,
         c.source_id,
         c.source_name,
-        c.authority_level,
+        d.authority_level,
+        d.authority_tier,
         c.document_type,
         c.language,
         c.medicine_ids,
@@ -181,6 +185,7 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       documentId: row.document_id,
       title: row.title,
       sectionCode: row.section_code,
+      sectionCodes: row.section_codes ?? [],
       sectionHeading: row.section_heading,
       sectionPath: row.section_path,
       content: row.content,
@@ -188,6 +193,7 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       sourceId: row.source_id,
       sourceName: row.source_name,
       authorityLevel: Number(row.authority_level),
+      authorityTier: row.authority_tier ?? null,
       documentType: row.document_type,
       language: row.language,
       medicineIds: row.medicine_ids ?? [],

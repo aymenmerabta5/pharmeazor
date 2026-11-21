@@ -37,14 +37,17 @@ paths:
 # only relabels the cleaning-specific `tier` where the default derived from
 # `source_type` is not precise enough. A source missing here still works.
 #
-# Authority ranking (from the project brief, lower wins):
-#   1 = official Algerian SmPC / package leaflet (ANPP)
-#   2 = official Algerian nomenclature (Ministry of Pharmaceutical Industry)
+# Authority ranking (lower wins):
+#   1 = official Algerian sources: ANPP SmPC / package leaflet, and the
+#       Ministry of Health nomenclature
+#   2 = Algerian nomenclature register (Pharm'Net catalogue: names and status)
 #   3 = foreign institutional reference (ANSM/BDPM, DailyMed, EMA)
-#   4 = Algerian professional website (Pharm'Net, secondary only)
+#   4 = Algerian professional website (secondary only)
 sources:
   ANPP_RCP:
     tier: official_algerian_smpc
+  PHARMNET_CATALOG:
+    tier: nomenclature_register
 
 # Chunking preview only. Final chunking belongs to the retrieval pipeline;
 # this proves the clean files split cleanly with the intended settings.
