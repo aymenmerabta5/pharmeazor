@@ -1,0 +1,94 @@
+# @repo/benchmark
+
+LLM benchmark package for PHARMEAZOR. Measures the raw professor-approved model
+(`openai/gpt-oss-120b` via Groq) on a versioned, human-reviewed question set,
+without any PHARMEAZOR corpus or retrieval.
+
+The package is **independent** of the production app, `@repo/api`, and the
+retrieval labs under `tooling/`. It is a workspace member that can be run
+standalone.
+
+## Status
+
+See [`STATUS.md`](./STATUS.md). This package is currently at **Prompt 2** —
+package foundation and dataset only. Groq integration, raw-model runs,
+evaluation, reporting and comparison are later phases.
+
+## Requirements
+
+- Bun `1.4.4` (matches the root `packageManager` pin)
+- Node `24.19.0` (matches `engines.node` in `apps/harness`)
+- No API key is needed for Prompt 2. `GROQ_API_KEY` is required from Prompt 3.
+
+## Layout
+
+    data/v1/                     versioned benchmark dataset (DRAFT)
+    docs/dataset.md              dataset format and reviewer workflow
+    src/dataset/                 schemas, loaders, validators, hashing
+    src/shared/                  small shared utilities
+    src/cli/                     CLI entry (dataset validate/stats)
+    tests/dataset/               unit tests, including the isolation tests
+
+## Commands
+
+From the package directory:
+
+    bun run test                 # unit tests
+    bun run typecheck            # bun check
+    bun run lint                 # oxlint --deny-warnings .
+    bun run format:check         # oxfmt --check .
+    bun run benchmark dataset validate
+    bun run benchmark dataset stats
+
+From the repository root:
+
+    bun run --cwd packages/benchmark benchmark dataset validate
+    bun run --cwd packages/benchmark test
+
+## Dataset model
+
+Two files, both versioned under `data/v1/`:
+
+- `questions.jsonl` — the **only** file the raw benchmark runner will send to the model.
+- `gold_annotations.jsonl` — reference answers and evaluation criteria. **Never** sent to the model.
+
+The raw runner path structurally cannot load gold annotations: see
+`src/dataset/loader.ts` (exports only `loadQuestions`) versus
+`src/dataset/gold-loader.ts` (not re-exported from `src/index.ts` and
+not imported by `loader.ts`). `tests/dataset/isolation.test.ts` enforces this.
+
+## Current state
+
+All 30 questions and all 30 gold annotations are `DRAFT`. No question is
+scorable until a pharmacist sets `review_status: "APPROVED"` on the question
+**and** `verification_status: "VERIFIED"` on its annotation, with a real
+`reference_answer` and non-empty `expected_facts`.
+
+## What is not implemented yet (by design)
+
+- Groq integration, model selection, prompt versioning (Prompt 3)
+- Raw-model runner, caching, resume (Prompt 3)
+- LLM scoring, deterministic rubric, human review interface (Prompt 4)
+- Reports, run comparison, reproducibility checks (Prompt 5)
+
+## Environment
+
+- `BENCHMARK_LOG_LEVEL` (optional, default `info`): `debug | info | warn | error`
+- `GROQ_API_KEY` (Prompt 3 onwards, already declared in the root `.env.example`)
+
+CLI usage from the repo root requires the root `.env.local` to be loaded for
+Prompt 3 and later:
+
+    bun --env-file=.env.local run --cwd packages/benchmark benchmark raw run
+
+## Known limitations (Prompt 2)
+
+- The 30 shipped questions are realistic pharmacist-relevant prompts but **every
+  gold annotation is a template with `reference_answer: null`** and every
+  question is `DRAFT`. A pharmacist must fill them in. No medical fact has been
+  invented by this package.
+- No Arabic question is included in v1 (language enum supports `ar`, but v1
+  contains none). Adding `ar` questions is an additive change to `data/v2/`.
+- The validator refuses to score DRAFT questions; this is intentional.
+
+See [`docs/dataset.md`](./docs/dataset.md) for the full data model and reviewer workflow.
