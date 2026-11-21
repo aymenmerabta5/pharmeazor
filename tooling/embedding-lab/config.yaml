@@ -1,0 +1,130 @@
+# =============================================================================
+# PHARMEAZOR — BGE-M3 embedding lab configuration
+# =============================================================================
+# This lab is deliberately small: it reads the contextualized chunk file that
+# cleaning-lab writes, runs BAAI/bge-m3 on the local GPU, and writes one vector
+# per chunk plus a manifest. It never writes to PostgreSQL, never serves
+# requests, and is not imported by the application runtime.
+#
+# Paths are resolved relative to this file (the lab root), not the current
+# working directory. `run.py --input/--output/--model-dir` overrides them for a
+# one-off run.
+#
+# Why `embed-input.jsonl` and not `notes.jsonl`:
+#   cleaning-lab writes two sidecars. `notes.jsonl` contains only the
+#   contextualization note (`context_key`, `chunk_id`, `note`) and currently
+#   has duplicate chunk ids. `embed-input.jsonl` is the newer artifact and
+#   contains the actual contextualized chunk text (`text`) plus its
+#   `text_sha256`. Embedding the note-only file would index notes instead of
+#   chunks, so this lab rejects it with an explicit error.
+
+input:
+  # The cleaning-lab output tree has a nested `output/output` directory.
+  path: "../cleaning-lab/output/output/context/embed-input.jsonl"
+
+  # `error` refuses duplicate chunk ids. `first`/`last` are available for
+  # exploratory runs, but the production corpus must stay one row per chunk.
+  duplicate_policy: "error"
+
+  # Every row must carry a matching SHA-256 of its `text`. This catches a
+  # truncated or partially rewritten input file before the GPU is touched.
+  require_text_sha256: true
+
+  # 0 = all rows. Useful for a fast smoke test from the CLI (`--limit`).
+  max_rows: 0
+
+output:
+  root: "output/embeddings"
+
+  # BGE-M3 produces 1024-d dense vectors. `float16` is the right storage type
+  # for pgvector halfvec and halves the artifact size; use `float32` when a
+  # downstream benchmark needs full precision.
+  dtype: "float16"
+
+  # Keep the chunk text beside the vectors so the artifact is self-contained.
+  # `--no-text` omits it and leaves only chunk_id + text_sha256.
+  include_text: true
+
+  # Refuse to overwrite an existing artifact unless the run passes --force.
+  overwrite: false
+
+model:
+  repo_id: "BAAI/bge-m3"
+
+  # Pinned commit for reproducibility. `run.py download` resolves and records
+  # the exact commit it downloaded; changing this invalidates every vector.
+  revision: "5617a9f61b028005a4858fdac845db406aefb181"
+
+  local_dir: "models/bge-m3"
+
+  # The corpus max is ~7,100 characters per chunk. BGE-M3 supports 8,192
+  # tokens; 4,096 is a safe cap that still leaves headroom for French
+  # tokenization. A chunk longer than this fails the run by default instead of
+  # being silently truncated.
+  max_length: 4096
+  truncation: "error" # error | truncate
+
+  # `bfloat16` is native on the RTX 5060 (Blackwell, sm_120) and is more
+  # numerically stable than float16 for XLM-R LayerNorm. `float32` is slower
+  # and only useful for comparison.
+  dtype: "bfloat16"
+
+  # SDPA selects the best fused attention kernel PyTorch has for this GPU.
+  # `flash_attention_2` is intentionally not required; it has no reliable
+  # Windows/Blackwell wheel in this setup.
+  attn_implementation: "sdpa"
+
+  # BGE-M3's sentence-transformers config uses CLS pooling, then L2
+  # normalization. Do not change this without re-measuring retrieval quality.
+  pooling: "cls"
+  normalize: true
+
+  trust_remote_code: false
+  local_files_only: true
+  download_workers: 8
+
+runtime:
+  device: "cuda"
+
+  # Batch shaping. The engine groups similar-length chunks and then caps each
+  # batch by both item count and padded token count. 24k padded tokens is a
+  # conservative starting point for an 8 GB RTX 5060; OOM retries halve the
+  # batch instead of aborting the run.
+  batch_size: 64
+  max_batch_tokens: 24576
+  length_grouped: true
+  pad_multiple: 64
+
+  # Pad/pin the next batches on a CPU thread while the GPU is busy. 0 disables
+  # the prefetcher.
+  prefetch_batches: 4
+  pin_memory: true
+
+  # torch.compile is lazy: the first batch pays the compilation cost. On the
+  # RTX 5060, `default` measured faster than `max-autotune-no-cudagraphs`
+  # (33.0 vs 31.9 rows/s) and compiles in a fraction of the time. CUDA-graph
+  # modes fail on the varying padded lengths, so `compile_dynamic` stays true:
+  # one graph for every shape instead of one graph per shape.
+  compile: true
+  compile_mode: "default"
+  compile_backend: "inductor"
+  compile_dynamic: true
+  warmup_batches: 3
+
+  # Blackwell supports TF32 and BF16. SDPA is enabled explicitly so a stale
+  # environment variable cannot silently force the slow math kernel.
+  tf32: true
+  sdpa: true
+
+  # Halve a batch and retry on CUDA OOM rather than failing a long run.
+  oom_retry: true
+
+  progress: true
+
+benchmark:
+  # A length-stratified sample is enough to compare eager and compiled modes
+  # without spending a full corpus run on each candidate.
+  sample_rows: 1024
+  warmup_batches: 3
+  measure_batches: 10
+  compare_eager: true

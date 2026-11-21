@@ -1,0 +1,16 @@
+{
+  "name": "@tooling/embedding-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline BGE-M3 embedding service for the PHARMEAZOR chunk corpus.",
+  "scripts": {
+    "download": "python run.py download",
+    "embed": "python run.py embed",
+    "benchmark": "python run.py benchmark",
+    "validate": "python run.py validate",
+    "info": "python run.py info",
+    "check:python": "python -m compileall -q settings.py pipeline run.py",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  }
+}

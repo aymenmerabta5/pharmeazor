@@ -1,0 +1,23 @@
+# Python-side dependencies for the offline BGE-M3 embedding lab.
+#
+# PyTorch is installed separately from the CUDA index so this machine gets the
+# sm_120 (Blackwell) build instead of the CPU wheel. See README.md:
+#
+#   uv pip install --index-url https://download.pytorch.org/whl/cu130 \
+#       "torch==2.14.1+cu130"
+#
+# Then install this file. `triton-windows` is optional and only needed to let
+# torch.compile's Inductor backend generate kernels on Windows; without it the
+# service falls back to eager and says so in the run manifest.
+transformers>=5.24,<6
+huggingface-hub>=2.4,<3
+safetensors>=0.4,<1
+sentencepiece>=0.2,<0.3
+numpy>=2.0,<3
+PyYAML>=6,<7
+tqdm>=4.66,<5
+
+# Windows has no upstream Triton wheel, and torch.compile's Inductor backend
+# needs one to generate CUDA kernels. This port was tested with the cu130 torch
+# wheel above; without it the service logs the reason and falls back to eager.
+triton-windows==3.9.0.post30; sys_platform == "win32"
