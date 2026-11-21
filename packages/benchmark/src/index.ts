@@ -29,3 +29,23 @@ export {
 export { validateDataset, validateDatasetFromFiles } from "./dataset/validate";
 export { hashQuestions } from "./dataset/hash";
 export { sha256 } from "./shared/hash";
+
+// Prompt 3 additions
+export { getGroqApiKey, MissingEnvError } from "./config/env";
+export { RAW_GENERATION_V1, type GenerationConfig } from "./config/generation";
+export { RAW_PROMPT_VERSION, RAW_SYSTEM_PROMPT_V1 } from "./prompts/raw/v1";
+export {
+  createGroqClient,
+  type GroqClient,
+  type ChatRequest,
+  type ChatResult,
+  type ChatUsage,
+} from "./providers/groq/client";
+export { classifyGroqError, type ClassifiedError, type ErrorClass } from "./providers/groq/errors";
+export { buildCacheKey, readCache, writeCache, type CacheKeyInput } from "./runner/cache";
+export {
+  runRawBenchmark,
+  type RawRunInput,
+  type RawRunResult,
+  type RawRunProgress,
+} from "./runner/raw";

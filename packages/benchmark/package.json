@@ -12,9 +12,11 @@
     "format:check": "oxfmt --check .",
     "test": "bun test",
     "test:unit": "bun test",
-    "benchmark": "bun src/cli/index.ts"
+    "benchmark": "bun --env-file=../../.env.local src/cli/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/groq": "4.0.84",
+    "ai": "7.0.173",
     "zod": "4.6.7"
   },
   "devDependencies": {

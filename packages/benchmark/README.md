@@ -31,19 +31,46 @@ evaluation, reporting and comparison are later phases.
 
 ## Commands
 
-From the package directory:
-
-    bun run test                 # unit tests
-    bun run typecheck            # bun check
-    bun run lint                 # oxlint --deny-warnings .
-    bun run format:check         # oxfmt --check .
+    bun run test                 # unit tests (mocked, no API)
+    bun run typecheck
+    bun run lint
+    bun run format:check
     bun run benchmark dataset validate
     bun run benchmark dataset stats
+    bun run benchmark raw run   --allow-draft --limit 1
+    bun run benchmark raw run   --category DOSAGE_AND_NUMERICAL_KNOWLEDGE
+    bun run benchmark raw resume --run-id <ID>
+    bun run benchmark raw status
+    bun run benchmark raw status --run-id <ID>
 
-From the repository root:
+From the repo root:
 
-    bun run --cwd packages/benchmark benchmark dataset validate
     bun run --cwd packages/benchmark test
+    bun --env-file=.env.local run --cwd packages/benchmark benchmark raw run
+
+## Raw model run
+
+- Model: `openai/gpt-oss-120b` via Groq (`@ai-sdk/groq`)
+- Reasoning effort: `medium`
+- Concurrency: `1`
+- Prompt: fixed system prompt v1, one user message per question
+- Input: **questions.jsonl only**. No gold annotations, no PHARMEAZOR
+  corpus, no retrieval.
+- Output per question: `responses.jsonl` line with the visible answer,
+  token usage, latency, finish reason.
+- Failures: bounded retry (3 attempts, exponential backoff) on transient
+  errors only. Permanent errors are recorded and the next question runs.
+- Cache: global, keyed on model + prompt version + system prompt + question
+  - generation config. Resume and re-runs reuse cached responses.
+
+`raw run` refuses to start when no question is `APPROVED`, unless
+`--allow-draft` is passed. `--allow-draft` runs are tagged in
+`run_metadata.json` and must not be scored.
+
+Live smoke test (consumes Groq quota):
+
+    $env:BENCHMARK_LIVE="1"
+    bun --env-file=.env.local run --cwd packages/benchmark test tests/smoke
 
 ## Dataset model
 
