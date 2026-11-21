@@ -16,6 +16,8 @@ export interface RunMetadata {
   generation: Record<string, unknown>;
   total_questions: number;
   allow_draft: boolean;
+  run_mode?: "raw" | "evidence" | "rag";
+  annotations_hash?: string | null;
   cumulative_usage?: {
     api_calls: number;
     cache_hits: number;

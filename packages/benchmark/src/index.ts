@@ -66,3 +66,17 @@ export { extractNumbers, compareNumerical } from "./evaluation/numerical";
 export { detectBehavior } from "./evaluation/behavior";
 export { detectSafety } from "./evaluation/safety";
 export { computeSummary, type SummaryMetrics } from "./evaluation/metrics";
+
+// Prompt 5 additions
+export {
+  generateMarkdownReport,
+  type ReportInput,
+  type GeneratedReport,
+} from "./reporting/markdown";
+export {
+  compareRuns,
+  formatComparison,
+  type ComparisonResult,
+  type ComparableRun,
+} from "./reporting/compare";
+export { checkReproducibility, type ReproReport, type ReproCheck } from "./reporting/checks";

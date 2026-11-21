@@ -40,13 +40,19 @@ evaluation, reporting and comparison are later phases.
     bun run benchmark raw run   --allow-draft --limit 1
     bun run benchmark raw run   --category DOSAGE_AND_NUMERICAL_KNOWLEDGE
     bun run benchmark raw resume --run-id <ID>
-    bun run benchmark raw status
-    bun run benchmark raw status --run-id <ID>
+    bun run benchmark raw status [--run-id <ID>]
+    bun run benchmark evaluate run --run-id <ID>
+    bun run benchmark review prepare --run-id <ID>
+    bun run benchmark review submit --run-id <ID> --reviewer <name> --file <path>
+    bun run benchmark summary --run-id <ID>
+    bun run benchmark report --run-id <ID>
+    bun run benchmark compare --run-a <ID> --run-b <ID>
+    bun run benchmark reproduce --run-id <ID>
 
-From the repo root:
+Live smoke test (consumes Groq quota, only when explicitly authorized):
 
-    bun run --cwd packages/benchmark test
-    bun --env-file=.env.local run --cwd packages/benchmark benchmark raw run
+    $env:BENCHMARK_LIVE="1"
+    bun --env-file=.env.local run --cwd packages/benchmark test tests/smoke
 
 ## Raw model run
 
@@ -119,3 +125,20 @@ Prompt 3 and later:
 - The validator refuses to score DRAFT questions; this is intentional.
 
 See [`docs/dataset.md`](./docs/dataset.md) for the full data model and reviewer workflow.
+
+## Reporting and comparison
+
+Each run produces `responses.jsonl`, `errors.jsonl`, `run_metadata.json`,
+`evaluation.jsonl`, `summary.json`, and `report.md` inside
+`packages/benchmark/runs/<run_id>/`. See [`docs/reporting.md`](./docs/reporting.md)
+for structure, comparison rules, and reproducibility checks.
+
+The report never contains the API key: the generator strips `gsk_...`
+substrings and a test asserts the rendered output has none.
+
+Comparing two runs is refused unless `model_id`, `provider`,
+`prompt_version`, `reasoning_effort`, `dataset_version`, `dataset_hash`,
+`total_questions`, `run_mode`, and the full `generation` block are
+identical. When both runs recorded an `annotations_hash`, that must match
+too; if one or both pre-Phase-5 runs lack the field, the tool warns but
+still compares.

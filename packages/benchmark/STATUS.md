@@ -127,4 +127,70 @@ checks. Those are Prompt 5.
 
 ---
 
-## Phase 4 (Prompt 5) — Reporting and Reproducibility — NOT STARTED
+## Phase 4 (Prompt 5) — Reporting, Reproducibility and Final Validation — COMPLETE
+
+**Delivered:**
+
+- `src/reporting/markdown.ts` — `report.md` generator with the exact
+  sections Prompt 5 requires. Every percentage is written as `n/d (pct)`,
+  never as a bare rate. Zero-denominator cells are `N/A (0)`.
+- `src/reporting/compare.ts` — `compareRuns` with hard compatibility guards
+  (model, provider, prompt version, reasoning effort, dataset version, dataset
+  hash, total questions, run mode, full generation config) plus a soft
+  `annotations_hash` check with a warning path for older runs.
+- `src/reporting/checks.ts` — reproducibility checklist including a secret
+  scan (`gsk_...` and `GROQ_API_KEY=`) over every text file in the run
+  directory.
+- CLI: `benchmark report --run-id`, `benchmark compare --run-a --run-b`,
+  `benchmark reproduce --run-id`. `benchmark summary` now also writes
+  `report.md` automatically.
+- `raw run` / `raw resume` now record `annotations_hash` in
+  `run_metadata.json` (computed by the CLI, passed as a string to the
+  runner; `raw.ts` never imports the gold loader).
+- `run_mode` field added to `RunMetadata` (default `"raw"`) so evidence-
+  grounded and RAG stages can reuse the tooling later without breaking
+  comparisons.
+- Tests: `tests/reporting/markdown.test.ts` (report structure, no secrets,
+  N/A for unreviewed), `tests/reporting/compare.test.ts` (compatible,
+  every hard guard, warnings path), `tests/reporting/checks.test.ts`
+  (complete run, missing usage, count mismatch, secret leak).
+- Extended `tests/dataset/isolation.test.ts` with one more assertion that
+  `src/runner/raw.ts` does not import the gold loader.
+
+**Professor's usage rules — now fully enforced:**
+
+- **Secrets never in reports**: the markdown generator strips `gsk_...`
+  and a test asserts no `GROQ_API_KEY=` in the rendered body. The
+  reproducibility check fails the run if any file under the run directory
+  contains either pattern.
+- **API call count and token totals in the report**: present in the
+  Experiment table, sourced from `cumulative_usage`.
+- **Cache replay**: documented, tested, and reported (`API calls` /
+  `Cache hits` rows).
+- **No provider or model switching on outage**: not implemented because
+  it must not be — the tool reports failures, never works around them.
+- **Arabic legal-term verification**: noted in `docs/reporting.md` for the
+  future evidence phase. No Arabic question ships in v1.
+
+**Not implemented (final state):** evidence-grounded benchmarking and
+end-to-end RAG benchmarking. `run_mode` and `annotations_hash` are the only
+hooks added; no empty folders or speculative modules exist.
+
+**Final known limitations:**
+
+- The shipped dataset is all `DRAFT`. A pharmacist must approve questions
+  and verify annotations before the runner will score anything in a
+  non-`--allow-draft` run.
+- The deterministic rubric is intentionally conservative; the human review
+  is the authoritative score. No LLM judge.
+- Live smoke tests require `BENCHMARK_LIVE=1` and consume real quota.
+
+---
+
+## Final status: Prompt 5 complete
+
+All five phases of the professor-approved benchmark plan are delivered:
+package foundation (P2), Groq raw runner (P3), deterministic evaluation
+plus human review (P4), and reporting, comparison and reproducibility (P5).
+The package is independent of PHARMEAZOR's corpus and retrieval, and is
+ready for later evidence-grounded and RAG stages.

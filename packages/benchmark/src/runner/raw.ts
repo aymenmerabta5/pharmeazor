@@ -35,6 +35,7 @@ export interface RawRunInput {
    * always falls back to `createRateLimiter(RATE_LIMITS_FREE_TIER)`.
    */
   rateLimiter?: RateLimiter;
+  annotationsHash?: string | null;
 }
 
 export interface RawRunProgress {
@@ -120,6 +121,7 @@ export async function runRawBenchmark(input: RawRunInput): Promise<RawRunResult>
     total_questions: selected.length,
     allow_draft: input.allowDraft,
     cumulative_usage: cumulative,
+    annotations_hash: input.annotationsHash ?? null,
   };
 
   await writeRunMetadata(input.runsDir, input.runId, initialMeta);

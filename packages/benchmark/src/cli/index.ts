@@ -22,6 +22,10 @@ import {
 } from "../evaluation/review";
 import { readErrors, readResponses, readRunMetadata } from "../storage/fs";
 import { sha256 } from "../shared/hash";
+import { generateMarkdownReport } from "../reporting/markdown";
+import { compareRuns, formatComparison, type ComparableRun } from "../reporting/compare";
+import { checkReproducibility } from "../reporting/checks";
+import { readdir, readFile } from "node:fs/promises";
 
 interface ParsedArgs {
   command?: string;
@@ -78,6 +82,9 @@ function printUsage(): void {
   benchmark review prepare   --run-id <ID>
   benchmark review submit    --run-id <ID> --reviewer <ID> --file <path>
   benchmark summary          --run-id <ID>
+  benchmark report           --run-id <ID>
+  benchmark compare          --run-a <ID> --run-b <ID>
+  benchmark reproduce        --run-id <ID>
 `);
 }
 
@@ -190,7 +197,8 @@ async function runRawRun(flags: Record<string, string>): Promise<number> {
     logger.error("no questions selected after filtering; nothing to run");
     return 1;
   }
-
+  const annotations = await loadGoldAnnotationsFromFile(dataV1Path("gold_annotations.jsonl"));
+  const annotationsHash = sha256(JSON.stringify(annotations));
   const apiKey = getGroqApiKey();
   const client = createGroqClient(apiKey);
   const runId = generateRunId();
@@ -218,6 +226,7 @@ async function runRawRun(flags: Record<string, string>): Promise<number> {
     gitSha: readGitSha(),
     generation: RAW_GENERATION_V1,
     allowDraft: flags["allow-draft"] === "true",
+    annotationsHash,
     onProgress: (e) => {
       if (e.phase === "api_call" || e.phase === "cache_hit" || e.phase === "error") {
         logger.info(`[${e.answered + e.failed}/${e.total}] ${e.phase} ${e.current_question_id}`);
@@ -248,6 +257,7 @@ async function runRawResume(flags: Record<string, string>): Promise<number> {
     logger.error(`run ${runId} not found under ${runsDir()}`);
     return 1;
   }
+  const annotationsHash = meta.annotations_hash ?? null;
 
   // Resume MUST use the generation config and prompt version stored in the
   // run, not the current defaults. Otherwise cache reuse is meaningless and
@@ -281,6 +291,7 @@ async function runRawResume(flags: Record<string, string>): Promise<number> {
     gitSha: readGitSha(),
     generation,
     allowDraft: meta.allow_draft,
+    annotationsHash,
     onProgress: (e) => {
       if (e.phase === "api_call" || e.phase === "cache_hit" || e.phase === "error") {
         logger.info(`[${e.answered + e.failed}/${e.total}] ${e.phase} ${e.current_question_id}`);
@@ -363,6 +374,9 @@ async function main(argv: string[]): Promise<number> {
   if (command === "review" && subcommand === "prepare") return runReviewPrepare(flags);
   if (command === "review" && subcommand === "submit") return runReviewSubmit(flags);
   if (command === "summary") return runSummary(flags);
+  if (command === "report") return runReport(flags);
+  if (command === "compare") return runCompare(flags);
+  if (command === "reproduce") return runReproduce(flags);
   printUsage();
   return 1;
 }
@@ -476,10 +490,17 @@ async function runReviewSubmit(flags: Record<string, string>): Promise<number> {
       runId,
       m.question_id,
       m.score,
-      reconciliation.get(m.question_id) ?? { status: "AGREED", disagreements: [] },
+      reconciliation.get(m.question_id) ?? {
+        status: "AGREED",
+        disagreements: [],
+      },
     );
   }
-  logger.info("review merged", { run_id: runId, reviewer, questions: merged.length });
+  logger.info("review merged", {
+    run_id: runId,
+    reviewer,
+    questions: merged.length,
+  });
   for (const [qid, rec] of reconciliation) {
     if (rec.status === "NEEDS_HUMAN_REVIEW") {
       logger.warn(`disagreement on ${qid}: ${rec.disagreements.join(", ")}`);
@@ -515,6 +536,36 @@ async function runSummary(flags: Record<string, string>): Promise<number> {
   const path = join(runsDir(), runId, "summary.json");
   await Bun.write(path, JSON.stringify(summary, null, 2));
 
+  const questionsById = new Map(
+    questions.map(
+      (q) =>
+        [
+          q.question_id,
+          {
+            category: q.category,
+            therapeutic_class: q.therapeutic_class,
+            question: q.question,
+          },
+        ] as const,
+    ),
+  );
+  const responses = await readResponses(runsDir(), runId);
+  const errors = await readErrors(runsDir(), runId);
+  const meta = await readRunMetadata(runsDir(), runId);
+  let reportPath: string | null = null;
+  if (meta) {
+    const report = generateMarkdownReport({
+      metadata: meta,
+      responses,
+      errors,
+      evaluation,
+      summary,
+      questionsById,
+    });
+    reportPath = join(runsDir(), runId, "report.md");
+    await Bun.write(reportPath, report.markdown);
+  }
+
   logger.info("summary", {
     run_id: runId,
     path,
@@ -524,6 +575,152 @@ async function runSummary(flags: Record<string, string>): Promise<number> {
     incorrect_rate: summary.overall.correctness.incorrect_rate,
     unreviewed: summary.by_review_status.unreviewed,
     needs_human_review: summary.by_review_status.needs_review,
+    report_path: reportPath,
   });
   return 0;
+}
+
+async function runReport(flags: Record<string, string>): Promise<number> {
+  const runId = flags["run-id"];
+  if (!runId) {
+    logger.error("--run-id is required");
+    return 1;
+  }
+  const meta = await readRunMetadata(runsDir(), runId);
+  if (!meta) {
+    logger.error(`run ${runId} not found`);
+    return 1;
+  }
+  const questions = await loadQuestionsFromFile(dataV1Path("questions.jsonl"));
+  const responses = await readResponses(runsDir(), runId);
+  const errors = await readErrors(runsDir(), runId);
+  const evaluation = await readEvaluation(runsDir(), runId);
+  const catById = new Map(questions.map((q) => [q.question_id, q.category] as const));
+  const classById = new Map(questions.map((q) => [q.question_id, q.therapeutic_class] as const));
+  const summary = computeSummary({
+    run_id: runId,
+    evaluation,
+    categoriesByQuestion: catById,
+    therapeuticClassByQuestion: classById,
+  });
+  const questionsById = new Map(
+    questions.map(
+      (q) =>
+        [
+          q.question_id,
+          {
+            category: q.category,
+            therapeutic_class: q.therapeutic_class,
+            question: q.question,
+          },
+        ] as const,
+    ),
+  );
+  const report = generateMarkdownReport({
+    metadata: meta,
+    responses,
+    errors,
+    evaluation,
+    summary,
+    questionsById,
+  });
+  const path = join(runsDir(), runId, "report.md");
+  await Bun.write(path, report.markdown);
+  await Bun.write(join(runsDir(), runId, "summary.json"), JSON.stringify(summary, null, 2));
+  logger.info("report written", {
+    run_id: runId,
+    path,
+    failure_samples: report.failure_samples,
+  });
+  return 0;
+}
+
+async function loadComparableRun(runId: string): Promise<ComparableRun | null> {
+  const meta = await readRunMetadata(runsDir(), runId);
+  if (!meta) return null;
+  const questions = await loadQuestionsFromFile(dataV1Path("questions.jsonl"));
+  const evaluation = await readEvaluation(runsDir(), runId);
+  const catById = new Map(questions.map((q) => [q.question_id, q.category] as const));
+  const classById = new Map(questions.map((q) => [q.question_id, q.therapeutic_class] as const));
+  const summary = computeSummary({
+    run_id: runId,
+    evaluation,
+    categoriesByQuestion: catById,
+    therapeuticClassByQuestion: classById,
+  });
+  return { metadata: meta, evaluation, summary };
+}
+
+async function runCompare(flags: Record<string, string>): Promise<number> {
+  const a = flags["run-a"];
+  const b = flags["run-b"];
+  if (!a || !b) {
+    logger.error("--run-a and --run-b are required");
+    return 1;
+  }
+  const aRun = await loadComparableRun(a);
+  if (!aRun) {
+    logger.error(`run ${a} not found`);
+    return 1;
+  }
+  const bRun = await loadComparableRun(b);
+  if (!bRun) {
+    logger.error(`run ${b} not found`);
+    return 1;
+  }
+  const result = compareRuns(aRun, bRun);
+  const text = formatComparison(result, a, b);
+  const path = join(runsDir(), `compare-${a}-vs-${b}.md`);
+  await Bun.write(path, text);
+  console.log(text);
+  logger.info("comparison written", { path, compatible: result.compatible });
+  return result.compatible ? 0 : 2;
+}
+
+async function runReproduce(flags: Record<string, string>): Promise<number> {
+  const runId = flags["run-id"];
+  if (!runId) {
+    logger.error("--run-id is required");
+    return 1;
+  }
+  const meta = await readRunMetadata(runsDir(), runId);
+  const responses = await readResponses(runsDir(), runId);
+  const errors = await readErrors(runsDir(), runId);
+  const evaluation = await readEvaluation(runsDir(), runId);
+  let summary: ReturnType<typeof computeSummary> | null = null;
+  try {
+    const raw = await readFile(join(runsDir(), runId, "summary.json"), "utf8");
+    summary = JSON.parse(raw);
+  } catch {
+    /* no summary */
+  }
+  const fileContents = new Map<string, string>();
+  try {
+    const entries = await readdir(join(runsDir(), runId), {
+      withFileTypes: true,
+    });
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      try {
+        fileContents.set(entry.name, await readFile(join(runsDir(), runId, entry.name), "utf8"));
+      } catch {
+        /* binary */
+      }
+    }
+  } catch {
+    /* dir missing */
+  }
+  const report = checkReproducibility({
+    metadata: meta,
+    responses,
+    errors,
+    evaluation,
+    summary,
+    fileContents,
+  });
+  for (const c of report.checks) {
+    console.log(`${c.passed ? "[OK]" : "[FAIL]"} ${c.name}: ${c.details}`);
+  }
+  logger.info(report.passed ? "reproducibility: PASS" : "reproducibility: FAIL", { run_id: runId });
+  return report.passed ? 0 : 1;
 }

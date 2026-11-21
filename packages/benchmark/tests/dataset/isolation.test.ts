@@ -40,4 +40,8 @@ describe("gold-annotation isolation", () => {
     };
     expect(QuestionSchema.safeParse(withLeak).success).toBe(false);
   });
+  it("src/runner/raw.ts does not import gold-loader", async () => {
+    const src = await readFile(join(PKG_ROOT, "src/runner/raw.ts"), "utf8");
+    expect(src).not.toMatch(/from\s+["'][^"']*gold-loader/);
+  });
 });
