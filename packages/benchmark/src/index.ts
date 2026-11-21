@@ -49,3 +49,20 @@ export {
   type RawRunResult,
   type RawRunProgress,
 } from "./runner/raw";
+
+// Prompt 4 additions
+export type {
+  DeterministicSignals,
+  HumanScore,
+  EvaluationRecord,
+  Correctness,
+  Completeness,
+  NumericalAccuracy,
+  AbstentionOutcome,
+  SafetyVerdict,
+} from "./evaluation/schema";
+export { computeDeterministicSignals, type RubricInput } from "./evaluation/rubric";
+export { extractNumbers, compareNumerical } from "./evaluation/numerical";
+export { detectBehavior } from "./evaluation/behavior";
+export { detectSafety } from "./evaluation/safety";
+export { computeSummary, type SummaryMetrics } from "./evaluation/metrics";

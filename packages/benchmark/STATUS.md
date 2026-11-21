@@ -81,6 +81,50 @@
 
 ---
 
-## Phase 3 (Prompt 4) — Evaluation and Human Review — NOT STARTED
+---
+
+## Phase 3 (Prompt 4) — Evaluation and Human Review — COMPLETE
+
+**Delivered:**
+
+- `src/evaluation/schema.ts` — Zod schemas for deterministic signals, human
+  scores, reconciliation status, and evaluation records.
+- `src/evaluation/text-normalize.ts` — accent/case/whitespace normalization
+  shared by fact matching and safety detection.
+- `src/evaluation/numerical.ts` — `(number, unit)` extraction (French
+  thousand separator, comma decimals) and unit-grouped comparison producing
+  correct / wrong_value / missed / unsupported.
+- `src/evaluation/behavior.ts` — phrase-list detection of ANSWER,
+  LIMITED_ANSWER, ABSTAIN, ASK_CLARIFICATION, REFUSE_OUT_OF_SCOPE.
+- `src/evaluation/safety.ts` — flags for diagnosis, treatment selection,
+  patient-specific advice, and uncertainty acknowledgment.
+- `src/evaluation/rubric.ts` — `computeDeterministicSignals` combining all
+  the above into one record.
+- `src/evaluation/metrics.ts` — `computeSummary` with explicit denominators
+  on every percentage; `null` when denominator is 0; `NOT_APPLICABLE` is
+  excluded from denominators, never counted as zero.
+- `src/evaluation/storage.ts` — `evaluation.jsonl` reader/writer;
+  `mergeHumanScore`.
+- `src/evaluation/review.ts` — review template builder, submit and reconcile
+  logic (flags disagreements as `NEEDS_HUMAN_REVIEW`).
+- CLI: `benchmark evaluate run`, `benchmark review prepare`,
+  `benchmark review submit`, `benchmark summary`.
+- Tests: `numerical.test.ts`, `behavior.test.ts`, `rubric.test.ts`,
+  `metrics.test.ts`, `review.test.ts`.
+- `docs/evaluation.md` — full rubric, review workflow, and metric definitions.
+
+**Constraints from the professor, enforced:**
+
+- No second LLM judge. Correctness is deterministic signals + human review.
+- Raw responses are never modified by the evaluator.
+- `citation_accuracy` and `evidence_faithfulness` are `NOT_APPLICABLE` in
+  this stage and never folded into any rate.
+- Gold annotations are loaded **only** by `evaluate run`, `review prepare`,
+  and tests. The raw runner path still has no path to gold.
+
+**Not implemented (intentional):** reports, run comparison, reproducibility
+checks. Those are Prompt 5.
+
+---
 
 ## Phase 4 (Prompt 5) — Reporting and Reproducibility — NOT STARTED

@@ -38,9 +38,9 @@ export interface RateLimitConfig {
   max_requests_per_day: number;
   max_tokens_per_minute: number;
   max_tokens_per_day: number;
-  /** Upper bound for a single call, per the professor's instruction. */
+  /** Sliding-window length. Production: 60_000. Tests override to shorten. */
+  window_ms: number;
   target_max_tokens_per_call: number;
-  /** Hard floor between calls, regardless of token budget. */
   min_interval_between_calls_ms: number;
 }
 
@@ -49,6 +49,7 @@ export const RATE_LIMITS_FREE_TIER: RateLimitConfig = Object.freeze({
   max_requests_per_day: 1000,
   max_tokens_per_minute: 8000,
   max_tokens_per_day: 200000,
+  window_ms: 60_000,
   target_max_tokens_per_call: 4000,
   min_interval_between_calls_ms: 2000,
 });

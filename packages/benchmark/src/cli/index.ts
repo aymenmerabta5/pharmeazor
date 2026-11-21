@@ -8,9 +8,20 @@ import { RAW_GENERATION_V1 } from "../config/generation";
 import { RAW_PROMPT_VERSION, RAW_SYSTEM_PROMPT_V1 } from "../prompts/raw/v1";
 import { createGroqClient } from "../providers/groq/client";
 import { runRawBenchmark } from "../runner/raw";
-import { readErrors, readResponses, readRunMetadata } from "../storage/fs";
 import { logger } from "../shared/logger";
 import { CATEGORY_VALUES, type Category } from "../dataset/schema";
+import { loadGoldAnnotationsFromFile } from "../dataset/gold-loader";
+import { computeDeterministicSignals } from "../evaluation/rubric";
+import { computeSummary } from "../evaluation/metrics";
+import { writeEvaluation, readEvaluation, mergeHumanScore } from "../evaluation/storage";
+import {
+  buildReviewTemplate,
+  writeReviewTemplate,
+  readSubmittedReview,
+  reconcileReviews,
+} from "../evaluation/review";
+import { readErrors, readResponses, readRunMetadata } from "../storage/fs";
+import { sha256 } from "../shared/hash";
 
 interface ParsedArgs {
   command?: string;
@@ -19,20 +30,24 @@ interface ParsedArgs {
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
-  const [command, subcommand, ...rest] = argv;
+  const positionals: string[] = [];
   const flags: Record<string, string> = {};
-  for (let i = 0; i < rest.length; i++) {
-    const arg = rest[i]!;
-    if (!arg.startsWith("--")) continue;
-    const key = arg.slice(2);
-    const next = rest[i + 1];
-    if (next !== undefined && !next.startsWith("--")) {
-      flags[key] = next;
-      i++;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]!;
+    if (arg.startsWith("--")) {
+      const key = arg.slice(2);
+      const next = argv[i + 1];
+      if (next !== undefined && !next.startsWith("--")) {
+        flags[key] = next;
+        i++;
+      } else {
+        flags[key] = "true";
+      }
     } else {
-      flags[key] = "true";
+      positionals.push(arg);
     }
   }
+  const [command, subcommand] = positionals;
   return { command, subcommand, flags };
 }
 
@@ -59,6 +74,10 @@ function printUsage(): void {
   benchmark raw run          [--category <CAT>] [--limit <N>] [--allow-draft]
   benchmark raw resume       --run-id <ID>
   benchmark raw status       [--run-id <ID>]
+  benchmark evaluate run     --run-id <ID>
+  benchmark review prepare   --run-id <ID>
+  benchmark review submit    --run-id <ID> --reviewer <ID> --file <path>
+  benchmark summary          --run-id <ID>
 `);
 }
 
@@ -340,6 +359,10 @@ async function main(argv: string[]): Promise<number> {
   if (command === "raw" && subcommand === "run") return runRawRun(flags);
   if (command === "raw" && subcommand === "resume") return runRawResume(flags);
   if (command === "raw" && subcommand === "status") return runRawStatus(flags);
+  if (command === "evaluate" && subcommand === "run") return runEvaluateRun(flags);
+  if (command === "review" && subcommand === "prepare") return runReviewPrepare(flags);
+  if (command === "review" && subcommand === "submit") return runReviewSubmit(flags);
+  if (command === "summary") return runSummary(flags);
   printUsage();
   return 1;
 }
@@ -351,4 +374,156 @@ if (import.meta.main) {
     logger.error((err as Error).message);
     process.exit(1);
   }
+}
+
+async function runEvaluateRun(flags: Record<string, string>): Promise<number> {
+  const runId = flags["run-id"];
+  if (!runId) {
+    logger.error("--run-id is required");
+    return 1;
+  }
+
+  const questions = await loadQuestionsFromFile(dataV1Path("questions.jsonl"));
+  const annotations = await loadGoldAnnotationsFromFile(dataV1Path("gold_annotations.jsonl"));
+  const responses = await readResponses(runsDir(), runId);
+
+  if (responses.length === 0) {
+    logger.error(`run ${runId} has no responses`);
+    return 1;
+  }
+
+  const qById = new Map(questions.map((q) => [q.question_id, q] as const));
+  const aById = new Map(annotations.map((a) => [a.question_id, a] as const));
+  const records = [];
+
+  for (const r of responses) {
+    const q = qById.get(r.question_id);
+    const a = aById.get(r.question_id);
+    if (!q || !a) {
+      logger.warn(`missing question or annotation for ${r.question_id}; skipping`);
+      continue;
+    }
+    const deterministic = computeDeterministicSignals({
+      question: q,
+      annotation: a,
+      modelResponse: r.content,
+    });
+    records.push({
+      question_id: r.question_id,
+      run_id: runId,
+      evaluated_at: new Date().toISOString(),
+      response_content_hash: sha256(r.content),
+      annotation_hash: sha256(JSON.stringify(a)),
+      deterministic,
+      human: null,
+      reconciliation: null,
+    });
+  }
+
+  await writeEvaluation(runsDir(), runId, records);
+  logger.info("evaluation written", {
+    run_id: runId,
+    records: records.length,
+    path: `runs/${runId}/evaluation.jsonl`,
+  });
+  return 0;
+}
+
+async function runReviewPrepare(flags: Record<string, string>): Promise<number> {
+  const runId = flags["run-id"];
+  if (!runId) {
+    logger.error("--run-id is required");
+    return 1;
+  }
+
+  const questions = await loadQuestionsFromFile(dataV1Path("questions.jsonl"));
+  const annotations = await loadGoldAnnotationsFromFile(dataV1Path("gold_annotations.jsonl"));
+  const responses = await readResponses(runsDir(), runId);
+  const evaluation = await readEvaluation(runsDir(), runId);
+
+  const template = buildReviewTemplate(questions, annotations, responses, evaluation);
+  const path = await writeReviewTemplate(runsDir(), runId, template);
+  logger.info("review template written", { path, count: template.length });
+  logger.info(
+    "edit the file, fill in each `score` object, save as review_primary.jsonl (or review_secondary.jsonl), then run `benchmark review submit`",
+  );
+  return 0;
+}
+
+async function runReviewSubmit(flags: Record<string, string>): Promise<number> {
+  const runId = flags["run-id"];
+  const file = flags.file;
+  const reviewer = flags.reviewer;
+  if (!runId || !file || !reviewer) {
+    logger.error("--run-id, --file and --reviewer are required");
+    return 1;
+  }
+  const submission = await readSubmittedReview(file);
+  const secondaryPath = join(runsDir(), runId, "review", "review_secondary.jsonl");
+
+  // If a secondary file already exists on disk, reconcile against it.
+  let secondary: Awaited<ReturnType<typeof readSubmittedReview>> | null = null;
+  try {
+    secondary = await readSubmittedReview(secondaryPath);
+  } catch {
+    /* no secondary */
+  }
+
+  const { merged, reconciliation } = reconcileReviews(submission, secondary);
+  for (const m of merged) {
+    await mergeHumanScore(
+      runsDir(),
+      runId,
+      m.question_id,
+      m.score,
+      reconciliation.get(m.question_id) ?? { status: "AGREED", disagreements: [] },
+    );
+  }
+  logger.info("review merged", { run_id: runId, reviewer, questions: merged.length });
+  for (const [qid, rec] of reconciliation) {
+    if (rec.status === "NEEDS_HUMAN_REVIEW") {
+      logger.warn(`disagreement on ${qid}: ${rec.disagreements.join(", ")}`);
+    }
+  }
+  return 0;
+}
+
+async function runSummary(flags: Record<string, string>): Promise<number> {
+  const runId = flags["run-id"];
+  if (!runId) {
+    logger.error("--run-id is required");
+    return 1;
+  }
+
+  const questions = await loadQuestionsFromFile(dataV1Path("questions.jsonl"));
+  const evaluation = await readEvaluation(runsDir(), runId);
+  if (evaluation.length === 0) {
+    logger.error(
+      `run ${runId} has no evaluation.jsonl; run 'benchmark evaluate run --run-id ${runId}' first`,
+    );
+    return 1;
+  }
+  const catById = new Map(questions.map((q) => [q.question_id, q.category] as const));
+  const classById = new Map(questions.map((q) => [q.question_id, q.therapeutic_class] as const));
+
+  const summary = computeSummary({
+    run_id: runId,
+    evaluation,
+    categoriesByQuestion: catById,
+    therapeuticClassByQuestion: classById,
+  });
+  const path = join(runsDir(), runId, "summary.json");
+  await Bun.write(path, JSON.stringify(summary, null, 2));
+
+  logger.info("summary", {
+    run_id: runId,
+    path,
+    total: summary.overall.total,
+    human_reviewed: summary.overall.human_reviewed,
+    correct_rate: summary.overall.correctness.correct_rate,
+    incorrect_rate: summary.overall.correctness.incorrect_rate,
+    unreviewed: summary.by_review_status.unreviewed,
+    needs_human_review: summary.by_review_status.needs_review,
+  });
+  return 0;
 }

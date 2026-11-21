@@ -31,7 +31,7 @@ export function createRateLimiter(
   let total = 0;
 
   function prune(current: number): void {
-    const cutoff = current - 60_000;
+    const cutoff = current - config.window_ms;
     while (windowEvents.length > 0 && windowEvents[0]!.ts < cutoff) {
       windowEvents.shift();
     }
@@ -49,7 +49,7 @@ export function createRateLimiter(
         const waitTokenBudget =
           windowUsed + estimatedTokens > config.max_tokens_per_minute
             ? windowEvents[0]
-              ? windowEvents[0].ts + 60_000 - current + 50
+              ? windowEvents[0].ts + config.window_ms - current + 50
               : 0
             : 0;
 
