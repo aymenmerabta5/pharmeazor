@@ -7,3 +7,10 @@ tmp_inspect*.py
 # Generated corpus. It is reproducible with `python run.py`; remove this line
 # if you deliberately want to commit the 40 MB deliverable.
 output/
+
+# Downloaded copy used to verify the R2 round trip. Regenerate with
+# `python r2_upload.py download`.
+downloads/
+
+# R2 transfer reports, one JSON object per object transferred.
+*.report.jsonl

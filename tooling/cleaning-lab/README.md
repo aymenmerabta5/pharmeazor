@@ -398,6 +398,22 @@ The validator is run automatically after every clean. It checks:
 
 A successful run ends with `"ok": true` and `0` uncovered raw documents.
 
+### Upload the result to Cloudflare R2
+
+From the same folder, `r2_upload.py` uploads `output/` under the
+`cleaning-lab/` prefix, verifies every object by hashing it, and restores the
+remote tree under `downloads/`:
+
+```powershell
+.\.venv\Scripts\python.exe r2_upload.py --dry-run
+.\.venv\Scripts\python.exe r2_upload.py --checksum --report upload.report.jsonl
+.\.venv\Scripts\python.exe r2_upload.py verify --report verify.report.jsonl
+.\.venv\Scripts\python.exe r2_upload.py download --skip-existing --report download.report.jsonl
+```
+
+See [R2_UPLOAD.md](R2_UPLOAD.md) for the defaults, the shared connection
+settings, and the `bun run r2:*` scripts.
+
 ---
 
 ## 8. Chunking and BGE-M3
