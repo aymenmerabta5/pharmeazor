@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./retrieval": "./src/schema/retrieval.ts"
   },
   "scripts": {
     "typecheck": "bun check",

@@ -5,4 +5,5 @@ export * from "./enums";
 export * from "./eve";
 export * from "./manual-payments";
 export * from "./posts";
+export * from "./retrieval";
 export * from "./storage";

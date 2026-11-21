@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM oven/bun:1.4.4 AS bun-runtime
+FROM oven/bun:1.4.5 AS bun-runtime
 
 # The agent runs its sandbox in a sibling container, so the image needs the
 # Docker CLI. The official CLI image ships a statically linked binary that

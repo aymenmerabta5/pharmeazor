@@ -12,7 +12,7 @@ where the daemon can reach it. The image then assembles the artifacts it
 produced and installs the production dependency graph.
 
 The build also requires a regular root `bun.lock`. If this project was created
-with `--no-install`, run `bun run install:bootstrap` using Bun `1.4.4` before
+with `--no-install`, run `bun run install:bootstrap` using Bun `1.4.5` before
 building. The Dockerfile checks this before its frozen install and rejects a
 missing lock, directory, or symbolic link with corrective guidance.
 Both container installs read the generated `bunfig.toml`, enforcing a

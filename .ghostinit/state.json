@@ -37,7 +37,7 @@
     ]
   },
   "generatedBy": "0.1.0",
-  "generatedAt": "2026-11-13T16:13:46.186Z",
+  "generatedAt": "2026-11-20T19:02:37.435Z",
   "files": {
     ".cursor/rules/ghostinit.mdc": {
       "path": ".cursor/rules/ghostinit.mdc",
@@ -16660,8 +16660,8 @@
       "path": "packages/database/src/schema/index.ts",
       "owner": "adapter",
       "lifecycle": "generator-owned",
-      "contentHash": "cad65b9e8b6d68a4e2cc4965f49adb48a5fb13fec68bd9e18febbcabbcbd3336",
-      "size": 240,
+      "contentHash": "f9b8553048ae638648ceecf6ae8c44166c6272c34737d92c14e8ded7168a34ba",
+      "size": 269,
       "provenance": {
         "renderer": "resolved-template-compiler.v2",
         "source": "src/templates",
@@ -17647,8 +17647,8 @@
       "path": "packages/modules/src/index.ts",
       "owner": "domain",
       "lifecycle": "generator-owned",
-      "contentHash": "1b031ac7719b8cbb517383ed624838e2cb01a209052177a7bdee51283eda4d46",
-      "size": 144,
+      "contentHash": "d8674bd0c4370f3d928621ff5af875d1065dd636d97677c4cdffb4de8393c8a8",
+      "size": 192,
       "provenance": {
         "renderer": "resolved-template-compiler.v2",
         "source": "src/templates",
@@ -20819,7 +20819,8 @@
   },
   "modules": [
     "billing",
-    "identity"
+    "identity",
+    "retrieval"
   ],
   "procedures": [
     "health",

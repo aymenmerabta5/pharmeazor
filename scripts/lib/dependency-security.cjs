@@ -25500,10 +25500,10 @@ var supplyChain = {
   minimumReleaseAgeSeconds: 604800,
 };
 var runtime = {
-  bun: "1.4.4",
+  bun: "1.4.5",
   node: "24.19.0",
   "@types/node": "24.19.1",
-  "bun-types": "1.4.4",
+  "bun-types": "1.4.5",
   "server-only": "0.0.1",
 };
 var typescript = {

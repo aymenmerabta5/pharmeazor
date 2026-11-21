@@ -25,4 +25,3 @@ data/metadata/
 # R2 transfer reports and downloaded verification copies
 *.report.jsonl
 downloads/
-
