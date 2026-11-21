@@ -2,7 +2,9 @@
 
 The shared bucket module `tooling/bucket_operations.py` mirrors the corpus
 between the repository and the `pharmeazor` bucket through Cloudflare R2's
-S3-compatible API. It is used by both labs and by the bucket-first runner.
+S3-compatible API. It is used by the labs and by the bucket-first runner. The
+implementation lives in `tooling/storage-lab/storage_lab/`; the script at
+`tooling/bucket_operations.py` is the stable entry point and re-exports it.
 
 It reads the repository's existing `.env.local`; it does not keep a second copy
 of the credentials and never prints a secret value.
@@ -24,11 +26,17 @@ datasets:
 | `retrieval-quarantine` | `tooling/retrieval-lab/data/quarantine/` | `retrieval-lab/quarantine/` |
 | `retrieval-evaluation` | `tooling/retrieval-lab/data/evaluation/` | `retrieval-lab/evaluation/` |
 | `cleaning-output`      | `tooling/cleaning-lab/output/`           | `cleaning-lab/`             |
+| `embedding-output`     | `tooling/embedding-lab/output/`          | `embedding-lab/`            |
 
 `cleaning-output` covers the cleaned Markdown, structured tables, reports,
 chunk previews (`preview/`) and the chunk context data (`context/notes.jsonl`,
 `context/packets/`, `context/embed-input.jsonl`). It is considered complete
 only when `manifest.jsonl` is present.
+
+`embedding-output` covers the BGE-M3 artifact (`embeddings/vectors.npy`,
+`embeddings/chunks.jsonl`, `embeddings/manifest.json`, `embeddings/run-report.json`),
+`benchmark.json` and any extra run directory under `output/`. It is considered
+complete only when `embeddings/manifest.json` is present.
 
 Buckets written before this layout may hold `corpus/retrieval-lab/*`,
 `corpus/raw`, `corpus/processed` or a root-level `cleaning-lab/`. Those prefixes
@@ -51,9 +59,9 @@ explicitly asked to.
 | `download`         | Restore one remote prefix under `--dest` (default `downloads/`).        |
 
 `pull`, `push`, `sync`, `organize` and `reset` accept `--dataset NAME`
-(repeatable) or `--group retrieval|cleaning` to limit the run. `--dry-run`
-works for `upload`, `push`, `organize` and `reset`; `--force` re-transfers
-objects that already match by size and SHA-256.
+(repeatable) or `--group retrieval|cleaning|embedding` to limit the run.
+`--dry-run` works for `upload`, `push`, `organize` and `reset`; `--force`
+re-transfers objects that already match by size and SHA-256.
 
 `reset` is the only destructive command. Without `--yes` it lists the objects
 it would delete and writes nothing.
@@ -233,7 +241,7 @@ Useful flags:
 | `--checksum`          | Upload only: compute SHA-256 and store it as object metadata.                     |
 | `--dest PATH`         | Download only: destination directory (default `tooling/downloads`).               |
 | `--dataset NAME`      | `status`/`pull`/`push`/`sync`/`organize`/`reset`: limit to one dataset.           |
-| `--group NAME`        | Same commands: limit to `retrieval` or `cleaning`.                                |
+| `--group NAME`        | Same commands: limit to `retrieval`, `cleaning` or `embedding`.                   |
 | `--yes`               | `reset` only: confirm the permanent deletion.                                     |
 | `--allow-remote-only` | `reset` only: also delete remote objects that have no local copy.                 |
 | `--workers N`         | Parallel transfers (default 4).                                                   |
@@ -295,7 +303,7 @@ configuration or source, `130` interrupted.
 
 ```powershell
 python -m unittest discover -s tooling/tests -v
-python -m compileall -q tooling/bucket_operations.py tooling/run_pipeline.py
+python -m compileall -q tooling/storage-lab tooling/bucket_operations.py tooling/run_pipeline.py
 ```
 
 After an upload, the public read base (when the bucket has public access) is

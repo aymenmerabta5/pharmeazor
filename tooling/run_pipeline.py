@@ -11,7 +11,10 @@ already exists:
 3. only when the bucket has nothing does the script collect, clean and chunk.
 
 Every stage that runs is pushed back to the bucket. Nothing is ever deleted
-from R2, and a legacy prefix is read as a fallback but never rewritten.
+from R2, and a legacy prefix is read as a fallback but never rewritten. The
+embedding-lab output is mirrored as its own dataset when it exists; the GPU
+embedding run itself stays a separate `python tooling/embedding-lab/run.py`
+command.
 
 Usage
 -----

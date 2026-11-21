@@ -21,3 +21,7 @@ tqdm>=4.66,<5
 # needs one to generate CUDA kernels. This port was tested with the cu130 torch
 # wheel above; without it the service logs the reason and falls back to eager.
 triton-windows==3.9.0.post30; sys_platform == "win32"
+
+# Cloudflare R2 transfer (tooling/bucket_operations.py). The engine is shared
+# with the other labs and needs botocore >= 1.36 for its checksum settings.
+boto3>=1.36,<2

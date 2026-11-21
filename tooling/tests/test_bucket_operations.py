@@ -230,6 +230,7 @@ class DatasetTests(unittest.TestCase):
                 "retrieval-logs",
                 "retrieval-quarantine",
                 "cleaning-output",
+                "embedding-output",
             }.issubset(names)
         )
 
@@ -238,6 +239,13 @@ class DatasetTests(unittest.TestCase):
         self.assertEqual(dataset.local_root, bucket.PROCESSED_ROOT)
         self.assertEqual(dataset.prefix, "cleaning-lab")
         self.assertEqual(dataset.marker, "manifest.jsonl")
+
+    def test_embedding_output_covers_the_vector_artifact(self) -> None:
+        dataset = bucket.DATASETS_BY_NAME["embedding-output"]
+        self.assertEqual(dataset.local_root, bucket.EMBEDDING_OUTPUT)
+        self.assertEqual(dataset.prefix, "embedding-lab")
+        self.assertEqual(dataset.marker, "embeddings/manifest.json")
+        self.assertEqual(dataset.group, "embedding")
 
     def test_select_datasets_defaults_to_all_and_rejects_unknown(self) -> None:
         self.assertEqual(bucket.select_datasets(), list(bucket.DATASETS))
@@ -249,12 +257,18 @@ class DatasetTests(unittest.TestCase):
             bucket.select_datasets(["nope"])
 
     def test_groups_select_every_tree_in_a_lab(self) -> None:
-        self.assertEqual(bucket.DATASET_GROUPS, ("cleaning", "retrieval"))
+        self.assertEqual(
+            bucket.DATASET_GROUPS, ("cleaning", "embedding", "retrieval")
+        )
         retrieval = bucket.select_datasets(groups=["retrieval"])
         self.assertEqual(len(retrieval), 8)
         self.assertTrue(all(dataset.group == "retrieval" for dataset in retrieval))
         cleaning = bucket.select_datasets(groups=["cleaning"])
         self.assertEqual([dataset.name for dataset in cleaning], ["cleaning-output"])
+        embedding = bucket.select_datasets(groups=["embedding"])
+        self.assertEqual(
+            [dataset.name for dataset in embedding], ["embedding-output"]
+        )
         self.assertEqual(
             [dataset.name for dataset in bucket.select_datasets(["cleaning-output"], ["retrieval"])],
             ["cleaning-output"],
@@ -279,6 +293,29 @@ class DatasetTests(unittest.TestCase):
             remote={
                 "cleaning-lab/documents/a.md": 3,
                 "cleaning-lab/manifest.jsonl": 10,
+            },
+            local=[],
+        )
+        self.assertTrue(complete.complete)
+        self.assertEqual(complete.state, "remote only")
+
+    def test_embedding_state_requires_the_nested_manifest(self) -> None:
+        dataset = bucket.DATASETS_BY_NAME["embedding-output"]
+        partial = bucket.DatasetState(
+            dataset=dataset,
+            remote_prefix="embedding-lab",
+            remote={"embedding-lab/embeddings/vectors.npy": 3},
+            local=[],
+        )
+        self.assertFalse(partial.complete)
+        self.assertEqual(partial.state, "remote partial")
+
+        complete = bucket.DatasetState(
+            dataset=dataset,
+            remote_prefix="embedding-lab",
+            remote={
+                "embedding-lab/embeddings/vectors.npy": 3,
+                "embedding-lab/embeddings/manifest.json": 10,
             },
             local=[],
         )
