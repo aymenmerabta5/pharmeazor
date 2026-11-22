@@ -1,0 +1,24 @@
+{
+  "name": "@tooling/embedding-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline BGE-M3 embedding service for the PHARMEAZOR chunk corpus.",
+  "scripts": {
+    "download": "python run.py download",
+    "embed": "python run.py embed",
+    "benchmark": "python run.py benchmark",
+    "validate": "python run.py validate",
+    "info": "python run.py info",
+    "r2:dry-run": "python ../bucket_operations.py --dry-run --group embedding push",
+    "r2:upload": "python ../bucket_operations.py push --group embedding",
+    "r2:verify": "python ../bucket_operations.py verify --source output --prefix embedding-lab",
+    "r2:download": "python ../bucket_operations.py pull --group embedding",
+    "r2:status": "python ../bucket_operations.py status --group embedding",
+    "r2:organize": "python ../bucket_operations.py organize --group embedding",
+    "r2:reset": "python ../bucket_operations.py reset --group embedding",
+    "r2:sync": "python ../bucket_operations.py sync --group embedding",
+    "check:python": "python -m compileall -q settings.py pipeline run.py ../bucket_operations.py ../storage-lab",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  }
+}

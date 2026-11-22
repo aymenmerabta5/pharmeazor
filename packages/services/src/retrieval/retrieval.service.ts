@@ -7,14 +7,21 @@ import type {
 import { RetrievalError, isRetrievalError } from "./errors";
 import { AUTHORITY_PRECEDENCE, authorityDescriptor, findAuthorityOverlaps } from "./authority";
 import { fuseRankedLists, type FusedCandidate } from "./fusion";
+import { aliasCandidateKeys, expandQueryTerms, type QueryExpansion } from "./expand";
 import { normalizeRetrievalRequest, RETRIEVAL_LIMITS } from "./policy";
-import type { EmbeddingPort, RerankPort, RetrievalIndexPort } from "./ports";
+import type { AliasPort, EmbeddingPort, RerankPort, RetrievalIndexPort } from "./ports";
 import { queryTerms } from "./tokenize";
 
 export interface RetrievalServiceDependencies {
   readonly index: RetrievalIndexPort;
   readonly embedding: EmbeddingPort;
   readonly reranker?: RerankPort | null;
+  /**
+   * Optional brand-to-substance lookup. When it is missing or fails, the
+   * lexical arm searches the original query; expansion is a recall aid, not a
+   * correctness requirement.
+   */
+  readonly aliases?: AliasPort | null;
   /**
    * When true, a reranker outage fails the request instead of silently
    * returning fusion order. Set this in production deployments where ranking
@@ -39,6 +46,7 @@ export interface SearchOptions {
 export function createRetrievalService(dependencies: RetrievalServiceDependencies) {
   const now = dependencies.now ?? (() => performance.now());
   const reranker = dependencies.reranker ?? null;
+  const aliases = dependencies.aliases ?? null;
 
   return {
     async search(
@@ -51,6 +59,25 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
       }
       const { query, limit, filter } = normalizeRetrievalRequest(request);
       const startedAt = now();
+      const terms = queryTerms(query, RETRIEVAL_LIMITS.maxQueryTerms);
+
+      // Brand aliases are resolved before the lexical arm so a brand the corpus
+      // never spells out still reaches the substance its documents use. A
+      // failed lookup degrades to the original query instead of failing search.
+      let expansion: QueryExpansion = {
+        terms,
+        expandedTerms: [],
+        ambiguousAliases: [],
+      };
+      if (aliases) {
+        try {
+          const keys = aliasCandidateKeys(terms);
+          const matches = keys.length > 0 ? await aliases.resolveAliases(keys) : [];
+          expansion = expandQueryTerms(terms, matches);
+        } catch {
+          dependencies.warn?.("Alias expansion failed; searching the original query");
+        }
+      }
 
       let queryEmbedding: number[];
       try {
@@ -71,7 +98,7 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
             filter,
           }),
           dependencies.index.lexicalSearch({
-            terms: queryTerms(query, RETRIEVAL_LIMITS.maxQueryTerms),
+            terms: expansion.terms,
             model: dependencies.embedding.model,
             limit: RETRIEVAL_LIMITS.lexicalCandidates,
             filter,
@@ -108,6 +135,8 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
             droppedForInjection: 0,
             rerank: reranker ? "applied" : "disabled",
             elapsedMs: Math.round(now() - startedAt),
+            expandedTerms: expansion.expandedTerms,
+            ambiguousAliases: expansion.ambiguousAliases,
           },
         };
       }
@@ -130,8 +159,13 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
 
       if (reranker && ordered.length > 1) {
         try {
+          // A cross-encoder has never seen the Algerian brand either, so an
+          // expanded query is reranked with the substance terms included. The
+          // brand stays in the string; the substance is what anchors the score.
+          const rerankQuery =
+            expansion.expandedTerms.length > 0 ? expansion.terms.join(" ") : query;
           const ranked = await reranker.rerank({
-            query,
+            query: rerankQuery,
             documents: ordered.map((candidate) => candidate.contextualizedContent),
             topN: Math.min(ordered.length, RETRIEVAL_LIMITS.rerankCandidates),
             ...(options.signal ? { signal: options.signal } : {}),
@@ -210,6 +244,8 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
           droppedForInjection,
           rerank: rerankStatus,
           elapsedMs: Math.round(now() - startedAt),
+          expandedTerms: expansion.expandedTerms,
+          ambiguousAliases: expansion.ambiguousAliases,
         },
       };
     },

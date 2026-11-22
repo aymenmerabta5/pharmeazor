@@ -390,19 +390,27 @@ online:   query -> BGE-M3 embed ─┬─> dense search (cosine, HNSW)
           -> injection scan -> citation-labelled passages
 ```
 
-| Concern                       | Implementation                                                  |
-| ----------------------------- | --------------------------------------------------------------- |
-| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                       |
-| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`          |
-| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts` |
-| Tables                        | `packages/database/src/schema/retrieval.ts`                     |
-| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`    |
-| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`               |
-| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`   |
-| Composition root              | `packages/api/src/composition/retrieval.ts`                     |
-| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`  |
-| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                  |
-| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`             |
+| Concern                       | Implementation                                                            |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                                 |
+| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`                    |
+| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts`           |
+| Tables                        | `packages/database/src/schema/retrieval.ts`                               |
+| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`              |
+| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`                         |
+| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`             |
+| Composition root              | `packages/api/src/composition/retrieval.ts`                               |
+| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`            |
+| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                            |
+| Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`               |
+| Brand expansion               | `packages/services/src/retrieval/expand.ts`                               |
+| Alias import                  | `packages/api/src/workers/retrieval/import-aliases.ts`                    |
+| Registry import               | `packages/api/src/workers/retrieval/import-registry.ts`                   |
+| Registry adapter              | `packages/api/src/adapters/retrieval/registry.ts`                         |
+| Registry transport            | `packages/api/src/retrieval/registry-http.ts` + `/api/retrieval/registry` |
+| Registry agent tool           | `apps/harness/agent/tools/lookup_algerian_registry.ts`                    |
+| Wire contract                 | `packages/contracts/src/retrieval.ts`                                     |
+| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`                       |
 
 `ghostinit sync` owns `packages/database/src/schema/index.ts` and
 `packages/modules/src/index.ts`, so the retrieval module and schema are
@@ -419,28 +427,181 @@ principal is never read from model output or a public request body.
 ```bash
 bun run retrieval:ensure-schema   # create tables, GIN/HNSW indexes, extension
 bun run retrieval:ingest:dry      # chunk and report; no database, no embedding server
-bun run retrieval:ingest          # embed changed chunks and rebuild postings
+bun run retrieval:ingest:vectors:dry # validate the precomputed BGE-M3 artifact against the chunker
+bun run retrieval:ingest:vectors  # load vectors.npy + chunks.jsonl; no embedding server
+bun run retrieval:ingest          # embed changed chunks through RETRIEVAL_EMBEDDING_URL
 bun run retrieval:ingest --force  # re-embed every selected chunk
 bun run retrieval:ingest --prune  # delete documents absent from the manifest
+bun run retrieval:backfill-provenance          # metadata-only: dates, status, review flag
+bun run retrieval:backfill-provenance -- --dry-run
+bun run retrieval:import-aliases               # brand -> substance expansion table
+bun run retrieval:import-aliases -- --dry-run
+bun run retrieval:import-registry              # merge the two register catalogues
+bun run retrieval:import-registry -- --dry-run
 ```
 
-The indexer is incremental: a chunk is re-embedded only when its content hash or
-embedding model changed, and its postings are rebuilt only when the chunk or the
-tokenizer version changed. Documents that disappear from the manifest are
-deleted only under `--prune`, on an unfiltered run.
+`retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,
+`chunks.jsonl` and `vectors.npy`. It re-chunks the corpus with the production
+chunker, joins every chunk by `chunk_id`, and requires the artifact's
+`text_sha256` to equal the chunker's `contentHash`. A changed chunk, a missing
+vector or a checksum mismatch stops the import instead of indexing stale text.
+The artifact manifest pins the BGE-M3 revision and the SHA-256 of both files;
+the revision is stored on every chunk so two revisions cannot be mixed
+silently. This path needs no embedding server. The HTTP path is still required
+for query embedding at runtime.
+
+The indexer is incremental: a chunk is re-embedded only when its content hash,
+embedding model or embedding revision changed, and its postings are rebuilt
+only when the chunk or the tokenizer version changed. Documents that disappear
+from the manifest are deleted only under `--prune`, on an unfiltered run.
+
+### Dates and extraction quality
+
+Every returned passage carries four timestamps. They answer different
+questions and are never merged:
+
+| Field             | Source                                                    | Populated | Meaning                                              |
+| ----------------- | --------------------------------------------------------- | --------- | ---------------------------------------------------- |
+| `publicationDate` | manifest `publication_date`                               | 498/528   | when the regulator issued or last revised the source |
+| `collectedAt`     | manifest `collected_at`                                   | 528/528   | when this system fetched it                          |
+| `extractedAt`     | extraction report `extracted_at`, else cleaning timestamp | 528/528   | when this system parsed and normalised it            |
+| `indexedAt`       | `retrieval_chunks.created_at`                             | 528/528   | when the chunk entered the vector index              |
+
+`publicationDate` is the currency of the clinical claim. A label published in
+2013 and extracted in 2026 is old evidence; reporting the extraction date in
+its place would tell the reader the opposite of the truth. The wire contract
+therefore renders a single `citationStamp` server-side:
+
+```text
+ANPP SmPC · published 2021-11-29 · extracted 2026-11-21
+```
+
+The agent copies that stamp verbatim and never formats a date itself. When the
+source never stated a publication date the stamp says `published unknown`, and
+the extraction date is not substituted. A stamp gains `· partial extraction`
+when the extraction report recorded `PARTIAL`, and `· review required` when the
+document was flagged for human review.
+
+Extraction status and the review flag live in
+`retrieval_documents.metadata` (`extraction_status`, `review_required`,
+`extracted_at`). The ingest worker writes them from the extraction report on
+every run; the corpus data is not committed, so a checkout without that report
+indexes documents with no status rather than inventing one. For an index built
+before this metadata existed, `retrieval:backfill-provenance` updates the rows
+in place: it touches only `metadata`, never `content_hash`, `embedding`, or the
+HNSW index, and it is idempotent.
+
+### Brand expansion
+
+The corpus is written with substance names while Algerian users ask with
+brands. Measured: 775 of the 2,144 known brands (36.1%) never occur in the
+indexed text, so neither arm can reach them. `retrieval_aliases` maps a folded
+brand to the substance labels its products use, imported from the lab's
+`name_map.csv` with `retrieval:import-aliases`.
+
+Expansion appends at most four substance tokens to the lexical query; it never
+replaces the brand, because the brand is the term that identifies the product.
+The same expanded string is used for reranking, which matters: a cross-encoder
+has never seen `COZAAR` either, and measured against the local index the
+unexpanded query put an unrelated paracetamol/codeine chunk above losartan.
+With the substance in the rerank query, `COZAAR indications` returns three
+losartan chunks at 0.88-0.95.
+
+Brands that cover more than one substance are **not** expanded. 304 of 2,113
+folded brands are ambiguous (`COPARAMOL` is paracetamol alone and paracetamol
+with codeine); they are returned in `diagnostics.ambiguousAliases` so the agent
+asks which product the user means instead of silently dosing a combination
+product as a single agent.
+
+### Registry lookup
+
+Registration status, dispensing schedule, holder, pack, generic/reference and
+withdrawal are rows, not passages. `retrieval_products` merges the Ministry
+nomenclature (9,595 rows) with Pharm'Net (9,560); 9,448 registration numbers
+appear in both. Nomenclature wins every field it carries, Pharm'Net fills
+`observation` and `shelf_life_months`, and the importer reports every
+disagreement instead of resolving it silently.
+
+A registration number alone is not a product identity: one dossier can carry
+several brand names (`LYANA` and `YASMINE` share `285/11 H 078/21`). The table
+therefore keys on registration number + folded brand + folded dosage and
+collapses pack variants. Keying on the registration number dropped five brands
+and fifty rows. Lookups fold accents on both sides: the register mixes
+`PARACÉTAMOL` and `PARACETAMOL`, and a pharmacist may type either.
+
+The agent reaches it through `lookup_algerian_registry`, which signs the same
+envelope as retrieval and calls `/api/retrieval/registry`. The route needs no
+embedding server, so a register question still answers while the models are
+down. Every response carries a server-rendered disclaimer: a register row is
+never an indication, a dose, or a recommendation. A `withdrawn` or
+`non_renewed` status is a safety fact, not noise, and is returned by default.
+`total` reports how many rows match before the page limit, so "how many
+paracetamol products are registered" is answerable without paging.
+
+### Serving the models
+
+Query embedding and reranking need an HTTP endpoint, not a particular server.
+The adapters speak TEI's `/embed` and `/rerank` shapes, so the reference server
+is Text Embeddings Inference, pinned by digest in `docker-compose.yml`:
+
+```bash
+docker compose --env-file .env.local --profile retrieval up -d
+```
+
+Both services sit behind the `retrieval` profile, so a checkout without a GPU
+still runs `docker compose up` unchanged. The image is pinned by digest because
+a TEI minor release can change tokenization or kernels; the weights are mounted
+read-only from a local snapshot because the corpus records the revision that
+produced its vectors, and serving a different one would put queries and
+documents in different embedding spaces.
+
+| Service                | Model                     | Port |
+| ---------------------- | ------------------------- | ---- |
+| `retrieval-embeddings` | `BAAI/bge-m3`             | 8081 |
+| `retrieval-reranker`   | `BAAI/bge-reranker-v2-m3` | 8082 |
+
+Measured on an RTX 3060: TEI's vectors match the ones already indexed at cosine
+0.9996 minimum / 0.9998 mean (TEI approximates GeLU with tanh), and the
+reranker separates a matching indication from an unrelated one at 0.99 vs 0.09.
+
+The reranker adapter splits requests into `RETRIEVAL_RERANKER_BATCH_SIZE`
+documents because TEI rejects a `texts` array larger than its
+`max_client_batch_size` (32 by default). Scores are comparable across batches,
+so the adapter merges them by score and re-indexes against the caller's
+original order.
+
+The rerank window covers the whole fusion window. A chunk found by only one arm
+sits low in the fused order by construction; a narrower window discards exactly
+the identifier and paraphrase hits the two arms exist to catch. Measured: an
+English question put the correct French chunk at fused position 33 of 50, and
+the reranker scored it 0.99 — but a 30-candidate window never showed it to the
+reranker.
 
 ### Configuration
 
 Server-only variables, read by `packages/api/src/adapters/retrieval/config.ts`:
 
-| Variable                         | Default       | Meaning                                                  |
-| -------------------------------- | ------------- | -------------------------------------------------------- |
-| `RETRIEVAL_EMBEDDING_URL`        | required      | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings` |
-| `RETRIEVAL_EMBEDDING_MODE`       | `tei`         | `tei` or `openai`                                        |
-| `RETRIEVAL_EMBEDDING_MODEL`      | `BAAI/bge-m3` | Stored on every chunk; changing it forces re-embedding   |
-| `RETRIEVAL_EMBEDDING_DIMENSIONS` | `1024`        | Must stay 1024 to match the `halfvec` column             |
-| `RETRIEVAL_RERANKER_URL`         | unset         | TEI `/rerank`; unset returns fusion order                |
-| `RETRIEVAL_REQUIRE_RERANK`       | `false`       | Fail the request instead of degrading                    |
+| Variable                         | Default                                             | Meaning                                                                  |
+| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `RETRIEVAL_EMBEDDING_URL`        | required                                            | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings`                 |
+| `RETRIEVAL_EMBEDDING_MODE`       | `tei`                                               | `tei` or `openai`                                                        |
+| `RETRIEVAL_EMBEDDING_MODEL`      | `BAAI/bge-m3`                                       | Stored on every chunk; changing it forces re-embedding                   |
+| `RETRIEVAL_EMBEDDING_DIMENSIONS` | `1024`                                              | Must stay 1024 to match the `halfvec` column                             |
+| `RETRIEVAL_EMBEDDING_API_KEY`    | unset                                               | Sent as `Authorization: Bearer` when set                                 |
+| `RETRIEVAL_EMBEDDING_TIMEOUT_MS` | `20000`                                             | Per-request timeout                                                      |
+| `RETRIEVAL_EMBEDDING_BATCH_SIZE` | `16`                                                | Texts per request, capped at 64                                          |
+| `RETRIEVAL_RERANKER_URL`         | unset                                               | TEI `/rerank`; unset returns fusion order                                |
+| `RETRIEVAL_RERANKER_MODEL`       | `BAAI/bge-reranker-v2-m3`                           | Model name reported in diagnostics                                       |
+| `RETRIEVAL_RERANKER_API_KEY`     | unset                                               | Sent as `Authorization: Bearer` when set                                 |
+| `RETRIEVAL_RERANKER_TIMEOUT_MS`  | `10000`                                             | Per-request timeout, applied to each batch                               |
+| `RETRIEVAL_RERANKER_BATCH_SIZE`  | `32`                                                | Documents per request, capped at 64; match TEI's `max_client_batch_size` |
+| `RETRIEVAL_REQUIRE_RERANK`       | `false`                                             | Fail the request instead of degrading                                    |
+| `RETRIEVAL_EMBEDDING_MODEL_DIR`  | `./tooling/embedding-lab/models/bge-m3`             | Compose-only host path mounted at `/data`                                |
+| `RETRIEVAL_RERANKER_MODEL_DIR`   | `./tooling/embedding-lab/models/bge-reranker-v2-m3` | Compose-only host path mounted at `/data`                                |
+
+`RETRIEVAL_EMBEDDING_URL` is required for query embedding at runtime and for
+the HTTP ingest path. `retrieval:ingest:vectors` does not read it: the model
+name and revision come from the artifact manifest.
 
 ### What is deliberately deferred
 

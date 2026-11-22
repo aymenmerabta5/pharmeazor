@@ -62,6 +62,25 @@ export interface RetrievalCandidate {
   readonly sourceUrls: readonly string[];
   /** True when ingest detected instruction-like text in the chunk. */
   readonly injectionRisk: boolean;
+  /**
+   * When the regulator published or last revised the source document, as a
+   * `YYYY-MM-DD` string, or null when the source did not state one.
+   *
+   * This is the currency of the clinical claim. It is never substituted with an
+   * ingestion timestamp: a 2013 label extracted in 2026 is old evidence, and
+   * reporting the extraction date in its place would say the opposite.
+   */
+  readonly publicationDate: string | null;
+  /** When the application fetched the source document. */
+  readonly collectedAt: string | null;
+  /** When the application parsed and normalised the document. */
+  readonly extractedAt: string | null;
+  /** When the chunk entered the vector index. */
+  readonly indexedAt: string | null;
+  /** `EXTRACTED`, `PARTIAL`, or null when the source recorded no status. */
+  readonly extractionStatus: string | null;
+  /** True when the extraction pipeline flagged the document for review. */
+  readonly reviewRequired: boolean;
 }
 
 export interface RetrievalScores {
@@ -107,6 +126,61 @@ export interface RetrievalDiagnostics {
   readonly droppedForInjection: number;
   readonly rerank: RerankStatus;
   readonly elapsedMs: number;
+  /** Terms the alias layer appended to the lexical query, if any. */
+  readonly expandedTerms: readonly string[];
+  /** Brands that matched more than one substance and were therefore not expanded. */
+  readonly ambiguousAliases: readonly string[];
+}
+
+/** How a registry query should be matched. */
+export type RegistryQueryKind = "auto" | "brand" | "substance" | "registration";
+
+/**
+ * One row of the Algerian product register.
+ *
+ * These are register facts. `registrationStatus` and `withdrawalReason` are the
+ * reason this table exists: a brand that is no longer registered must not be
+ * presented as available, and a vector index cannot answer that reliably.
+ */
+export interface RegistryProduct {
+  readonly registrationNumber: string;
+  readonly brand: string;
+  readonly dci: string | null;
+  readonly dciCode: string | null;
+  readonly form: string | null;
+  readonly dosage: string | null;
+  readonly pack: string | null;
+  /** `LISTE I`, `LISTE II`, `STUPEFIANT`, or null. */
+  readonly schedule: string | null;
+  readonly holder: string | null;
+  readonly holderCountry: string | null;
+  /** `GE` (generic), `RE` (reference), `BIO`, or null. */
+  readonly productType: string | null;
+  /** `registered`, `withdrawn`, `non_renewed`, or `unknown`. */
+  readonly registrationStatus: string;
+  readonly withdrawalDate: string | null;
+  readonly withdrawalReason: string | null;
+  readonly shelfLife: string | null;
+  readonly isCombination: boolean;
+  readonly inScope: boolean;
+  readonly medicineIds: readonly string[];
+}
+
+export interface RegistryLookupInput {
+  readonly query: string;
+  readonly kind: RegistryQueryKind;
+  readonly limit: number;
+  readonly includeWithdrawn: boolean;
+  /** True when the query looks like a registration number rather than a name. */
+  readonly registrationShaped: boolean;
+}
+
+export interface RegistryPage {
+  readonly products: readonly RegistryProduct[];
+  /** Rows matching the query, before the page limit. */
+  readonly total: number;
+  /** True when the register held more rows than the caller asked for. */
+  readonly truncated: boolean;
 }
 
 export interface RetrievalResult {

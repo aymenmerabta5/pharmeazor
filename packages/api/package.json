@@ -14,7 +14,8 @@
     "typecheck": "bun check",
     "lint": "oxlint --deny-warnings .",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "test": "bun test --conditions=react-server --preload ../../scripts/test-env.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1170.0",
@@ -26,6 +27,7 @@
     "@repo/auth": "workspace:*",
     "@repo/billing": "workspace:*",
     "@repo/config": "workspace:*",
+    "@repo/contracts": "workspace:*",
     "@repo/database": "workspace:*",
     "@repo/modules": "workspace:*",
     "@repo/observability": "workspace:*",

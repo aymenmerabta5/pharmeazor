@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "registry": "https://registry.npmjs.org",
   "minimumReleaseAgeSeconds": 604800,
-  "auditedAt": "2026-11-20T20:08:03.120Z",
-  "lockSha256": "9948e88e103943d2c3fd3b40d300a466bebb4c7bfe12c61c66eaaa5b25b7723e",
+  "auditedAt": "2026-11-22T01:57:54.031Z",
+  "lockSha256": "1e24b4f6bd79c1c13b1dbd76bdd15930a037544e8386a25703a870a477e862f6",
   "releases": [
     {
       "package": "@ai-sdk/gateway",

@@ -7,6 +7,13 @@ import { RetrievalError } from "./errors";
  * The candidate depth follows the measured reranking evidence: 30 to 50 fused
  * candidates in, a handful out. Raising these numbers increases latency on
  * every call, so they are service policy rather than tool input.
+ *
+ * The rerank window covers the whole fusion window on purpose. A chunk that
+ * only one arm found sits low in the fused order by construction, so a window
+ * narrower than the fusion list silently discards exactly the identifier and
+ * paraphrase hits the two arms exist to catch. Measured: an English question
+ * put the correct French chunk at fused position 33 of 50; the reranker scored
+ * it 0.99, but a 30-candidate window never showed it to the reranker.
  */
 export const RETRIEVAL_LIMITS = {
   minQueryChars: 2,
@@ -16,7 +23,7 @@ export const RETRIEVAL_LIMITS = {
   denseCandidates: 50,
   lexicalCandidates: 50,
   fusionCandidates: 50,
-  rerankCandidates: 30,
+  rerankCandidates: 50,
   rrfK: 60,
   bm25K1: 1.2,
   bm25B: 0.75,

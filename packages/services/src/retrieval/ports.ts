@@ -1,4 +1,10 @@
-import type { RankedCandidate, RetrievalCandidate, RetrievalFilter } from "./contracts";
+import type {
+  RankedCandidate,
+  RegistryLookupInput,
+  RegistryPage,
+  RetrievalCandidate,
+  RetrievalFilter,
+} from "./contracts";
 
 /**
  * Inward-facing retrieval ports. Adapters live in `packages/api`; domain code
@@ -48,4 +54,38 @@ export interface RerankResult {
 export interface RerankPort {
   readonly model: string;
   rerank(input: RerankInput): Promise<RerankResult[]>;
+}
+
+/** One brand alias and the substance terms it stands for. */
+export interface AliasMatch {
+  /** Folded alias, space-joined; the key the lookup matched. */
+  readonly aliasNorm: string;
+  /** Display form, quoted back to the agent for disambiguation. */
+  readonly aliasRaw: string;
+  /** Folded substance labels. More than one means the brand is ambiguous. */
+  readonly dciNorms: readonly string[];
+  readonly dciLabels: readonly string[];
+  readonly ambiguous: boolean;
+}
+
+/**
+ * Brand lookup for query expansion.
+ *
+ * Optional: when it is absent or fails, retrieval runs on the original query.
+ * Expansion raises recall but is not a correctness requirement, so its outage
+ * must not take the corpus offline.
+ */
+export interface AliasPort {
+  resolveAliases(keys: readonly string[]): Promise<readonly AliasMatch[]>;
+}
+
+/**
+ * Deterministic lookup over the Algerian product register.
+ *
+ * Deliberately separate from `RetrievalIndexPort`: this answers a row question
+ * (`is this brand registered, on which schedule, by whom`) and must not be
+ * satisfied by a nearest-neighbour search over prose.
+ */
+export interface RegistryPort {
+  lookupProducts(input: RegistryLookupInput): Promise<RegistryPage>;
 }

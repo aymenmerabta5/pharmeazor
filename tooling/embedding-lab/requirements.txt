@@ -1,0 +1,34 @@
+# Python-side dependencies for the offline BGE-M3 embedding lab.
+#
+# PyTorch is installed separately from the CUDA index so the process gets a
+# GPU build instead of the CPU wheel. Pick the index URL that matches your
+# driver from https://pytorch.org/get-started/locally/, for example:
+#
+#   uv pip install --index-url https://download.pytorch.org/whl/cu126 \
+#       "torch>=2.6,<3"
+#
+# Then install this file. `triton-windows` is optional and only needed to let
+# torch.compile's Inductor backend generate kernels on Windows; without it the
+# service falls back to eager and says so in the run manifest.
+#
+# The loader speaks both transformers lines: 5.x (`dtype=`) and 4.55+
+# (`torch_dtype=`). Keep huggingface-hub on whatever the chosen transformers
+# line requires; the 5.x line wants 2.4+, the 4.x line wants 0.34.x.
+transformers>=4.55,<6
+huggingface-hub>=0.34,<3
+safetensors>=0.4,<1
+sentencepiece>=0.2,<0.3
+numpy>=2.0,<3
+PyYAML>=6,<7
+tqdm>=4.66,<5
+
+# Windows has no upstream Triton wheel, and torch.compile's Inductor backend
+# needs one to generate CUDA kernels. The pin must match the installed torch
+# build, so this is a range: pick the `triton-windows` release that ships the
+# same Triton version as your torch wheel. Without a match the service logs the
+# reason and runs eagerly.
+triton-windows>=3.4,<4; sys_platform == "win32"
+
+# Cloudflare R2 transfer (tooling/bucket_operations.py). The engine is shared
+# with the other labs and needs botocore >= 1.36 for its checksum settings.
+boto3>=1.36,<2

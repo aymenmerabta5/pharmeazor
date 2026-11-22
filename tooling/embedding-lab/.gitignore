@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+
+# Downloaded BGE-M3 weights (~2.3 GB) and generated vectors.
+models/
+output/
+
+# Downloaded copy used to verify the R2 round trip. Regenerate with
+# `python ../bucket_operations.py pull --dataset embedding-output`.
+downloads/
+
+# R2 transfer reports, one JSON object per object transferred.
+*.report.jsonl

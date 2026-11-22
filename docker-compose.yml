@@ -80,6 +80,69 @@ services:
       redis:
         condition: service_healthy
 
+  # Retrieval models served by Text Embeddings Inference (TEI).
+  #
+  # Both services sit behind the `retrieval` profile so a checkout without GPU
+  # access still runs `docker compose up` unchanged:
+  #
+  #   docker compose --env-file .env.local --profile retrieval up -d
+  #
+  # The image is pinned by digest because a TEI minor release can change
+  # tokenization or kernels. The weights are mounted read-only from a local
+  # snapshot instead of being downloaded at startup: the corpus in
+  # `retrieval_chunks` records the revision that produced its vectors, and
+  # serving a different one would put queries and documents in different
+  # embedding spaces. Refresh a snapshot with the model's `revision` and point
+  # RETRIEVAL_*_MODEL_DIR at it.
+  retrieval-embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference@sha256:bee0bdb887096229add91b6fdfcf95258c12eb9180e90dc86f3b4b25b86fc613
+    profiles: ["retrieval"]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    command: ["--model-id", "/data", "--port", "80"]
+    volumes:
+      - "${RETRIEVAL_EMBEDDING_MODEL_DIR:-./tooling/embedding-lab/models/bge-m3}:/data:ro"
+    ports:
+      - "127.0.0.1:${RETRIEVAL_EMBEDDING_PORT:-8081}:80"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      # Loading a 2 GB snapshot from disk dominates the start period.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:80/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 180s
+
+  retrieval-reranker:
+    image: ghcr.io/huggingface/text-embeddings-inference@sha256:bee0bdb887096229add91b6fdfcf95258c12eb9180e90dc86f3b4b25b86fc613
+    profiles: ["retrieval"]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    command: ["--model-id", "/data", "--port", "80"]
+    volumes:
+      - "${RETRIEVAL_RERANKER_MODEL_DIR:-./tooling/embedding-lab/models/bge-reranker-v2-m3}:/data:ro"
+    ports:
+      - "127.0.0.1:${RETRIEVAL_RERANKER_PORT:-8082}:80"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:80/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 180s
+
 volumes:
   postgres_data:
   redis_data:
