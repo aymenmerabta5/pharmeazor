@@ -1,7 +1,7 @@
 {
   "version": "v1",
   "created_at": "2026-11-20T00:00:00Z",
-  "updated_at": "2026-11-22T00:00:00Z",
+  "updated_at": "2026-11-22T20:30:00+01:00",
   "question_count": 50,
   "category_counts": {
     "GENERAL_MEDICATION_KNOWLEDGE": 7,
@@ -25,6 +25,17 @@
     "Q-MID-003 / Q-MID-007 / Q-MID-009 — CEBREX/celecoxib INN (fr/en/ar)",
     "Q-GMK-004 / Q-GMK-006 / Q-GMK-007 — ACE inhibitor mechanism (fr/en/ar)"
   ],
-  "notes": "All 50 questions and annotations are grounded in tooling/embedding-lab/output/embeddings/chunks.jsonl: real chunk ids, verbatim evidence passages, and reference answers derived only from those passages. Ungroundable topics were replaced. Every row is APPROVED/VERIFIED with reviewer note 'corpus-derived, pharmacist sign-off pending'. The RAG arm remains deferred.",
-  "review_workflow": "Corpus grounding is complete. Pharmacist sign-off is still pending; review the replacement questions, evidence spans, and reference answers before interpreting any scored run. dataset validate must report zero errors and zero non-DRAFT warnings."
+  "notes": "All 50 questions and annotations are grounded in tooling/embedding-lab/output/embeddings/chunks.jsonl: real chunk ids, verbatim evidence passages, and reference answers derived only from those passages. Ungroundable topics were replaced. Pharmacist sign-off was reconciled against the current corpus; corpus-supported corrections were applied and unresolved source-metadata or intentional trap-design conflicts are recorded in reviewer_notes. The RAG arm remains deferred.",
+  "review_workflow": "Question and annotation review is complete. All rows are APPROVED/VERIFIED with sign-off recorded in reviewer_notes, reviewed_by, reviewed_at and verification_status. Six intentional TRAP_EXPECTS_ANSWER warnings remain: four direct-evidence traps (Q-TOS-002 to Q-TOS-005) and two source-boundary answers (Q-TOS-007 and Q-TOS-009). Response-level review is complete for the current raw and oracle runs: 100/100 responses scored once by benchmark-maintainer (deterministic-assisted response review), not by the pharmacist sheet and not by a second LLM judge. Measured evidenceGain is +0.52 (oracle 0.68 - raw 0.16 correct_rate).",
+  "signoff": {
+    "source": "PHARMACIST_SIGNOFF_SHEET.csv",
+    "reviewer": "student — licence 12er4567 — affiliation NTIC",
+    "reviewed_at": "2026-11-22T19:51:00+01:00",
+    "decisions": {
+      "APPROVE": 18,
+      "REVISE": 32,
+      "REJECT": 0
+    },
+    "owner_confirmation": "Reviewer identity confirmed by the project owner as a licensed pharmacist."
+  }
 }

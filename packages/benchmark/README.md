@@ -3,11 +3,11 @@
 Three-arm LLM benchmark for PHARMEAZOR. It measures the same model on the same
 human-reviewed questions under three evidence conditions:
 
-| Arm      | Input to the model                       | Status                       |
-| -------- | ---------------------------------------- | ---------------------------- |
-| `raw`    | the question only                        | implemented                  |
-| `oracle` | the question + a curated evidence bundle | implemented, awaiting review |
-| `rag`    | the question + PHARMEAZOR retrieval      | deferred                     |
+| Arm      | Input to the model                       | Status                                |
+| -------- | ---------------------------------------- | ------------------------------------- |
+| `raw`    | the question only                        | implemented, reviewed (single review) |
+| `oracle` | the question + a curated evidence bundle | implemented, reviewed (single review) |
+| `rag`    | the question + PHARMEAZOR retrieval      | deferred                              |
 
 The deltas are the point, not any single score:
 
@@ -27,16 +27,18 @@ recorded interface; it will not import app internals into the benchmark core.
 
 ## Status
 
-See [`STATUS.md`](./STATUS.md). The package is at **benchmark v1, corpus-grounded
-and scorable**: all 50 questions are `APPROVED` and all 50 annotations are
-`VERIFIED`, so `dataset stats` reports `scorable_questions: 50`. Every answer,
+See [`STATUS.md`](./STATUS.md). The package is at **benchmark v1, corpus-grounded,
+signed off, and scored**: all 50 questions are `APPROVED` and all 50 annotations
+are `VERIFIED`, so `dataset stats` reports `scorable_questions: 50`. Every answer,
 fact, retrieval label, and oracle passage is derived from
 `tooling/embedding-lab/output/embeddings/chunks.jsonl` using real chunk ids and
-verbatim text. Each row carries the reviewer note `corpus-derived, pharmacist
-sign-off pending`. Live `raw` and `oracle` baselines have been recorded and are
-documented in [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md),
-but no number should be quoted as a clinical result until a pharmacist signs
-off.
+verbatim text. Dataset sign-off has been reconciled into the strict JSONL fields
+and documented in `data/v1/PHARMACIST_SIGNOFF_README.md`. Live `raw` and `oracle`
+baselines each have 50/50 submitted response reviews. The measured
+`evidenceGain` is **+52 percentage points** (raw 16% correct, oracle 68%
+correct); see [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md).
+The filename is historical. These are single-review benchmark scores, not a
+clinical recommendation, and the RAG arm is still deferred.
 
 ## Requirements
 
@@ -115,8 +117,8 @@ be scored.
 
 The oracle arm gives the model a small, curated bundle of evidence passages and
 asks it to answer from that evidence with `[E1]`-style citations. The bundles are
-corpus-derived, not retrieved at run time, and are pending pharmacist sign-off.
-See [`docs/oracle.md`](./docs/oracle.md).
+corpus-derived, not retrieved at run time, and were included in the dataset
+sign-off reconciliation. See [`docs/oracle.md`](./docs/oracle.md).
 
 - Only questions with a non-empty `evidence_bundle` are sent. Questions without
   evidence are recorded in `skipped_question_ids`, never answered with an empty
@@ -143,8 +145,10 @@ structurally (it inspects imports, not just runtime behaviour).
 The gold schema carries both retrieval ground truth (`relevant_chunk_ids`) and
 oracle input (`evidence_bundle`). Keeping them separate lets the retrieval gate
 and the oracle arm disagree for the right reasons instead of silently sharing
-one list. `answerable_without_corpus` and `difficulty` are now populated for all
-50 rows from the corpus-grounding review; pharmacist sign-off is still pending.
+one list. `answerable_without_corpus` and `difficulty` are populated for all 50
+rows from the corpus-grounding review; dataset sign-off is recorded in the
+existing `reviewer_notes`, `reviewed_by`, `reviewed_at`, and
+`verification_status` fields.
 
 ## Identity and provenance
 
@@ -177,11 +181,19 @@ all 50 rows are scorable:
 There are six parallel fr/en/ar triples for cross-language comparison; see
 `data/v1/dataset.meta.json`. Every annotation has a corpus-derived
 `reference_answer`, non-empty `expected_facts`, real `relevant_chunk_ids`, and a
-verbatim `evidence_bundle`. The exact reviewer note is `corpus-derived,
-pharmacist sign-off pending`: structural verification is complete, but clinical
-sign-off is still required before any score is interpreted. The `raw` and
-`oracle` arms have each completed 50/50 live responses with zero failures;
-their human review count is still zero, so the scored deltas remain pending.
+verbatim `evidence_bundle`. Sign-off was reconciled from the returned sheet into
+the existing strict fields. The literal signature is
+`student — licence 12er4567 — affiliation NTIC`, preserved as supplied; the
+project owner confirmed that reviewer is a licensed pharmacist.
+
+| Arm      | Run ID                          | Correct     | Partially correct | Incorrect  | Reviewed |
+| -------- | ------------------------------- | ----------- | ----------------- | ---------- | -------- |
+| `raw`    | `raw-20261122-191450-l8bqkn`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%) | 50/50    |
+| `oracle` | `oracle-20261122-191458-yqo6sy` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)  | 50/50    |
+
+Response review is single review by the benchmark maintainer, not the pharmacist
+sheet and not a second LLM judge. `evidenceGain = 0.68 − 0.16 = +0.52`.
+`retrievalGap` and `systemGain` remain unmeasured because RAG is deferred.
 
 ## Environment
 
@@ -194,16 +206,15 @@ From the repository root:
 
 ## Known limitations
 
-- **Pharmacist sign-off is pending.** The data is corpus-grounded and scorable,
-  but the exact reviewer note is `corpus-derived, pharmacist sign-off pending`.
-  `dataset validate` passes with zero errors; four intentional
+- **Single response review.** The 100 responses were scored once by the
+  benchmark maintainer. The pharmacist sheet signs off the dataset, not the
+  model answers. `dataset validate` passes with zero errors; six intentional
   `TRAP_EXPECTS_ANSWER` warnings remain because the curated evidence directly
-  answers those rows. That is a structural result, not a clinical endorsement,
-  and both live runs are provisional.
+  answers those rows. They are documented, not suppressed.
 - **No RAG arm yet.** `run_mode` already distinguishes `raw | oracle | rag`, and
   the retrieval contracts exist upstream, but no live retrieval run is wired.
-  The RAG arm is deferred until the oracle arm and the annotation schema are
-  stable.
+  The oracle arm and annotation schema are now stable, so RAG is the next
+  workstream; `retrievalGap` and `systemGain` are still null.
 - **No LLM judge.** Correctness is deterministic signals plus human review. The
   deterministic layer is advisory and conservative by design.
 - **Provider outages are reported, never worked around.** No silent model or

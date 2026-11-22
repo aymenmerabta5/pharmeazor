@@ -1,23 +1,81 @@
 {
-  "label": "provisional deterministic evidenceGain proxy — NOT a clinical benchmark score",
-  "note": "Human review count is 0 for both runs. These deltas are deterministic advisory signals only; pharmacist sign-off is pending.",
+  "label": "reviewed v1 raw/oracle baselines — single-review response scoring",
+  "note": "Filename retained from the earlier provisional record. The current runs have 50/50 submitted response reviews. The raw and oracle prompts are different arms by design; retrieved evidence is not used in either arm.",
+  "recorded_at": "2026-11-22T20:00:00Z",
+  "dataset_signoff": {
+    "status": "RECONCILED",
+    "literal_reviewer": "student — licence 12er4567 — affiliation NTIC",
+    "reviewed_at": "2026-11-22T19:51:00+01:00",
+    "owner_confirmation": "Reviewer identity confirmed by the project owner as a licensed pharmacist.",
+    "sheet_decisions": {
+      "APPROVE": 18,
+      "REVISE": 32,
+      "REJECT": 0
+    },
+    "revise_reconciliation": {
+      "already_fixed": 12,
+      "decide": 7,
+      "still_open": 13
+    },
+    "intentional_warnings": [
+      "Q-TOS-002",
+      "Q-TOS-003",
+      "Q-TOS-004",
+      "Q-TOS-005",
+      "Q-TOS-007",
+      "Q-TOS-009"
+    ]
+  },
+  "response_review": {
+    "reviewer_id": "benchmark-maintainer (deterministic-assisted response review)",
+    "scored_at": "2026-11-22T20:00:00Z",
+    "status": "SINGLE_REVIEW",
+    "responses_reviewed": 100,
+    "second_llm_judge": false,
+    "pharmacist_reviewed_responses": false
+  },
+  "shared_identity": {
+    "dataset_hash": "df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56",
+    "selection_hash": "fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804",
+    "annotations_hash": "b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71",
+    "oracle_evidence_hash": "57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6"
+  },
+  "superseded_runs": [
+    "raw-20261122-161936-esgy4s",
+    "oracle-20261122-162607-ergtb5"
+  ],
   "runs": {
     "raw": {
-      "run_id": "raw-20261122-161936-esgy4s",
-      "evaluated_responses": 50,
-      "expected_facts": 174,
-      "facts_found": 46,
-      "fact_coverage_pct": 26.4,
-      "full_fact_rows": 1,
-      "full_fact_rows_pct": 2,
-      "behavior_agreement": 41,
-      "behavior_agreement_pct": 82,
+      "run_id": "raw-20261122-191450-l8bqkn",
+      "status": "COMPLETED",
+      "responses": 50,
+      "api_calls": 1,
+      "cache_hits": 49,
+      "failed": 0,
+      "live_tokens": 1025,
+      "human_reviewed": 50,
+      "correct": 8,
+      "partially_correct": 33,
+      "incorrect": 9,
+      "correct_rate": 0.16,
+      "partially_correct_rate": 0.66,
+      "incorrect_rate": 0.18,
+      "safe": 44,
+      "safe_rate": 0.88,
+      "responses_with_any_unsupported_claim": 42,
+      "expected_facts": 191,
+      "facts_found": 45,
+      "fact_coverage_pct": 23.6,
+      "full_fact_rows": 2,
+      "full_fact_rows_pct": 4,
+      "behavior_agreement": 43,
+      "behavior_agreement_pct": 86,
       "forbidden_claim_rows": 1,
       "forbidden_claim_rows_pct": 2,
-      "numerical_correct": 16,
-      "numerical_wrong_value": 8,
-      "numerical_missed": 6,
-      "numerical_unsupported": 22,
+      "numerical_correct": 17,
+      "numerical_wrong_value": 9,
+      "numerical_missed": 4,
+      "numerical_unsupported": 20,
       "numerical_problem_rows": 15,
       "numerical_problem_rows_pct": 30,
       "cited_rows": 0,
@@ -26,36 +84,66 @@
       "unsupported_number_rows": 12
     },
     "oracle": {
-      "run_id": "oracle-20261122-162607-ergtb5",
-      "evaluated_responses": 50,
-      "expected_facts": 174,
-      "facts_found": 92,
-      "fact_coverage_pct": 52.9,
+      "run_id": "oracle-20261122-191458-yqo6sy",
+      "status": "COMPLETED",
+      "responses": 50,
+      "api_calls": 50,
+      "cache_hits": 0,
+      "failed": 0,
+      "live_tokens": 50652,
+      "human_reviewed": 50,
+      "correct": 34,
+      "partially_correct": 15,
+      "incorrect": 1,
+      "correct_rate": 0.68,
+      "partially_correct_rate": 0.3,
+      "incorrect_rate": 0.02,
+      "safe": 49,
+      "safe_rate": 0.98,
+      "responses_with_any_unsupported_claim": 27,
+      "expected_facts": 191,
+      "facts_found": 77,
+      "fact_coverage_pct": 40.3,
       "full_fact_rows": 8,
       "full_fact_rows_pct": 16,
-      "behavior_agreement": 45,
-      "behavior_agreement_pct": 90,
+      "behavior_agreement": 46,
+      "behavior_agreement_pct": 92,
       "forbidden_claim_rows": 1,
       "forbidden_claim_rows_pct": 2,
-      "numerical_correct": 20,
-      "numerical_wrong_value": 5,
-      "numerical_missed": 5,
-      "numerical_unsupported": 7,
+      "numerical_correct": 19,
+      "numerical_wrong_value": 9,
+      "numerical_missed": 1,
+      "numerical_unsupported": 4,
       "numerical_problem_rows": 8,
       "numerical_problem_rows_pct": 16,
-      "cited_rows": 24,
-      "cited_rows_pct": 48,
+      "cited_rows": 19,
+      "cited_rows_pct": 38,
       "invalid_citation_rows": 0,
-      "unsupported_number_rows": 4
+      "unsupported_number_rows": 5
     }
   },
-  "evidence_gain_proxy": {
-    "fact_coverage_pp": 26.5,
-    "full_fact_rows_pp": 14,
-    "behavior_agreement_pp": 8,
-    "forbidden_claim_rows_pp": 0,
-    "numerical_problem_rows_pp": -14,
-    "facts_found_delta": 46,
-    "behavior_agreement_delta": 4
-  }
+  "metrics": {
+    "evidence_gain": {
+      "formula": "oracle.correct_rate - raw.correct_rate",
+      "raw_correct_rate": 0.16,
+      "oracle_correct_rate": 0.68,
+      "value": 0.52,
+      "percentage_points": 52,
+      "additional_correct_answers": 26
+    },
+    "deterministic_deltas": {
+      "fact_coverage_pp": 16.7,
+      "full_fact_rows_pp": 12,
+      "behavior_agreement_pp": 6,
+      "forbidden_claim_rows_pp": 0,
+      "unsafe_rows_pp": -10,
+      "numerical_problem_rows_pp": -14
+    },
+    "retrieval_gap": null,
+    "system_gain": null
+  },
+  "unmeasured": [
+    "retrievalGap — no RAG arm is wired",
+    "systemGain — no RAG arm is wired"
+  ]
 }

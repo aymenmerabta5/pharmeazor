@@ -4,272 +4,207 @@ _Last updated: 2026-11-22_
 
 ## Current state
 
-The package implements the three-arm benchmark's first two arms and the
-evaluation/reporting tooling around them. The third arm is deliberately not
-built yet.
+The package implements the first two arms of the three-arm benchmark and the
+evaluation, review, reporting, and reproducibility tooling around them. The RAG
+arm is deliberately not built yet; the annotations, oracle baseline, and dataset
+sign-off that it depends on are now stable.
 
-| Area                          | State                                                                                                 |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED`                                             |
-| Gold annotations              | 50 `VERIFIED` corpus-derived annotations                                                              |
-| Raw arm (`raw`)               | implemented, tested                                                                                   |
-| Oracle arm (`oracle`)         | implemented, tested, corpus-derived bundles populated                                                 |
-| RAG arm (`rag`)               | **not implemented** — deferred until baselines exist                                                  |
-| Deterministic evaluation      | implemented, advisory only                                                                            |
-| Human review + reconciliation | implemented                                                                                           |
-| Reporting / comparison        | implemented with identity guards                                                                      |
-| Live runs                     | `raw` and `oracle` baselines recorded (50/50 each, 0 failures); provisional until pharmacist sign-off |
+| Area                          | State                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED` and signed off               |
+| Gold annotations              | 50 `VERIFIED` corpus-derived annotations with reconciled sign-off fields               |
+| Raw arm (`raw`)               | implemented, tested, live run reviewed (single review)                                 |
+| Oracle arm (`oracle`)         | implemented, tested, curated bundles populated, live run reviewed (single review)      |
+| RAG arm (`rag`)               | **not implemented** — deferred workstream; `retrievalGap` and `systemGain` remain null |
+| Deterministic evaluation      | implemented, advisory only                                                             |
+| Human review + reconciliation | implemented; 100/100 current responses scored once                                     |
+| Reporting / comparison        | implemented with identity guards; raw/oracle `compare` refusal is expected             |
+| Live runs                     | raw and oracle baselines completed, reviewed, and recorded with 0 failures per arm     |
 
-`dataset stats` now reports `scorable_questions: 50`. That is a structural
-result, not a clinical endorsement: every row carries the exact note
-`corpus-derived, pharmacist sign-off pending`. Live `raw` and `oracle` runs are
-recorded in [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md);
-their human review count is zero, so no benchmark number should be quoted until
-that sign-off exists.
+`dataset stats` reports `scorable_questions: 50`. Every question, fact, retrieval
+label, and oracle passage is derived from
+`tooling/embedding-lab/output/embeddings/chunks.jsonl` using real chunk ids and
+verbatim text. The returned pharmacist sheet was reconciled into the existing
+strict fields `reviewer_notes`, `reviewed_by`, `reviewed_at`, and
+`verification_status`; no schema field was added.
+
+The literal sheet reviewer is `student — licence 12er4567 — affiliation NTIC`.
+It is preserved exactly as supplied. The project owner confirmed that reviewer
+is a licensed pharmacist; that confirmation is recorded in `dataset.meta.json`.
+The sheet signs off the dataset, not model responses.
+
+The current raw and oracle runs each have 50/50 submitted response reviews.
+Response scoring is single review by
+`benchmark-maintainer (deterministic-assisted response review)`, not a second
+LLM judge and not pharmacist response adjudication. The reviewed result is:
+
+```text
+raw correct_rate    = 8/50  = 0.16
+oracle correct_rate = 34/50 = 0.68
+evidenceGain        = 0.68 − 0.16 = +0.52
+```
+
+`dataset validate` still emits six intentional `TRAP_EXPECTS_ANSWER` warnings:
+`Q-TOS-002`, `Q-TOS-003`, `Q-TOS-004`, `Q-TOS-005`, `Q-TOS-007`, and
+`Q-TOS-009`. They are documented and were not suppressed. Upstream
+`section_code`/metadata mismatches were likewise documented rather than patched
+in benchmark JSONL alone.
 
 ## Design decisions
 
 - Groq integration uses **`@ai-sdk/groq@4.0.84`** and **`ai@7.0.173`**, matching
   `apps/harness`, not `groq-sdk`.
-- Model: `openai/gpt-oss-120b` via Groq. Reasoning effort `medium`,
-  concurrency `1`.
+- Model: `openai/gpt-oss-120b` via Groq. Reasoning effort `medium`, concurrency
+  `1`.
 - No second LLM judge. Correctness is deterministic signals plus human review.
 - Gold annotations never reach the model. The raw runner has no import path to
   the gold loader; an isolation test enforces it structurally.
 - The oracle arm uses a manually curated `evidence_bundle`, not retrieval. The
   retrieval arm will be measured separately against the same questions.
-- `answerable_without_corpus` and `difficulty` are reviewer decisions. They are
-  now populated from corpus grounding; pharmacist sign-off is still pending.
-
----
-
-## Milestone 1 — Package foundation and dataset
-
-- Package skeleton, strict Zod schemas, JSONL loaders, validator, dataset
-  hashing.
-- Isolation guarantee: `loader.ts` exports only `loadQuestions*`; the gold
-  loader is separate, not re-exported, not imported by the loader.
-- `data/v1/` started with 30 French `DRAFT` questions and templates. No
-  reference answer fabricated.
-
-## Milestone 2 — Groq integration and raw arm
-
-- `src/config/env.ts`, `src/config/generation.ts` (`RAW_GENERATION_V1` frozen).
-- `src/prompts/raw/v1.ts` — fixed, versioned prompt; no tools, no retrieval.
-- `src/providers/groq/client.ts` — injectable `GroqClient` over `@ai-sdk/groq`.
-- `src/providers/groq/errors.ts` — transient vs permanent classification.
-- `src/runner/cache.ts` — deterministic request hash; global cache.
-- `src/runner/raw.ts` — orchestrator with retry, resume, JSONL artifacts.
-- CLI: `raw run`, `raw resume`, `raw status`.
-
-## Milestone 3 — Evaluation and human review
-
-- Deterministic signals: fact presence, forbidden claims, numerical comparison,
-  behaviour classification, safety patterns.
-- `metrics.ts` with explicit denominators and `NOT_APPLICABLE` excluded, never
-  counted as zero.
-- Review workflow: prepare, submit, reconcile. A single review is now
-  `SINGLE_REVIEW`, not `AGREED`; two reviews that differ become
-  `NEEDS_HUMAN_REVIEW` with the disagreeing fields listed.
-- CLI: `evaluate run`, `review prepare`, `review submit`, `summary`.
-
-## Milestone 4 — Reporting, comparison, reproducibility
-
-- `report.md` with experiment, generation settings, performance, errors, notes.
-- `compare` with hard compatibility guards and a soft `annotations_hash` path.
-- `reproduce` checklist including a secret scan over every file in the run.
-- Secrets are stripped from reports; a test asserts no `gsk_` in the output.
-
-## Milestone 5 — Dataset v1 expansion and three-arm schema
-
-- Merged `origin/main` into `LLM_Benchmark` (additive; `origin/main` had no
-  benchmark changes).
-- Dataset expanded from 30 to **50 questions**: 30 `fr`, 10 `en`, 10 `ar`.
-  Added ten English and ten Arabic questions plus six parallel fr/en/ar triples
-  recorded in `dataset.meta.json`.
-- Gold schema extended with:
-  - `relevant_chunk_ids` — retrieval ground truth, same `chunk_id` the retriever
-    returns;
-  - `evidence_bundle` — up to 8 curated passages, each with `evidence_id`,
-    `source_id`, `source_name`, `section_code`, `chunk_id`;
-  - `answerable_without_corpus` and `difficulty` — reviewer decisions;
-  - `reviewed_by` and `reviewed_at`.
-- Validator gained cross-field rules: approved questions need a verified
-  annotation, a reference answer, expected facts, an answerability decision, and
-  (for corpus questions) relevant chunks; evidence passages must point at
-  labelled relevant chunks; duplicate evidence or chunk ids are rejected; trap
-  questions may not expect an answer.
-- Stats now report `retrieval_ready_count` and `oracle_ready_count`.
-
-## Milestone 6 — Oracle arm and correctness hardening
-
-- `src/prompts/oracle/v1.ts` — `oracle-v1` system prompt, `CITATION_PATTERN`,
-  fenced data-only evidence block. Passage order is preserved so `[E1]` is
-  stable within a run.
-- `src/oracle/evidence.ts` — loads non-empty bundles, `hashEvidenceBundle`
-  (deterministic, order-insensitive across questions).
-- `src/runner/oracle.ts` — thin wrapper over the shared runner. Questions
-  without evidence are skipped and recorded, never answered empty.
-- `src/runner/chat.ts` — one generic runner for both arms:
-  - `SelectionMismatchError` when a run id is reused with a different selection;
-  - exact `selection_hash` and `selected_question_ids` stored and guarded;
-  - actual attempt counts, live vs replay token totals, failed attempts;
-  - daily request/token caps via `assertDailyCapacity`, `RATE_LIMITED` status;
-  - corrupt cache entries raise `CacheCorruptionError` instead of silently
-    replaying garbage.
-- `src/config/provenance.ts` — system prompt hash, selection hash, SDK versions,
-  runtime, temperature/seed (`null` = deliberately unset), model revision.
-- `src/evaluation/grounding.ts` — parses `[E#]`, checks citations against the
-  supplied bundle, checks numbers against the supplied text. Advisory only.
-- `evaluation/schema.ts` — optional `grounding` block, widened citation and
-  faithfulness enums, `SINGLE_REVIEW` reconciliation status.
-- `reporting/markdown.ts` — experiment table shows model revision, SDK, prompt
-  hash, selection hash, live/replay tokens, failed attempts, evidence hash; adds
-  a Grounding section for evidence arms.
-- `reporting/compare.ts` — hard guards on `selection_hash`,
-  `system_prompt_hash`, and `evidence_hash`; SDK mismatch warning.
-- `reporting/checks.ts` — identity fields, selection count, skipped-question
-  accounting.
-- CLI split into focused modules under `src/cli/`; `evaluate run` owns the
-  annotation hash, so the raw CLI no longer parses gold annotations.
-- Bun pins raised to `1.4.5` (`bun-types`, `packageManager`); lockfile is v3.
-
-**Gates run at this milestone**
-
-| Gate                   | Result                                            |
-| ---------------------- | ------------------------------------------------- |
-| `bun run typecheck`    | pass — 66 files                                   |
-| `bun run test`         | pass — 152 pass, 1 skip, 0 fail, 315 expect calls |
-| `bun run lint`         | pass                                              |
-| `bun run format:check` | pass                                              |
-| `dataset validate`     | valid, warnings only (all `DRAFT`)                |
-| `dataset stats`        | 50 total, 30 `fr` / 10 `en` / 10 `ar`, 0 scorable |
-
-**Tests added**
-
-- `tests/runner/selection.test.ts` — selection hash recorded, run-id reuse with
-  a different selection refused, resume only re-runs unanswered questions.
-- `tests/runner/rate-limit.test.ts` — daily request/token caps and UTC reset.
-- `tests/oracle/oracle.test.ts` — evidence hash determinism/order, bundle
-  loading, prompt shape, evidence sent, no-evidence questions skipped, cache
-  identity changes with evidence.
-- `tests/dataset/hash.test.ts` — `hashQuestions` order/status sensitivity,
-  `hashSelection` determinism and slice identity.
-- `tests/evaluation/grounding.test.ts` — citation parsing, invalid citations,
-  uncited answers, unsupported numbers, summary denominators.
-- `tests/evaluation/review.test.ts` — `SINGLE_REVIEW`, citation disagreement.
-- `tests/reporting/compare.test.ts` — selection/prompt/evidence guards, SDK
-  warning.
-- Existing cache tests cover `CacheCorruptionError`.
-
-## Milestone 7 — Corpus-grounded gold data
-
-- All 50 questions are now `APPROVED`; all 50 annotations are `VERIFIED`.
-- Authority is `tooling/embedding-lab/output/embeddings/chunks.jsonl`. Every
-  `relevant_chunk_ids` entry is a real chunk id from that file.
-- Every `evidence_bundle` passage is a verbatim substring of the cited chunk's
-  `text`, with provenance derived from that chunk's `artifact_id` and
-  `section_code`. No cleaning-lab Markdown or Postgres row was used as evidence.
-- `reference_answer`, `expected_facts`, and `forbidden_claims` were derived only
-  from those passages. Ungroundable topics were replaced with corpus-supported
-  questions; the original language and category counts were preserved.
-- The exact reviewer note on all 50 rows is
-  `corpus-derived, pharmacist sign-off pending`. Structural verification is
-  complete; clinical sign-off is not.
-- Six parallel fr/en/ar triples were updated to grounded topics: paracetamol
-  maximum daily dose, ibuprofen contraindications, clarithromycin–statin
-  interaction, personal paracetamol dosing safety trap, CEBREX/celecoxib INN,
-  and ACE inhibitor mechanism.
-- An independent corpus check over `chunks.jsonl` covered 38 referenced chunks:
-  every evidence passage is a verbatim substring of its cited chunk, every
-  provenance field matches that chunk, all reference-answer `[E#]` markers and
-  numbers are supported by the supplied bundle, and the language/category
-  counts match the metadata. It reported 0 errors.
-
-**Final gates run for this change**
-
-| Gate                                                          | Result                                                                                                                                                                                                                                                                                 |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bun run --cwd packages/benchmark benchmark dataset validate` | pass — 50 approved, 0 draft, 50 annotated, 50 verified, 50 retrieval-ready, 50 oracle-ready; `questions_hash=307742edc0cfc2b1e8e56813525a786a83af29f7a394a83449192984efbf6b84`                                                                                                         |
-| `bun run --cwd packages/benchmark benchmark dataset stats`    | pass — `scorable_questions: 50`; `fr 30 / en 10 / ar 10`; GMK 7 / MID 9 / DNK 7 / CAW 9 / DRI 9 / TOS 9                                                                                                                                                                                |
-| `bun run typecheck`                                           | pass — 23/23 tasks; benchmark 66 files, no type errors                                                                                                                                                                                                                                 |
-| `bun run test`                                                | pass — 11/11 tasks; benchmark 152 pass, 1 live smoke skip, 0 fail, 315 expect calls                                                                                                                                                                                                    |
-| `bun run lint:all`                                            | **fail** — stops in `lint:architecture`: one `apps/eve/package.json` manifest-coverage finding plus 43 `frontend-form-owner` findings in `apps/mobile`; no finding in `packages/benchmark`                                                                                             |
-| `bun run format:check`                                        | pass — 25/25 tasks; benchmark 75 files correctly formatted                                                                                                                                                                                                                             |
-| `bunx --bun ghostinit@0.1.0 check --json`                     | **fail** — 1 blocker, 43 high, 1157 medium. Seven medium `undeclared-dependency` findings name benchmark files, but each named dependency is declared in `packages/benchmark/package.json` and the checker attributes them to `Package pharmeazor`; no benchmark architecture finding. |
-
-The two failing gates are pre-existing, repository-wide findings outside this
-change. No detector, exception, or safeguard was changed to obtain the passing
-results.
-
-## Milestone 8 — Credibility audit and provisional baselines
-
-- Before any live call, all 50 questions and gold annotations were audited
-  against `tooling/embedding-lab/output/embeddings/chunks.jsonl`. The audit
-  checked evidence support, answerability, answer/query language agreement,
-  expected behavior, clinical plausibility, and numeric/dose accuracy.
-- Eight confirmed issues were corrected: one ACE-inhibitor overgeneralization,
-  one unsupported brand mapping, two language mismatches, one missing overdose
-  warning, and four trap rows whose labels penalized the evidence-backed
-  answer. The four trap rows now intentionally expect `ANSWER`.
-- The independent chunk verifier then reported 50 questions, 50 annotations,
-  38 referenced chunks and 0 errors. `dataset validate` reported 50 approved,
-  50 verified, 50 retrieval-ready and 50 oracle-ready with four intentional
-  `TRAP_EXPECTS_ANSWER` warnings and no errors.
-- Live baselines were recorded:
-  - `raw-20261122-161936-esgy4s` — 50/50 answered, 0 failed, 40,695 live tokens.
-  - `oracle-20261122-162607-ergtb5` — 50/50 answered, 0 failed, 47,632 live tokens.
-- `evaluate run`, `summary`, `report` and `reproduce` were run for both arms.
-  Reproducibility passes for both. Human review count is 0 and `correct_rate`
-  is `null`, so both baselines are provisional; see
+- `answerable_without_corpus` and `difficulty` are populated from corpus
+  grounding; dataset sign-off is recorded in the existing strict reviewer
+  fields.
+- `compare` keeps hard identity guards. `raw` and `oracle` intentionally differ
+  in `prompt_version`, `run_mode`, and `system_prompt_hash`, so a direct
+  `benchmark compare` returns `INCOMPATIBLE — comparison refused.` The reviewed
+  aggregate lives in
   [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md) and
   [`runs/PROVISIONAL_BASELINES.json`](./runs/PROVISIONAL_BASELINES.json).
 
-**Gates run for this change**
+## Delivered milestones
 
-| Gate                                                          | Result                                                                            |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `python verify_grounded_data.py`                              | pass — 50/50 rows, 38 chunks, 0 errors                                            |
-| `bun run --cwd packages/benchmark benchmark dataset validate` | pass — 50 approved, 50 verified, 50 scorable, 0 errors, 4 intentional warnings    |
-| `bun run --cwd packages/benchmark benchmark dataset stats`    | pass — `scorable_questions: 50`; fr 30 / en 10 / ar 10; category counts unchanged |
-| `bun run --cwd packages/benchmark test`                       | pass — 152 pass, 1 live smoke skip, 0 fail                                        |
-| `bun run --cwd packages/benchmark typecheck`                  | pass — 66 files, no type errors                                                   |
-| `bun run --cwd packages/benchmark benchmark reproduce`        | pass — both runs, no secrets in run directories                                   |
+### 1–2 — Package foundation and raw arm
 
----
+Strict Zod schemas, JSONL loaders, validator and hashing; structural isolation
+between the question loader and gold loader; versioned `raw-v1` prompt, Groq
+client with transient/permanent error classification, deterministic cache,
+bounded retry, resume, and CLI commands.
 
-## What is intentionally missing
+### 3–4 — Evaluation, review, reporting, reproducibility
 
-- **RAG arm.** No live retrieval run is wired. The oracle arm must exist and the
-  annotations must be verified first, otherwise `retrievalGap` has no stable
-  ceiling to measure against. `run_mode` already accepts `"rag"` and the
-  retrieval contracts live in `packages/services/src/retrieval/`.
-- **Human-scored baseline.** The `raw` and `oracle` runs are recorded, but the
-  human review count is 0 for both. No correctness score, `evidenceGain`,
-  `retrievalGap` or `systemGain` has been computed yet; the deterministic
-  proxies in `runs/PROVISIONAL_BASELINES.md` are advisory only.
-- **Embedding/model revision pinning beyond what Groq reports.**
-  `model_revision` records the provider's response field when present; the
-  benchmark cannot force a revision the provider does not expose.
+Deterministic advisory signals with explicit denominators; `SINGLE_REVIEW`
+reconciliation and `NEEDS_HUMAN_REVIEW` for disagreements; `summary`, `report`,
+`compare`, and `reproduce`. Reproducibility includes a secret scan over every
+file in a run directory.
 
-## Blocked on
+### 5–6 — Dataset v1 expansion and oracle arm
 
-1. Pharmacist sign-off is required before any score is quoted or used as a
-   clinical result. The exact current note on all 50 rows is
-   `corpus-derived, pharmacist sign-off pending`.
-2. Human review of both provisional runs is still required. The key is
-   configured and both live runs have completed; the remaining blockers are the
-   review worksheets and pharmacist sign-off, not API access.
+Dataset expanded to 50 questions with six parallel fr/en/ar triples. Gold schema
+carries `relevant_chunk_ids`, `evidence_bundle`, `answerable_without_corpus`,
+`difficulty`, and reviewer fields. Validator cross-field rules reject
+unverified approved rows, missing facts, missing answerability, missing
+retrieval labels, and duplicate evidence/chunk ids. The `oracle-v1` prompt uses a
+fenced data-only evidence block and stable `[E#]` ordering. Shared runner adds
+selection-hash guards, exact attempt/token accounting, daily caps, and corrupt
+cache detection. CLI is split into focused modules; `evaluate run` owns the
+`annotations_hash` so the raw CLI never parses gold annotations.
 
-## Next steps
+### 7 — Corpus-grounded gold data
 
-1. Prepare and complete the review worksheets for both provisional runs, then
-   submit the human scores.
-2. Pharmacist sign-off on the corpus-derived dataset
-   ([`docs/dataset.md`](./docs/dataset.md), [`docs/oracle.md`](./docs/oracle.md)).
-3. Compute the actual `evidenceGain` from the human-reviewed `raw` and `oracle`
-   scores and freeze dataset v1.0.
-4. Build `rag-fixed` (recorded retrieval traces) and then live `rag`; compute
-   `retrievalGap` and `systemGain`.
-5. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) using the
+All 50 questions and annotations were rebuilt from
+`tooling/embedding-lab/output/embeddings/chunks.jsonl`. Every evidence passage
+is a verbatim substring of its cited chunk with provenance from that chunk.
+Ungroundable topics were replaced while preserving the 30/10/10 language and
+six-category distribution. An independent chunk verifier checked all cited
+chunks, evidence substrings, provenance fields, `[E#]` markers, numeric claims,
+and distribution counts.
+
+### 8 — Credibility audit and provisional live baselines
+
+All 50 rows were audited before any live call for evidence support,
+answerability, language agreement, expected behavior, clinical plausibility, and
+numeric/dose claims. Live runs were recorded and evaluated, but at that point
+response review and dataset sign-off were still outstanding. Those runs were
+superseded by the current reviewed runs below and must not be quoted:
+
+- `raw-20261122-161936-esgy4s`
+- `oracle-20261122-162607-ergtb5`
+
+### 9 — Sign-off reconciliation and reviewed baselines
+
+All 32 `REVISE` rows from the pharmacist sheet were reconciled against the
+current corpus: 12 were already fixed, 7 required a documented decision, and 13
+remained open because the corpus source itself was the authority. Only
+corpus-supported corrections were applied. Notable outcomes:
+
+- `Q-DNK-002` retains `250 mg toutes les 12 heures pendant 7 à 14 jours`; the
+  proposed 10-day claim is not supported by the exact corpus table.
+- `Q-CAW-005` uses the amoxicillin-alone source
+  `MED013__SRC_DAILYMED__DOC003__label#warnings-0#0` and the contraindication
+  passage, not the old amoxicillin/clavulanate association.
+- Corrected ibuprofen contraindication lists, pediatric paracetamol qualifiers,
+  the overdose warning, registry source-boundary wording, and unrelated-detail
+  removals.
+- The six `TRAP_EXPECTS_ANSWER` rows were intentionally retained. Notes asking
+  for refusal or abstention were not applied literally because the supplied
+  evidence directly answers those rows.
+
+Current live runs:
+
+| Arm      | Run ID                          | Responses | API calls | Cache hits | Failed | Live tokens |
+| -------- | ------------------------------- | --------- | --------- | ---------- | ------ | ----------- |
+| `raw`    | `raw-20261122-191450-l8bqkn`    | 50/50     | 1         | 49         | 0      | 1,025       |
+| `oracle` | `oracle-20261122-191458-yqo6sy` | 50/50     | 50        | 0          | 0      | 50,652      |
+
+Shared identity:
+
+- `dataset_hash` = `df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56`
+- `selection_hash` = `fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804`
+- `annotations_hash` = `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
+- Oracle `evidence_hash` = `57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6`
+
+The per-run artifacts, including submitted `review_primary.jsonl`, were
+force-added because `packages/benchmark/runs/` is gitignored. No API key or
+secret appears in either run directory.
+
+## Reviewed results
+
+| Arm      | Correct     | Partially correct | Incorrect  | Safety (safe) | Responses with any unsupported claim |
+| -------- | ----------- | ----------------- | ---------- | ------------- | ------------------------------------ |
+| `raw`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%) | 44/50 (88%)   | 42/50 (84%)                          |
+| `oracle` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)  | 49/50 (98%)   | 27/50 (54%)                          |
+
+`correct_rate` counts only `CORRECT`; `PARTIALLY_CORRECT` is reported separately
+and is not folded into the headline rate. `NOT_APPLICABLE` is excluded from
+numerical and abstention denominators. Advisory deterministic signals and their
+deltas are tabulated in
+[`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md).
+
+Still unmeasured:
+
+- `retrievalGap = oracle − rag` — no RAG arm is wired.
+- `systemGain = rag − raw` — no RAG arm is wired.
+
+## Final gates
+
+| Gate                                                            | Result                                                                                                                                         |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `python packages/benchmark/scripts/verify_grounded_data.py`     | pass — 50 questions, 50 annotations, 39 chunks, 0 errors                                                                                       |
+| `bun run --cwd packages/benchmark benchmark dataset validate`   | pass — 50 approved, 50 annotated, 50 verified, 50 scorable, 0 errors, 6 intentional warnings                                                   |
+| `bun run --cwd packages/benchmark benchmark dataset stats`      | pass — `fr 30 / en 10 / ar 10`; GMK 7 / MID 9 / DNK 7 / CAW 9 / DRI 9 / TOS 9                                                                  |
+| `bun run --cwd packages/benchmark typecheck`                    | pass — 66 files, no type errors                                                                                                                |
+| `bun run --cwd packages/benchmark test`                         | pass — 152 pass, 1 skip, 0 fail, 315 expect() calls                                                                                            |
+| `bun run --cwd packages/benchmark lint`                         | pass                                                                                                                                           |
+| `bun run --cwd packages/benchmark format:check`                 | pass                                                                                                                                           |
+| `bun run typecheck` (root)                                      | pass — 23/23 tasks                                                                                                                             |
+| `bun run test` (root)                                           | pass — 11/11 tasks                                                                                                                             |
+| `bun run format:check` (root)                                   | pass — 25/25 tasks                                                                                                                             |
+| `bun run lint:all` (root)                                       | **fail** — pre-existing repository-wide findings outside this change (`apps/eve/package.json` manifest coverage, `apps/mobile` form ownership) |
+| `bunx --bun ghostinit@0.1.0 check --json`                       | **fail** — pre-existing repository-wide architecture/dependency-declaration findings; no detector, exception, or safeguard was changed         |
+| `bun run --cwd packages/benchmark benchmark reproduce` (both)   | pass — identity, accounting, and secret scan                                                                                                   |
+| `bun run --cwd packages/benchmark benchmark compare raw oracle` | expected refusal — arms differ by design in `prompt_version`, `run_mode`, and `system_prompt_hash`                                             |
+
+Repository-wide `lint:all` and `ghostinit check` failures predate this change and
+are outside `packages/benchmark`. No detector, exception, or safeguard was
+suppressed or weakened to obtain the passing results.
+
+## Remaining work
+
+1. Build `rag-fixed` with recorded retrieval traces, then wire the live `rag`
+   arm against the same frozen questions.
+2. Compute `retrievalGap` and `systemGain` once the RAG arm has reviewed scores.
+3. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) using the
    chunk labels already in the gold annotations.
+4. Restore the generator-owned seven-day dependency release-age delay when a
+   GhostInit release supports Bun 1.4.5 (repository follow-up, not benchmark
+   scope).

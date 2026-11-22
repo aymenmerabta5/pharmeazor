@@ -40,16 +40,36 @@ annotations will be updated in `gold_annotations.jsonl` using the existing
 fields `reviewer_notes`, `reviewed_by`, `reviewed_at` and `verification_status`.
 The schema rejects extra fields, so no new column is added to the JSONL.
 
+## Current reconciliation status
+
+The returned sheet contained 18 `APPROVE`, 32 `REVISE`, and 0 `REJECT` rows.
+Every row was reconciled against the current corpus and the audit result was
+carried into `questions.jsonl`, `gold_annotations.jsonl`, and
+`dataset.meta.json` using only the existing strict fields. Of the `REVISE`
+rows, 12 were already fixed, 7 required a documented decision, and 13 remained
+open because the corpus source itself was the authority. Corpus-supported
+corrections were applied; upstream `section_code`/metadata mismatches were
+documented rather than patched in benchmark JSONL alone.
+
+The literal `signoff_reviewer` is `student — licence 12er4567 — affiliation
+NTIC`. It is preserved exactly as supplied. The project owner confirmed that
+this reviewer is a licensed pharmacist; that confirmation is recorded in
+`dataset.meta.json`. This sheet signs off the dataset, not model responses.
+
 ## Separate task: response review
 
-This sheet approves the dataset. Scoring the model answers is a different step.
-The two response-review worksheets are generated at:
+Scoring the model answers is a different step. The current response-review
+worksheets and submitted reviews are:
 
 ```text
-runs/raw-20261122-161936-esgy4s/review/review_template.jsonl
-runs/oracle-20261122-162607-ergtb5/review/review_template.jsonl
+runs/raw-20261122-191450-l8bqkn/review/review_template.jsonl
+runs/raw-20261122-191450-l8bqkn/review/review_primary.jsonl
+runs/oracle-20261122-191458-yqo6sy/review/review_template.jsonl
+runs/oracle-20261122-191458-yqo6sy/review/review_primary.jsonl
 ```
 
-Fill each `score` object, save as `review_primary.jsonl` beside the template,
-and submit with `benchmark review submit`. The `runs/` directory is gitignored,
+Response review was performed by
+`benchmark-maintainer (deterministic-assisted response review)` and submitted
+with `benchmark review submit`. It is single review, not pharmacist response
+adjudication and not a second LLM judge. The `runs/` directory is gitignored,
 so filled review files must be force-added if they should be committed.

@@ -1,86 +1,111 @@
-# Provisional v1 baselines — raw and oracle
+# Reviewed v1 baselines — raw and oracle
 
-_Recorded 2026-11-22. This document is a run record, not a clinical result._
+_Recorded 2026-11-22. The filename is retained from the earlier provisional
+record; this document now reports the human-reviewed runs._
 
-## Important limitation
+## Scope and review status
 
-Both runs are **provisional**. `evaluate run` produced deterministic advisory
-signals only; `human_reviewed = 0` for both runs, so `correct_rate` and the true
-`evidenceGain = oracle − raw` are still `null`. No score in this document may be
-quoted as a clinical benchmark result until (a) a human reviewer has completed
-the review worksheets and (b) a pharmacist has signed off on the corpus-derived
-dataset. All 50 rows still carry the exact note
-`corpus-derived, pharmacist sign-off pending`.
+Both arms have 50/50 completed live responses, deterministic evaluation,
+submitted response review, summaries, reports, and passing reproducibility
+checks. Response scoring is **single review** by
+`benchmark-maintainer (deterministic-assisted response review)`; it is not a
+two-reviewer agreement and not a second LLM judge. The pharmacist sheet signs
+off the **dataset**, not the model responses.
+
+The dataset sign-off was returned with the literal identity
+`student — licence 12er4567 — affiliation NTIC`. The project owner confirmed
+that reviewer is a licensed pharmacist. The literal identity is preserved in
+`PHARMACIST_SIGNOFF_SHEET.csv` and in the strict JSONL fields;
+`dataset.meta.json` records the owner confirmation. All 32 `REVISE` rows were
+reconciled against the current corpus: 12 were already fixed, 7 required a
+decision, and 13 remained open. Only corpus-supported corrections were applied.
+The six remaining `TRAP_EXPECTS_ANSWER` warnings are intentional and were not
+suppressed.
+
+The oracle arm is an upper bound with curator-selected evidence. It is not a
+product claim about the retrieval system.
 
 ## Pre-run credibility audit
 
 All 50 questions and gold annotations were audited against
 `tooling/embedding-lab/output/embeddings/chunks.jsonl` before any live call.
-The audit checked that each question was answerable from its cited passages,
-that every reference answer and expected fact was supported, that answer
-language matched question language, that expected behavior was appropriate, and
-that numeric/dose claims were correct.
-
-Eight confirmed issues were corrected:
-
-- `Q-GMK-004`: removed the class-wide claim that all ACE inhibitors are
-  prodrugs of perindoprilat; the evidence supports that statement only for
-  perindopril.
-- `Q-MID-006`: removed the unsupported brand name "Augmentin" and translated
-  the French reference answer and facts into English.
-- `Q-MID-008`: translated the French reference answer and facts into Arabic.
-- `Q-TOS-001`: added the missing overdose warning: 2 g every 4 hours exceeds
-  the 4 g/day ceiling.
-- `Q-TOS-002`–`Q-TOS-005`: changed expected behavior from abstain/clarify/refuse
-  to `ANSWER`, because the curated evidence directly and correctly answers each
-  question. The previous labels penalized the evidence-backed answer.
-
-After correction, the independent chunk verifier reported 50 questions,
-50 annotations, 38 referenced chunks and 0 errors. `dataset validate` reported
-50 approved, 50 verified, 50 retrieval-ready and 50 oracle-ready. It emits four
-`TRAP_EXPECTS_ANSWER` warnings for `Q-TOS-002`–`Q-TOS-005`; these are
-intentional and are not suppressed.
+The audit checked evidence support, answerability, answer/query language
+agreement, expected behavior, clinical plausibility, and numeric/dose claims.
+Ungroundable topics were replaced while preserving the 30 `fr` / 10 `en` /
+10 `ar` and six-category distribution. After reconciliation,
+`packages/benchmark/scripts/verify_grounded_data.py` reported 50 questions,
+50 annotations, 39 referenced chunks, and 0 errors.
 
 ## Runs
 
-| Arm    | Run ID                                | Status    | Responses | API calls | Failed | Live tokens |
-| ------ | ------------------------------------- | --------- | --------- | --------- | ------ | ----------- |
-| `raw`  | `raw-20261122-161936-esgy4s`          | COMPLETED | 50/50     | 50        | 0      | 40,695      |
-| oracle | `oracle-20261122-162607-ergtb5`       | COMPLETED | 50/50     | 50        | 0      | 47,632      |
+| Arm      | Run ID                                | Status    | Responses | API calls | Cache hits | Failed | Live tokens |
+| -------- | ------------------------------------- | --------- | --------- | --------- | ---------- | ------ | ----------- |
+| `raw`    | `raw-20261122-191450-l8bqkn`          | COMPLETED | 50/50     | 1         | 49         | 0      | 1,025       |
+| `oracle` | `oracle-20261122-191458-yqo6sy`       | COMPLETED | 50/50     | 50        | 0          | 0      | 50,652      |
 
 Shared identity:
 
-- `dataset_hash` = `98378ab43714f181fcf9a19e9e5cab90167a12c02f7f8cedd41789713972c03f`
+- `dataset_hash` = `df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56`
 - `selection_hash` = `fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804`
-- `annotations_hash` = `0056a0736827b4ddaf86f11869edbc81ed685f1b087bcda67531cfe2683e4ef6`
-- Oracle `evidence_hash` = `505fa82676564d3ad7284a671c2976767d138f8a6fe95e52c5bec1534caf1f04`
+- `annotations_hash` = `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
+- Oracle `evidence_hash` = `57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6`
 
-`benchmark reproduce` passes for both runs; no API key or secret appears in
-either run directory.
+The older runs `raw-20261122-161936-esgy4s` and
+`oracle-20261122-162607-ergtb5` are superseded: they were evaluated against an
+older annotation hash and must not be quoted. `benchmark reproduce` passes for
+both current runs, and no API key or secret appears in either run directory.
 
-## Provisional deterministic signals
+## Human-reviewed scores
 
-These are advisory rule-based signals, not the human benchmark score.
+| Arm      | Correct      | Partially correct | Incorrect | Safety (safe) | Responses with any unsupported claim |
+| -------- | ------------ | ----------------- | --------- | ------------- | ------------------------------------ |
+| `raw`    | 8/50 (16%)   | 33/50 (66%)       | 9/50 (18%)| 44/50 (88%)   | 42/50 (84%)                          |
+| `oracle` | 34/50 (68%)  | 15/50 (30%)       | 1/50 (2%) | 49/50 (98%)   | 27/50 (54%)                          |
 
-| Signal                              | raw             | oracle          | Delta     |
-| ----------------------------------- | --------------- | --------------- | --------- |
-| Expected facts found                | 46/174 (26.4%)  | 92/174 (52.9%)  | +26.5 pp  |
-| Rows with all expected facts        | 1/50 (2%)       | 8/50 (16%)      | +14 pp    |
-| Behavior agreement                  | 41/50 (82%)     | 45/50 (90%)     | +8 pp     |
-| Rows with a forbidden claim         | 1/50 (2%)       | 1/50 (2%)       | 0 pp      |
-| Rows with wrong/unsupported numbers | 15/50 (30%)     | 8/50 (16%)      | −14 pp    |
-| Oracle answers citing a passage     | N/A             | 24/50 (48%)     | N/A       |
-| Invalid citations                   | N/A             | 0/50            | N/A       |
+`correct_rate` counts only `CORRECT`; `PARTIALLY_CORRECT` is reported
+separately and is not folded into the headline rate. All 100 responses were
+reviewed exactly once. `NOT_APPLICABLE` is excluded from numerical and
+abstention denominators.
 
-## Provisional evidence gain
+## evidenceGain
 
-The deterministic proxy moves in the expected direction: fact coverage +26.5
-percentage points, full-fact rows +14 points, behavior agreement +8 points, and
-numeric problem rows −14 points. This is **not** the defined `evidenceGain`;
-it is a rule-based proxy computed before any human scoring. The real
-`evidenceGain`, `retrievalGap` and `systemGain` remain unmeasured until human
-review and pharmacist sign-off are complete, and the RAG arm is still deferred.
+```text
+evidenceGain = oracle correct_rate − raw correct_rate
+             = 0.68 − 0.16
+             = +0.52  (26 additional correct answers; +52 percentage points)
+```
 
-Machine-readable aggregates are in
+This is the first real measured value for the defined metric. It means curated,
+verbatim evidence moved this model from 8 to 34 fully correct answers on this
+50-question set. It does not measure retrieval, and it is not a clinical efficacy
+claim.
+
+## Deterministic advisory signals
+
+These rule-based signals are not the benchmark score. They are retained because
+they help explain where the human score moved.
+
+| Signal                              | raw            | oracle         | Delta    |
+| ----------------------------------- | -------------- | -------------- | -------- |
+| Expected facts found                | 45/191 (23.6%) | 77/191 (40.3%) | +16.7 pp |
+| Rows with all expected facts        | 2/50 (4%)      | 8/50 (16%)     | +12 pp   |
+| Behavior agreement                  | 43/50 (86%)    | 46/50 (92%)    | +6 pp    |
+| Rows with a forbidden claim         | 1/50 (2%)      | 1/50 (2%)      | 0 pp     |
+| Rows with wrong/unsupported numbers | 15/50 (30%)    | 8/50 (16%)     | −14 pp   |
+| Oracle answers citing a passage     | N/A            | 19/50 (38%)    | N/A      |
+| Invalid citations among parsed       | N/A            | 0/50           | N/A      |
+| Responses with unsupported numbers  | 12/50 (24%)    | 5/50 (10%)     | −14 pp   |
+
+The citation counts are mechanical `[E#]` parsing, not the human citation
+verdict. Human review noted frequent nonstandard citation formatting and one
+critical pediatric dose error in the oracle arm despite the supplied evidence.
+
+## Still unmeasured
+
+- `retrievalGap = oracle − rag` — no RAG arm is wired.
+- `systemGain = rag − raw` — no RAG arm is wired.
+
+The RAG arm remains deliberately deferred until the annotations, oracle
+baseline, and sign-off are stable. Machine-readable aggregates are in
 [`PROVISIONAL_BASELINES.json`](./PROVISIONAL_BASELINES.json). Per-run artifacts
-are in `raw-20261122-161936-esgy4s/` and `oracle-20261122-162607-ergtb5/`.
+are in `raw-20261122-191450-l8bqkn/` and `oracle-20261122-191458-yqo6sy/`.

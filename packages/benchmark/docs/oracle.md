@@ -11,10 +11,11 @@ answered first:
 That is the oracle arm. It replaces retrieval with a small, curated
 `evidence_bundle` from the gold annotation. The shipped bundles are derived from
 `tooling/embedding-lab/output/embeddings/chunks.jsonl`: each passage is a
-verbatim substring of a real chunk and carries that chunk's provenance. They are
-`VERIFIED` with the exact note `corpus-derived, pharmacist sign-off pending`, so
-pharmacist sign-off is still required before any score is interpreted. The
-difference between `oracle` and `raw` is the value of evidence itself:
+verbatim substring of a real chunk and carries that chunk's provenance. All 50
+annotations are `VERIFIED`, and the pharmacist sheet was reconciled into the
+existing strict JSONL fields. Dataset sign-off is recorded in
+[`../data/v1/PHARMACIST_SIGNOFF_README.md`](../data/v1/PHARMACIST_SIGNOFF_README.md).
+The difference between `oracle` and `raw` is the value of evidence itself:
 
 ```text
 evidenceGain = oracle − raw
@@ -137,7 +138,9 @@ An oracle run answers a specific diagnostic question:
 - **Uncited but correct oracle answers** → the prompt contract is not being
   followed; that is a generation failure even when the fact is right.
 
-Do not quote `evidenceGain` from data that lacks pharmacist sign-off. The corpus
-grounding is structurally verified, but the exact reviewer note is
-`corpus-derived, pharmacist sign-off pending`; the delta is not a clinical
-result until that sign-off is recorded.
+Dataset sign-off is recorded, and the current reviewed `evidenceGain` is
+`0.68 − 0.16 = +0.52`, from 50/50 single-review responses in each arm. It is a
+benchmark measurement, not a clinical result: the pharmacist sheet signs off the
+dataset, not model answers, and no second LLM judge was used. The expected
+`benchmark compare` refusal between `raw` and `oracle` is documented in
+[`../runs/PROVISIONAL_BASELINES.md`](../runs/PROVISIONAL_BASELINES.md).

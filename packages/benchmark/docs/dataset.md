@@ -19,9 +19,11 @@ The shipped dataset is corpus-grounded. `questions.jsonl` and
 `gold_annotations.jsonl` are derived from
 `tooling/embedding-lab/output/embeddings/chunks.jsonl`: chunk ids are real,
 evidence text is verbatim, and answers and facts come only from those passages.
-Every row carries the exact reviewer note
-`corpus-derived, pharmacist sign-off pending`. This is structural verification,
-not clinical sign-off.
+The returned pharmacist sheet has been reconciled into the existing strict JSONL
+fields. The literal signature is
+`student — licence 12er4567 — affiliation NTIC`, preserved as supplied; the
+project owner confirmed that reviewer is a licensed pharmacist. See
+[`../data/v1/PHARMACIST_SIGNOFF_README.md`](../data/v1/PHARMACIST_SIGNOFF_README.md).
 
 ## Question fields
 
@@ -93,16 +95,18 @@ oracle may use a subset, but every chunk-backed passage should also appear in
    passages to `evidence_bundle`. Passages are verbatim, carry provenance, and
    are ordered: `[E1]` refers to the first passage. See
    [`oracle.md`](./oracle.md).
-6. **Validation.** `bun run benchmark dataset validate` must pass with zero
-   errors. The current corpus-grounded dataset has zero errors and four
-   intentional `TRAP_EXPECTS_ANSWER` warnings; each warning is a row where the
-   curated evidence directly and correctly answers the trap, so `ANSWER` is
-   the credible expected behavior. These warnings are documented in
+6. **Validation.** `bun run --cwd packages/benchmark benchmark dataset validate`
+   must pass with zero errors. The current corpus-grounded dataset has zero
+   errors and six intentional `TRAP_EXPECTS_ANSWER` warnings: four rows where the
+   curated evidence directly and correctly answers the trap, plus two
+   source-boundary answers. These warnings are documented and not suppressed in
    [`../runs/PROVISIONAL_BASELINES.md`](../runs/PROVISIONAL_BASELINES.md).
-7. **Sign-off.** The current rows are `APPROVED`/`VERIFIED` with the exact note
-   `corpus-derived, pharmacist sign-off pending`. A pharmacist must still review
-   the questions, evidence spans, and reference answers before any score is
-   interpreted.
+7. **Sign-off.** The returned sheet was reconciled against the current corpus:
+   18 `APPROVE`, 32 `REVISE`, and 0 `REJECT` rows. Of the `REVISE` rows, 12 were
+   already fixed, 7 required a documented decision, and 13 remained open because
+   the source itself was the authority. Only corpus-supported corrections were
+   applied. The literal sheet identity and owner confirmation are recorded in
+   `dataset.meta.json` and the strict annotation fields.
 8. **Two-reviewer disputes.** If two reviewers disagree, set
    `verification_status: "DISPUTED"` and record both opinions in
    `reviewer_notes`. `DISPUTED` annotations are excluded from scored runs
