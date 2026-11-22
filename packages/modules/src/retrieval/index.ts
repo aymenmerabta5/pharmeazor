@@ -9,3 +9,4 @@ export {
   type ChunkSourceDocument,
   type ChunkingOptions,
 } from "./chunk";
+export { assertNormalized, parseNpy, type NpyDtype, type NpyMatrix } from "./npy";

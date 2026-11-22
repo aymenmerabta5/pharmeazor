@@ -34,6 +34,8 @@
     "retrieval:contextualize": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/contextualize.ts",
     "retrieval:ingest": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts",
     "retrieval:ingest:dry": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --dry-run",
+    "retrieval:ingest:vectors": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --vectors tooling/embedding-lab/output/embeddings",
+    "retrieval:ingest:vectors:dry": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --vectors tooling/embedding-lab/output/embeddings --dry-run",
     "dev": "bun --env-file=.env.local run turbo run dev",
     "doctor:fix": "bunx --bun ghostinit@0.1.0 doctor --fix",
     "eve:build": "bun --env-file=.env.local run --cwd apps/harness build",

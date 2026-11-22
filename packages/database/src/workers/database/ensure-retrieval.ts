@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS retrieval_chunks (
   document_type          text NOT NULL,
   source_urls            text[] NOT NULL DEFAULT '{}',
   embedding_model        text NOT NULL,
+  embedding_revision     text,
   embedding              halfvec(1024) NOT NULL,
   injection_risk         boolean NOT NULL DEFAULT false,
   created_at             timestamptz NOT NULL DEFAULT now(),
@@ -80,6 +81,7 @@ CREATE TABLE IF NOT EXISTS retrieval_chunk_terms (
 
 CREATE TABLE IF NOT EXISTS retrieval_index_meta (
   embedding_model          text PRIMARY KEY,
+  embedding_revision       text,
   chunk_count              integer NOT NULL,
   average_document_length  double precision NOT NULL,
   tokenizer_version        text NOT NULL,
@@ -89,6 +91,12 @@ CREATE TABLE IF NOT EXISTS retrieval_index_meta (
 CREATE INDEX IF NOT EXISTS retrieval_chunks_embedding_hnsw
   ON retrieval_chunks USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 16, ef_construction = 64);
+
+-- Existing databases were created before the embedding revision was recorded.
+ALTER TABLE retrieval_chunks
+  ADD COLUMN IF NOT EXISTS embedding_revision text;
+ALTER TABLE retrieval_index_meta
+  ADD COLUMN IF NOT EXISTS embedding_revision text;
 
 -- Packed chunks cover several sections, so the section filter is an overlap
 -- test over an array. The column is added separately for databases created

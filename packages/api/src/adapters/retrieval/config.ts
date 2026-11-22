@@ -23,6 +23,12 @@ export interface RerankerRuntimeConfig {
   readonly model: string;
   readonly apiKey?: string;
   readonly timeoutMs: number;
+  /**
+   * Documents per HTTP request. TEI rejects a request whose `texts` array
+   * exceeds its `max_client_batch_size` (32 by default), so a wider rerank
+   * window must be split rather than sent whole.
+   */
+  readonly batchSize: number;
 }
 
 export interface RetrievalRuntimeConfig {
@@ -96,6 +102,10 @@ export function readRetrievalRuntimeConfig(
           env.RETRIEVAL_RERANKER_TIMEOUT_MS,
           10_000,
           "RETRIEVAL_RERANKER_TIMEOUT_MS",
+        ),
+        batchSize: Math.min(
+          64,
+          positiveInteger(env.RETRIEVAL_RERANKER_BATCH_SIZE, 32, "RETRIEVAL_RERANKER_BATCH_SIZE"),
         ),
       }
     : null;

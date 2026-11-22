@@ -23,6 +23,8 @@ import {
  *
  * Vectors are BGE-M3 dense embeddings stored as `halfvec(1024)`; the lexical
  * arm is a real BM25 inverted index (`retrieval_chunk_terms`), not `ts_rank`.
+ * The pinned model revision is stored beside the model name so vectors from
+ * two revisions can never be mixed silently.
  */
 
 export const retrievalDocuments = pgTable("retrieval_documents", {
@@ -100,6 +102,7 @@ export const retrievalChunks = pgTable(
       .notNull()
       .default(sql`'{}'::text[]`),
     embeddingModel: text("embedding_model").notNull(),
+    embeddingRevision: text("embedding_revision"),
     embedding: halfvec("embedding", { dimensions: 1024 }).notNull(),
     injectionRisk: boolean("injection_risk").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -134,6 +137,7 @@ export const retrievalChunkTerms = pgTable(
 
 export const retrievalIndexMeta = pgTable("retrieval_index_meta", {
   embeddingModel: text("embedding_model").primaryKey(),
+  embeddingRevision: text("embedding_revision"),
   chunkCount: integer("chunk_count").notNull(),
   averageDocumentLength: doublePrecision("average_document_length").notNull(),
   tokenizerVersion: text("tokenizer_version").notNull(),

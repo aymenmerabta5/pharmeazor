@@ -39,6 +39,10 @@ import {
 } from "@repo/services/retrieval/tokenize";
 import { readRetrievalRuntimeConfig } from "../../adapters/retrieval/config";
 import { createHttpEmbeddingAdapter } from "../../adapters/retrieval/embedding";
+import {
+  openPrecomputedVectors,
+  type PrecomputedVectorSource,
+} from "../../adapters/retrieval/precomputed";
 import { textArray } from "../../adapters/retrieval/sql";
 
 interface ManifestRow {
@@ -80,6 +84,7 @@ interface IngestOptions {
   readonly maxChars: number;
   readonly notes: string | null;
   readonly requireContext: boolean;
+  readonly vectors: string | null;
 }
 
 interface IngestSummary {
@@ -94,6 +99,8 @@ interface IngestSummary {
   readonly deletedDocuments: number;
   readonly elapsedMs: number;
   readonly embeddingModel: string;
+  readonly embeddingRevision: string | null;
+  readonly vectorSource: "http" | "precomputed";
   readonly notesPath: string | null;
 }
 
@@ -104,10 +111,26 @@ async function main(): Promise<void> {
   const rows = await readManifest(options);
   const selected = selectRows(rows, options);
   const documents = await Promise.all(selected.map((row) => loadDocument(row, options, notes)));
+  const vectorSource = options.vectors ? await openPrecomputedVectors(options.vectors) : null;
+  const vectorCoverage = vectorSource
+    ? validatePrecomputedCoverage(documents, vectorSource, options)
+    : null;
 
   if (options.dryRun) {
     const summary = summarizeDryRun(documents, startedAt, options, notes);
-    console.log(JSON.stringify({ ok: true, dryRun: true, ...summary }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          dryRun: true,
+          ...summary,
+          vectorSource: vectorSource?.describe() ?? null,
+          vectors: vectorCoverage,
+        },
+        null,
+        2,
+      ),
+    );
     return;
   }
 
@@ -122,12 +145,18 @@ async function main(): Promise<void> {
     }
   }
 
-  const config = readRetrievalRuntimeConfig();
-  const embedding = createHttpEmbeddingAdapter(config.embedding);
+  const httpEmbedding = vectorSource
+    ? null
+    : createHttpEmbeddingAdapter(readRetrievalRuntimeConfig().embedding);
+  const embeddingModel = vectorSource?.model ?? httpEmbedding!.model;
+  const embeddingRevision = vectorSource?.revision ?? null;
+  if (vectorSource) {
+    await assertRevisionCompatible(embeddingModel, embeddingRevision, options);
+  }
   const meta = await db
     .select({ tokenizerVersion: retrievalIndexMeta.tokenizerVersion })
     .from(retrievalIndexMeta)
-    .where(eq(retrievalIndexMeta.embeddingModel, embedding.model))
+    .where(eq(retrievalIndexMeta.embeddingModel, embeddingModel))
     .limit(1);
   const tokenizerChanged =
     Boolean(meta[0]?.tokenizerVersion) && meta[0]!.tokenizerVersion !== LEXICAL_TOKENIZER_VERSION;
@@ -151,6 +180,7 @@ async function main(): Promise<void> {
         chunkId: retrievalChunks.chunkId,
         contentHash: retrievalChunks.contentHash,
         embeddingModel: retrievalChunks.embeddingModel,
+        embeddingRevision: retrievalChunks.embeddingRevision,
       })
       .from(retrievalChunks)
       .where(eq(retrievalChunks.artifactId, document.source.artifactId));
@@ -162,22 +192,30 @@ async function main(): Promise<void> {
         options.force ||
         !current ||
         current.contentHash !== chunk.contentHash ||
-        current.embeddingModel !== embedding.model
+        current.embeddingModel !== embeddingModel ||
+        current.embeddingRevision !== embeddingRevision
       );
     });
     const needsRetokenizing = options.force || tokenizerChanged ? document.chunks : changed;
     const vectors = new Map<string, number[]>();
     if (changed.length > 0) {
-      const embedded = await embedding.embedDocuments(
-        changed.map((chunk) => chunk.contextualizedContent),
-      );
-      if (embedded.length !== changed.length) {
-        throw new Error(
-          `Embedding server returned ${embedded.length} vectors for ${changed.length} chunks of ${document.source.artifactId}`,
+      if (vectorSource) {
+        for (const chunk of changed) {
+          vectors.set(chunk.chunkId, vectorSource.vectorFor(chunk));
+        }
+        embeddedChunks += changed.length;
+      } else {
+        const embedded = await httpEmbedding!.embedDocuments(
+          changed.map((chunk) => chunk.contextualizedContent),
         );
+        if (embedded.length !== changed.length) {
+          throw new Error(
+            `Embedding server returned ${embedded.length} vectors for ${changed.length} chunks of ${document.source.artifactId}`,
+          );
+        }
+        changed.forEach((chunk, index) => vectors.set(chunk.chunkId, embedded[index]!));
+        embeddedChunks += changed.length;
       }
-      changed.forEach((chunk, index) => vectors.set(chunk.chunkId, embedded[index]!));
-      embeddedChunks += changed.length;
     }
     reusedChunks += document.chunks.length - changed.length;
 
@@ -225,7 +263,7 @@ async function main(): Promise<void> {
           .insert(retrievalChunks)
           .values(
             batch.map((chunk) => ({
-              ...chunkRow(chunk, document.source, embedding.model),
+              ...chunkRow(chunk, document.source, embeddingModel, embeddingRevision),
               embedding: vectors.get(chunk.chunkId)!,
             })),
           )
@@ -278,13 +316,14 @@ async function main(): Promise<void> {
   `);
   await db.execute(sql`
     INSERT INTO retrieval_index_meta (
-      embedding_model, chunk_count, average_document_length, tokenizer_version, updated_at
+      embedding_model, embedding_revision, chunk_count, average_document_length, tokenizer_version, updated_at
     )
-    SELECT embedding_model, count(*)::int, coalesce(avg(term_count), 0)::float8,
+    SELECT embedding_model, max(embedding_revision), count(*)::int, coalesce(avg(term_count), 0)::float8,
       ${LEXICAL_TOKENIZER_VERSION}, now()
     FROM retrieval_chunks
     GROUP BY embedding_model
     ON CONFLICT (embedding_model) DO UPDATE SET
+      embedding_revision = EXCLUDED.embedding_revision,
       chunk_count = EXCLUDED.chunk_count,
       average_document_length = EXCLUDED.average_document_length,
       tokenizer_version = EXCLUDED.tokenizer_version,
@@ -308,7 +347,9 @@ async function main(): Promise<void> {
     injectionChunks,
     deletedDocuments,
     elapsedMs: Math.round(performance.now() - startedAt),
-    embeddingModel: embedding.model,
+    embeddingModel,
+    embeddingRevision,
+    vectorSource: vectorSource ? "precomputed" : "http",
     notesPath: options.notes,
   };
   console.log(JSON.stringify({ ok: true, ...summary }, null, 2));
@@ -325,6 +366,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
   let maxChars = 4_096;
   let notes: string | null = resolve("tooling/cleaning-lab/output/context/notes.jsonl");
   let requireContext = false;
+  let vectors: string | null = null;
   const medicineIds: string[] = [];
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -367,6 +409,9 @@ function parseOptions(argv: readonly string[]): IngestOptions {
       case "--require-context":
         requireContext = true;
         break;
+      case "--vectors":
+        vectors = resolve(next());
+        break;
       case "--dry-run":
         dryRun = true;
         break;
@@ -389,6 +434,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
             "  --notes <path>      model context notes (default tooling/cleaning-lab/output/context/notes.jsonl)",
             "  --no-notes          ignore model context notes and use the fallback note",
             "  --require-context   fail when any selected chunk has no model-written note",
+            "  --vectors <dir>     load vectors.npy + chunks.jsonl instead of an embedding server",
             "  --dry-run           chunk and report without a database or embedding server",
             "  --force             re-embed every selected chunk",
             "  --prune             delete documents absent from the manifest (full run only)",
@@ -418,6 +464,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
     maxChars,
     notes: notes ? resolve(notes) : null,
     requireContext,
+    vectors,
   };
 }
 
@@ -536,7 +583,12 @@ function resolveCorpusPath(root: string, outputPath: string): string {
   return target;
 }
 
-function chunkRow(chunk: ChunkDraft, source: ChunkSourceDocument, embeddingModel: string) {
+function chunkRow(
+  chunk: ChunkDraft,
+  source: ChunkSourceDocument,
+  embeddingModel: string,
+  embeddingRevision: string | null,
+) {
   return {
     chunkId: chunk.chunkId,
     artifactId: chunk.artifactId,
@@ -559,6 +611,7 @@ function chunkRow(chunk: ChunkDraft, source: ChunkSourceDocument, embeddingModel
     documentType: source.documentType,
     sourceUrls: [...source.sourceUrls],
     embeddingModel,
+    embeddingRevision,
     injectionRisk: chunk.injectionRisk,
     updatedAt: new Date(),
   };
@@ -585,10 +638,64 @@ function buildChunkUpdateSet() {
     documentType: sql`excluded.document_type`,
     sourceUrls: sql`excluded.source_urls`,
     embeddingModel: sql`excluded.embedding_model`,
+    embeddingRevision: sql`excluded.embedding_revision`,
     embedding: sql`excluded.embedding`,
     injectionRisk: sql`excluded.injection_risk`,
     updatedAt: sql`excluded.updated_at`,
   };
+}
+
+function validatePrecomputedCoverage(
+  documents: readonly LoadedDocument[],
+  source: PrecomputedVectorSource,
+  options: IngestOptions,
+): { readonly chunks: number; readonly artifactChunks: number; readonly extra: number } {
+  const seen = new Set<string>();
+  for (const document of documents) {
+    for (const chunk of document.chunks) {
+      source.validateChunk(chunk);
+      seen.add(chunk.chunkId);
+    }
+  }
+  const extra = source.chunkIds().filter((chunkId) => !seen.has(chunkId));
+  const complete =
+    options.limit === null && options.medicineIds.length === 0 && options.artifactId === null;
+  if (complete && extra.length > 0) {
+    throw new Error(
+      `${extra.length} precomputed chunk(s) are not produced by the corpus chunker (first: ${extra
+        .slice(0, 3)
+        .join(", ")}); re-run the embedding lab after changing the chunker`,
+    );
+  }
+  return { chunks: seen.size, artifactChunks: source.rows, extra: extra.length };
+}
+
+async function assertRevisionCompatible(
+  model: string,
+  revision: string | null,
+  options: IngestOptions,
+): Promise<void> {
+  if (!revision) return;
+  const rows = await db
+    .selectDistinct({ revision: retrievalChunks.embeddingRevision })
+    .from(retrievalChunks)
+    .where(eq(retrievalChunks.embeddingModel, model));
+  const conflicting = rows
+    .map((row) => row.revision)
+    .filter((value): value is string => Boolean(value) && value !== revision);
+  if (conflicting.length === 0) return;
+  const filtered =
+    options.limit !== null || options.medicineIds.length > 0 || options.artifactId !== null;
+  if (filtered) {
+    throw new Error(
+      `The index already holds ${model} vectors from revision(s) ${conflicting.join(
+        ", ",
+      )}; run an unfiltered ingest to replace the whole model`,
+    );
+  }
+  console.warn(
+    `[retrieval] replacing ${model} vectors from revision(s) ${conflicting.join(", ")} with ${revision}`,
+  );
 }
 
 async function pruneDocuments(rows: readonly ManifestRow[]): Promise<number> {

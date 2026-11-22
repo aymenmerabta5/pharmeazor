@@ -419,28 +419,92 @@ principal is never read from model output or a public request body.
 ```bash
 bun run retrieval:ensure-schema   # create tables, GIN/HNSW indexes, extension
 bun run retrieval:ingest:dry      # chunk and report; no database, no embedding server
-bun run retrieval:ingest          # embed changed chunks and rebuild postings
+bun run retrieval:ingest:vectors:dry # validate the precomputed BGE-M3 artifact against the chunker
+bun run retrieval:ingest:vectors  # load vectors.npy + chunks.jsonl; no embedding server
+bun run retrieval:ingest          # embed changed chunks through RETRIEVAL_EMBEDDING_URL
 bun run retrieval:ingest --force  # re-embed every selected chunk
 bun run retrieval:ingest --prune  # delete documents absent from the manifest
 ```
 
-The indexer is incremental: a chunk is re-embedded only when its content hash or
-embedding model changed, and its postings are rebuilt only when the chunk or the
-tokenizer version changed. Documents that disappear from the manifest are
-deleted only under `--prune`, on an unfiltered run.
+`retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,
+`chunks.jsonl` and `vectors.npy`. It re-chunks the corpus with the production
+chunker, joins every chunk by `chunk_id`, and requires the artifact's
+`text_sha256` to equal the chunker's `contentHash`. A changed chunk, a missing
+vector or a checksum mismatch stops the import instead of indexing stale text.
+The artifact manifest pins the BGE-M3 revision and the SHA-256 of both files;
+the revision is stored on every chunk so two revisions cannot be mixed
+silently. This path needs no embedding server. The HTTP path is still required
+for query embedding at runtime.
+
+The indexer is incremental: a chunk is re-embedded only when its content hash,
+embedding model or embedding revision changed, and its postings are rebuilt
+only when the chunk or the tokenizer version changed. Documents that disappear
+from the manifest are deleted only under `--prune`, on an unfiltered run.
+
+### Serving the models
+
+Query embedding and reranking need an HTTP endpoint, not a particular server.
+The adapters speak TEI's `/embed` and `/rerank` shapes, so the reference server
+is Text Embeddings Inference, pinned by digest in `docker-compose.yml`:
+
+```bash
+docker compose --env-file .env.local --profile retrieval up -d
+```
+
+Both services sit behind the `retrieval` profile, so a checkout without a GPU
+still runs `docker compose up` unchanged. The image is pinned by digest because
+a TEI minor release can change tokenization or kernels; the weights are mounted
+read-only from a local snapshot because the corpus records the revision that
+produced its vectors, and serving a different one would put queries and
+documents in different embedding spaces.
+
+| Service                | Model                     | Port |
+| ---------------------- | ------------------------- | ---- |
+| `retrieval-embeddings` | `BAAI/bge-m3`             | 8081 |
+| `retrieval-reranker`   | `BAAI/bge-reranker-v2-m3` | 8082 |
+
+Measured on an RTX 3060: TEI's vectors match the ones already indexed at cosine
+0.9996 minimum / 0.9998 mean (TEI approximates GeLU with tanh), and the
+reranker separates a matching indication from an unrelated one at 0.99 vs 0.09.
+
+The reranker adapter splits requests into `RETRIEVAL_RERANKER_BATCH_SIZE`
+documents because TEI rejects a `texts` array larger than its
+`max_client_batch_size` (32 by default). Scores are comparable across batches,
+so the adapter merges them by score and re-indexes against the caller's
+original order.
+
+The rerank window covers the whole fusion window. A chunk found by only one arm
+sits low in the fused order by construction; a narrower window discards exactly
+the identifier and paraphrase hits the two arms exist to catch. Measured: an
+English question put the correct French chunk at fused position 33 of 50, and
+the reranker scored it 0.99 — but a 30-candidate window never showed it to the
+reranker.
 
 ### Configuration
 
 Server-only variables, read by `packages/api/src/adapters/retrieval/config.ts`:
 
-| Variable                         | Default       | Meaning                                                  |
-| -------------------------------- | ------------- | -------------------------------------------------------- |
-| `RETRIEVAL_EMBEDDING_URL`        | required      | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings` |
-| `RETRIEVAL_EMBEDDING_MODE`       | `tei`         | `tei` or `openai`                                        |
-| `RETRIEVAL_EMBEDDING_MODEL`      | `BAAI/bge-m3` | Stored on every chunk; changing it forces re-embedding   |
-| `RETRIEVAL_EMBEDDING_DIMENSIONS` | `1024`        | Must stay 1024 to match the `halfvec` column             |
-| `RETRIEVAL_RERANKER_URL`         | unset         | TEI `/rerank`; unset returns fusion order                |
-| `RETRIEVAL_REQUIRE_RERANK`       | `false`       | Fail the request instead of degrading                    |
+| Variable                         | Default                                             | Meaning                                                                  |
+| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `RETRIEVAL_EMBEDDING_URL`        | required                                            | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings`                 |
+| `RETRIEVAL_EMBEDDING_MODE`       | `tei`                                               | `tei` or `openai`                                                        |
+| `RETRIEVAL_EMBEDDING_MODEL`      | `BAAI/bge-m3`                                       | Stored on every chunk; changing it forces re-embedding                   |
+| `RETRIEVAL_EMBEDDING_DIMENSIONS` | `1024`                                              | Must stay 1024 to match the `halfvec` column                             |
+| `RETRIEVAL_EMBEDDING_API_KEY`    | unset                                               | Sent as `Authorization: Bearer` when set                                 |
+| `RETRIEVAL_EMBEDDING_TIMEOUT_MS` | `20000`                                             | Per-request timeout                                                      |
+| `RETRIEVAL_EMBEDDING_BATCH_SIZE` | `16`                                                | Texts per request, capped at 64                                          |
+| `RETRIEVAL_RERANKER_URL`         | unset                                               | TEI `/rerank`; unset returns fusion order                                |
+| `RETRIEVAL_RERANKER_MODEL`       | `BAAI/bge-reranker-v2-m3`                           | Model name reported in diagnostics                                       |
+| `RETRIEVAL_RERANKER_API_KEY`     | unset                                               | Sent as `Authorization: Bearer` when set                                 |
+| `RETRIEVAL_RERANKER_TIMEOUT_MS`  | `10000`                                             | Per-request timeout, applied to each batch                               |
+| `RETRIEVAL_RERANKER_BATCH_SIZE`  | `32`                                                | Documents per request, capped at 64; match TEI's `max_client_batch_size` |
+| `RETRIEVAL_REQUIRE_RERANK`       | `false`                                             | Fail the request instead of degrading                                    |
+| `RETRIEVAL_EMBEDDING_MODEL_DIR`  | `./tooling/embedding-lab/models/bge-m3`             | Compose-only host path mounted at `/data`                                |
+| `RETRIEVAL_RERANKER_MODEL_DIR`   | `./tooling/embedding-lab/models/bge-reranker-v2-m3` | Compose-only host path mounted at `/data`                                |
+
+`RETRIEVAL_EMBEDDING_URL` is required for query embedding at runtime and for
+the HTTP ingest path. `retrieval:ingest:vectors` does not read it: the model
+name and revision come from the artifact manifest.
 
 ### What is deliberately deferred
 
