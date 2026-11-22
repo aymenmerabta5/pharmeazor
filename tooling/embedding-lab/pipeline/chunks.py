@@ -13,7 +13,7 @@ Batching has two jobs:
 
 1. keep the tokenizer off the critical path (the prefetcher pads and pins the
    next batches while the GPU works), and
-2. group similar-length chunks so an 8 GB card does not spend most of its
+2. group similar-length chunks so a small card does not spend most of its
    compute on padding.
 """
 
@@ -448,7 +448,22 @@ def plan_batches(
     Length grouping sorts longest-first, so the first item in a batch is also
     the padded length of the whole batch. That makes the token cap exact and
     avoids the classic "one long chunk pads 63 short ones" waste.
+
+    Both limits must be concrete here. ``0`` means "auto" in ``config.yaml``
+    and is resolved from the device before batching; passing it through would
+    make ``len(rows) >= 0`` true on every row and quietly emit one batch per
+    chunk, so it is rejected instead.
     """
+    if batch_size < 1:
+        raise ValueError(
+            f"batch_size must be >= 1, got {batch_size}; resolve the config's "
+            "auto value with apply_device_defaults() first"
+        )
+    if max_batch_tokens < 1:
+        raise ValueError(
+            f"max_batch_tokens must be >= 1, got {max_batch_tokens}; resolve "
+            "the config's auto value with apply_device_defaults() first"
+        )
     if not token_ids:
         return []
 

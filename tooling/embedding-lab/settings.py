@@ -20,10 +20,10 @@ import yaml
 ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG = ROOT / "config.yaml"
 
-MODEL_DTYPES = frozenset({"bfloat16", "float16", "float32"})
+MODEL_DTYPES = frozenset({"auto", "bfloat16", "float16", "float32"})
 OUTPUT_DTYPES = frozenset({"float16", "float32"})
 POOLING_MODES = frozenset({"cls", "mean"})
-ATTENTION_IMPLEMENTATIONS = frozenset({"sdpa", "eager", "flash_attention_2"})
+ATTENTION_IMPLEMENTATIONS = frozenset({"auto", "sdpa", "eager", "flash_attention_2"})
 TRUNCATION_MODES = frozenset({"error", "truncate"})
 DUPLICATE_POLICIES = frozenset({"error", "first", "last"})
 COMPILE_MODES = frozenset(
@@ -285,10 +285,10 @@ def load_settings(config_path: Path | str = DEFAULT_CONFIG) -> Settings:
             TRUNCATION_MODES,
         ),
         dtype=_choice(
-            model_raw.get("dtype", "bfloat16"), "model.dtype", MODEL_DTYPES
+            model_raw.get("dtype", "auto"), "model.dtype", MODEL_DTYPES
         ),
         attn_implementation=_choice(
-            model_raw.get("attn_implementation", "sdpa"),
+            model_raw.get("attn_implementation", "auto"),
             "model.attn_implementation",
             ATTENTION_IMPLEMENTATIONS,
         ),
@@ -312,12 +312,12 @@ def load_settings(config_path: Path | str = DEFAULT_CONFIG) -> Settings:
     runtime_settings = RuntimeSettings(
         device=_text(runtime_raw.get("device", "cuda"), "runtime.device"),
         batch_size=_integer(
-            runtime_raw.get("batch_size", 64), "runtime.batch_size", minimum=1
+            runtime_raw.get("batch_size", 0), "runtime.batch_size", minimum=0
         ),
         max_batch_tokens=_integer(
-            runtime_raw.get("max_batch_tokens", 24576),
+            runtime_raw.get("max_batch_tokens", 0),
             "runtime.max_batch_tokens",
-            minimum=1,
+            minimum=0,
         ),
         length_grouped=_boolean(
             runtime_raw.get("length_grouped", True), "runtime.length_grouped"
@@ -396,10 +396,10 @@ def validate_settings(settings: Settings) -> None:
     """Re-check the invariants after CLI overrides are applied."""
     if settings.model.max_length < 16 or settings.model.max_length > 8192:
         raise ConfigError("'model.max_length' must be between 16 and 8192")
-    if settings.runtime.batch_size < 1:
-        raise ConfigError("'runtime.batch_size' must be >= 1")
-    if settings.runtime.max_batch_tokens < 1:
-        raise ConfigError("'runtime.max_batch_tokens' must be >= 1")
+    if settings.runtime.batch_size < 0:
+        raise ConfigError("'runtime.batch_size' must be >= 0 (0 means auto)")
+    if settings.runtime.max_batch_tokens < 0:
+        raise ConfigError("'runtime.max_batch_tokens' must be >= 0 (0 means auto)")
     if settings.runtime.pad_multiple < 1:
         raise ConfigError("'runtime.pad_multiple' must be >= 1")
     if settings.runtime.prefetch_batches < 0:

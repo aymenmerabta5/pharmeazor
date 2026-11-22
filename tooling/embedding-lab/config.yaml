@@ -19,8 +19,8 @@
 #   chunks, so this lab rejects it with an explicit error.
 
 input:
-  # The cleaning-lab output tree has a nested `output/output` directory.
-  path: "../cleaning-lab/output/output/context/embed-input.jsonl"
+  # Written by `tooling/cleaning-lab` (see its README for the pipeline stages).
+  path: "../cleaning-lab/output/context/embed-input.jsonl"
 
   # `error` refuses duplicate chunk ids. `first`/`last` are available for
   # exploratory runs, but the production corpus must stay one row per chunk.
@@ -64,15 +64,16 @@ model:
   max_length: 4096
   truncation: "error" # error | truncate
 
-  # `bfloat16` is native on the RTX 5060 (Blackwell, sm_120) and is more
-  # numerically stable than float16 for XLM-R LayerNorm. `float32` is slower
-  # and only useful for comparison.
-  dtype: "bfloat16"
+  # `auto` picks the fastest dtype the GPU computes natively: bfloat16 on
+  # Ampere and newer (it has FP32's range, so XLM-R's LayerNorm cannot
+  # overflow), float16 on older CUDA cards, float32 on CPU. Set bfloat16,
+  # float16 or float32 to force one instead.
+  dtype: "auto"
 
-  # SDPA selects the best fused attention kernel PyTorch has for this GPU.
-  # `flash_attention_2` is intentionally not required; it has no reliable
-  # Windows/Blackwell wheel in this setup.
-  attn_implementation: "sdpa"
+  # `auto` uses SDPA when this PyTorch exposes it and eager otherwise.
+  # `flash_attention_2` needs a matching wheel and Ampere or newer; the loader
+  # falls back to eager when the kernel cannot be built.
+  attn_implementation: "auto"
 
   # BGE-M3's sentence-transformers config uses CLS pooling, then L2
   # normalization. Do not change this without re-measuring retrieval quality.
@@ -84,14 +85,18 @@ model:
   download_workers: 8
 
 runtime:
+  # `cuda` uses the NVIDIA GPU and fails loudly when a CUDA build of PyTorch is
+  # missing, so a long run never silently falls back to the CPU. `auto` prefers
+  # CUDA, then Apple MPS, then CPU; `cpu` and `mps` force one.
   device: "cuda"
 
   # Batch shaping. The engine groups similar-length chunks and then caps each
-  # batch by both item count and padded token count. 24k padded tokens is a
-  # conservative starting point for an 8 GB RTX 5060; OOM retries halve the
-  # batch instead of aborting the run.
-  batch_size: 64
-  max_batch_tokens: 24576
+  # batch by both item count and padded token count. `0` means "size it from
+  # the memory the card reports", so the same config runs on any GPU; a
+  # non-zero value is an explicit override. OOM retries halve the batch
+  # instead of aborting the run.
+  batch_size: 0
+  max_batch_tokens: 0
   length_grouped: true
   pad_multiple: 64
 
@@ -100,19 +105,19 @@ runtime:
   prefetch_batches: 4
   pin_memory: true
 
-  # torch.compile is lazy: the first batch pays the compilation cost. On the
-  # RTX 5060, `default` measured faster than `max-autotune-no-cudagraphs`
-  # (33.0 vs 31.9 rows/s) and compiles in a fraction of the time. CUDA-graph
-  # modes fail on the varying padded lengths, so `compile_dynamic` stays true:
-  # one graph for every shape instead of one graph per shape.
+  # torch.compile is lazy: the first batch pays the compilation cost. It needs
+  # a Triton backend for the target platform; without one the run logs the
+  # reason and continues eagerly. CUDA-graph modes need static shapes, so
+  # `compile_dynamic` stays true: one graph for every shape instead of one
+  # graph per shape.
   compile: true
   compile_mode: "default"
   compile_backend: "inductor"
   compile_dynamic: true
   warmup_batches: 3
 
-  # Blackwell supports TF32 and BF16. SDPA is enabled explicitly so a stale
-  # environment variable cannot silently force the slow math kernel.
+  # TF32 and SDPA are enabled explicitly so a stale environment variable cannot
+  # force the slow math kernel. Both are no-ops on hardware that lacks them.
   tf32: true
   sdpa: true
 

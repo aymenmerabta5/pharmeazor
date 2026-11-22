@@ -285,16 +285,31 @@ def cmd_info(args: argparse.Namespace) -> int:
     if getattr(args, "verbose", False):
         try:
             from pipeline.model import (
+                apply_device_defaults,
                 configure_runtime,
                 device_info,
+                resolve_attn_implementation,
                 resolve_device,
+                resolve_dtype,
             )
 
             flags = configure_runtime(settings)
             device = resolve_device(settings.runtime.device)
+            resolved = apply_device_defaults(settings, device)
+            _, dtype_name = resolve_dtype(settings.model.dtype, device)
             payload["device"] = {
                 "info": device_info(device),
                 "flags": flags,
+                # What "auto" and 0 become on this machine. `settings` above
+                # still shows the configured values, not these.
+                "resolved": {
+                    "dtype": dtype_name,
+                    "attn_implementation": resolve_attn_implementation(
+                        settings.model.attn_implementation
+                    ),
+                    "batch_size": resolved.runtime.batch_size,
+                    "max_batch_tokens": resolved.runtime.max_batch_tokens,
+                },
             }
         except Exception as exc:  # noqa: BLE001 - diagnostic output
             payload["device"] = {"error": f"{type(exc).__name__}: {exc}"}
@@ -328,6 +343,7 @@ def cmd_embed(args: argparse.Namespace) -> int:
 
     from pipeline.engine import EmbeddingEngine
     from pipeline.model import (
+        apply_device_defaults,
         configure_runtime,
         device_info,
         load_model,
@@ -338,6 +354,7 @@ def cmd_embed(args: argparse.Namespace) -> int:
 
     runtime_flags = configure_runtime(settings)
     device = resolve_device(settings.runtime.device)
+    settings = apply_device_defaults(settings, device)
     device_report = device_info(device)
     logger.info(
         "device: %s (compute %s, %.1f GB, bf16=%s)",
@@ -472,6 +489,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         write_benchmark_report,
     )
     from pipeline.model import (
+        apply_device_defaults,
         configure_runtime,
         device_info,
         load_model,
@@ -502,6 +520,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
 
     runtime_flags = configure_runtime(settings)
     device = resolve_device(settings.runtime.device)
+    settings = apply_device_defaults(settings, device)
     device_report = device_info(device)
 
     bundle = load_model(settings, device, compile_model=False)
