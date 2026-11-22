@@ -119,6 +119,20 @@ CREATE INDEX IF NOT EXISTS retrieval_chunks_language_idx
   ON retrieval_chunks (language);
 CREATE INDEX IF NOT EXISTS retrieval_chunk_terms_term_idx
   ON retrieval_chunk_terms (term);
+
+CREATE TABLE IF NOT EXISTS retrieval_aliases (
+  alias_norm    text PRIMARY KEY,
+  alias_raw     text NOT NULL,
+  dci_norms     text[] NOT NULL DEFAULT '{}',
+  dci_labels    text[] NOT NULL DEFAULT '{}',
+  medicine_ids  text[] NOT NULL DEFAULT '{}',
+  ambiguous     boolean NOT NULL DEFAULT false,
+  source_id     text NOT NULL,
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS retrieval_aliases_ambiguous_idx
+  ON retrieval_aliases (ambiguous);
 `;
 
 async function main(): Promise<void> {

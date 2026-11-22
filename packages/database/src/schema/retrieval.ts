@@ -144,6 +144,48 @@ export const retrievalIndexMeta = pgTable("retrieval_index_meta", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Brand-to-substance aliases for query expansion.
+ *
+ * The corpus is written with substance names (`paracétamol`) while a user
+ * asks with the Algerian brand (`DOLKO`). Measured: 36.1% of the 2,144 known
+ * brands never occur anywhere in the indexed text, so neither retrieval arm
+ * can reach them. This table lets the lexical arm append the substance terms
+ * the brand stands for.
+ *
+ * `alias_norm` is folded with the same `lexical-fold-v1` analyser as the
+ * postings, so an alias and a chunk term cannot live in different token
+ * spaces. `ambiguous` is true when one brand covers more than one substance
+ * (combination products); those are surfaced to the agent instead of expanded,
+ * because silently picking one sense is how a combination product gets dosed
+ * as a single agent.
+ */
+export const retrievalAliases = pgTable(
+  "retrieval_aliases",
+  {
+    aliasNorm: text("alias_norm").primaryKey(),
+    aliasRaw: text("alias_raw").notNull(),
+    /** Folded substance labels this alias expands to; empty when ambiguous. */
+    dciNorms: text("dci_norms")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    /** Display labels, kept so the agent can name the substance it searched. */
+    dciLabels: text("dci_labels")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    medicineIds: text("medicine_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    ambiguous: boolean("ambiguous").notNull().default(false),
+    sourceId: text("source_id").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("retrieval_aliases_ambiguous_idx").on(table.ambiguous)],
+);
+
 /** Convenience re-export so adapter code can import one type. */
 export type RetrievalDocumentRow = typeof retrievalDocuments.$inferSelect;
 export type RetrievalChunkRow = typeof retrievalChunks.$inferSelect;

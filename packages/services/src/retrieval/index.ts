@@ -37,6 +37,15 @@ export {
   type RankedList,
   type RetrievalArm,
 } from "./fusion";
+export {
+  MAX_ALIAS_TOKENS,
+  MAX_AMBIGUOUS_ALIASES,
+  MAX_EXPANDED_TERMS,
+  aliasCandidateKeys,
+  expandQueryTerms,
+  type QueryExpansion,
+} from "./expand";
+export type { AliasMatch, AliasPort } from "./ports";
 export { normalizeRetrievalRequest, RETRIEVAL_LIMITS } from "./policy";
 export {
   LEXICAL_TOKENIZER_VERSION,

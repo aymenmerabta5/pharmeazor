@@ -17,6 +17,7 @@ export function createRetrievalServiceFromEnv(): RetrievalService {
     index: postgresRetrievalIndex,
     embedding: createHttpEmbeddingAdapter(config.embedding),
     reranker: config.reranker ? createHttpRerankerAdapter(config.reranker) : null,
+    aliases: postgresRetrievalIndex,
     requireRerank: config.requireRerank,
     warn: (message) => console.warn(`[retrieval] ${message}`),
   });

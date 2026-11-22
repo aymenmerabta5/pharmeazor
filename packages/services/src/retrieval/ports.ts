@@ -49,3 +49,26 @@ export interface RerankPort {
   readonly model: string;
   rerank(input: RerankInput): Promise<RerankResult[]>;
 }
+
+/** One brand alias and the substance terms it stands for. */
+export interface AliasMatch {
+  /** Folded alias, space-joined; the key the lookup matched. */
+  readonly aliasNorm: string;
+  /** Display form, quoted back to the agent for disambiguation. */
+  readonly aliasRaw: string;
+  /** Folded substance labels. More than one means the brand is ambiguous. */
+  readonly dciNorms: readonly string[];
+  readonly dciLabels: readonly string[];
+  readonly ambiguous: boolean;
+}
+
+/**
+ * Brand lookup for query expansion.
+ *
+ * Optional: when it is absent or fails, retrieval runs on the original query.
+ * Expansion raises recall but is not a correctness requirement, so its outage
+ * must not take the corpus offline.
+ */
+export interface AliasPort {
+  resolveAliases(keys: readonly string[]): Promise<readonly AliasMatch[]>;
+}

@@ -403,6 +403,8 @@ online:   query -> BGE-M3 embed ─┬─> dense search (cosine, HNSW)
 | Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`  |
 | Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                  |
 | Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`     |
+| Brand expansion               | `packages/services/src/retrieval/expand.ts`                     |
+| Alias import                  | `packages/api/src/workers/retrieval/import-aliases.ts`          |
 | Wire contract                 | `packages/contracts/src/retrieval.ts`                           |
 | Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`             |
 
@@ -428,6 +430,8 @@ bun run retrieval:ingest --force  # re-embed every selected chunk
 bun run retrieval:ingest --prune  # delete documents absent from the manifest
 bun run retrieval:backfill-provenance          # metadata-only: dates, status, review flag
 bun run retrieval:backfill-provenance -- --dry-run
+bun run retrieval:import-aliases               # brand -> substance expansion table
+bun run retrieval:import-aliases -- --dry-run
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,
@@ -480,6 +484,28 @@ indexes documents with no status rather than inventing one. For an index built
 before this metadata existed, `retrieval:backfill-provenance` updates the rows
 in place: it touches only `metadata`, never `content_hash`, `embedding`, or the
 HNSW index, and it is idempotent.
+
+### Brand expansion
+
+The corpus is written with substance names while Algerian users ask with
+brands. Measured: 775 of the 2,144 known brands (36.1%) never occur in the
+indexed text, so neither arm can reach them. `retrieval_aliases` maps a folded
+brand to the substance labels its products use, imported from the lab's
+`name_map.csv` with `retrieval:import-aliases`.
+
+Expansion appends at most four substance tokens to the lexical query; it never
+replaces the brand, because the brand is the term that identifies the product.
+The same expanded string is used for reranking, which matters: a cross-encoder
+has never seen `COZAAR` either, and measured against the local index the
+unexpanded query put an unrelated paracetamol/codeine chunk above losartan.
+With the substance in the rerank query, `COZAAR indications` returns three
+losartan chunks at 0.88-0.95.
+
+Brands that cover more than one substance are **not** expanded. 304 of 2,113
+folded brands are ambiguous (`COPARAMOL` is paracetamol alone and paracetamol
+with codeine); they are returned in `diagnostics.ambiguousAliases` so the agent
+asks which product the user means instead of silently dosing a combination
+product as a single agent.
 
 ### Serving the models
 

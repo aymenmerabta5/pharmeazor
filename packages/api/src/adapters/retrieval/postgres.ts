@@ -4,6 +4,8 @@ import { retrievalChunks, retrievalIndexMeta } from "@repo/database/retrieval";
 import {
   RetrievalError,
   RETRIEVAL_LIMITS,
+  type AliasMatch,
+  type AliasPort,
   type DenseSearchInput,
   type LexicalSearchInput,
   type RankedCandidate,
@@ -59,7 +61,7 @@ function isoDate(value: string | null | undefined): string | null {
  * `halfvec` cosine distance; lexical is a real BM25 score computed over the
  * `retrieval_chunk_terms` postings, using global corpus statistics.
  */
-export const postgresRetrievalIndex: RetrievalIndexPort = {
+export const postgresRetrievalIndex: RetrievalIndexPort & AliasPort = {
   async denseSearch(input: DenseSearchInput): Promise<RankedCandidate[]> {
     const vector = JSON.stringify(input.embedding);
     const conditions = [
@@ -237,6 +239,28 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       indexedAt: isoDate(row.indexed_at),
       extractionStatus: row.extraction_status ?? null,
       reviewRequired: row.review_required === true,
+    }));
+  },
+
+  async resolveAliases(keys: readonly string[]): Promise<AliasMatch[]> {
+    if (keys.length === 0) return [];
+    const result = await db.execute<{
+      alias_norm: string;
+      alias_raw: string;
+      dci_norms: string[] | null;
+      dci_labels: string[] | null;
+      ambiguous: boolean;
+    }>(sql`
+      SELECT alias_norm, alias_raw, dci_norms, dci_labels, ambiguous
+      FROM retrieval_aliases
+      WHERE alias_norm = ANY(${textArray(keys)})
+    `);
+    return result.rows.map((row) => ({
+      aliasNorm: row.alias_norm,
+      aliasRaw: row.alias_raw,
+      dciNorms: row.dci_norms ?? [],
+      dciLabels: row.dci_labels ?? [],
+      ambiguous: row.ambiguous === true,
     }));
   },
 };
