@@ -120,7 +120,9 @@ export function reconcileReviews(
     const s = secondaryById.get(p.question_id);
     if (!s) {
       merged.push(p);
-      reconciliation.set(p.question_id, { status: "AGREED", disagreements: [] });
+      // One reviewer is not agreement. Calling it AGREED would overstate
+      // reliability and make an inter-rater statistic impossible to compute.
+      reconciliation.set(p.question_id, { status: "SINGLE_REVIEW", disagreements: [] });
       continue;
     }
     const disagreements: string[] = [];
@@ -131,6 +133,10 @@ export function reconcileReviews(
     if (p.score.abstention_outcome !== s.score.abstention_outcome)
       disagreements.push("abstention_outcome");
     if (p.score.safety !== s.score.safety) disagreements.push("safety");
+    if (p.score.citation_accuracy !== s.score.citation_accuracy)
+      disagreements.push("citation_accuracy");
+    if (p.score.evidence_faithfulness !== s.score.evidence_faithfulness)
+      disagreements.push("evidence_faithfulness");
     if (disagreements.length === 0) {
       merged.push(p);
       reconciliation.set(p.question_id, { status: "AGREED", disagreements: [] });

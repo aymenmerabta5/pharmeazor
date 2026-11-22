@@ -21,6 +21,10 @@ export interface ValidationStats {
   rejected_count: number;
   annotated_count: number;
   verified_count: number;
+  /** Annotations carrying at least one relevant chunk id: the retrieval gate input. */
+  retrieval_ready_count: number;
+  /** Annotations carrying at least one curated oracle passage. */
+  oracle_ready_count: number;
 }
 
 export interface ValidationReport {
@@ -136,6 +140,88 @@ export function validateDataset(
         question_id: q.question_id,
       });
     }
+    if (q.review_status === "APPROVED" && a.answerable_without_corpus === null) {
+      errors.push({
+        severity: "error",
+        code: "APPROVED_WITHOUT_ANSWERABILITY",
+        message:
+          "question is APPROVED but answerable_without_corpus is unset; the abstention analysis cannot classify it",
+        question_id: q.question_id,
+      });
+    }
+    if (
+      q.review_status === "APPROVED" &&
+      a.answerable_without_corpus === false &&
+      a.relevant_chunk_ids.length === 0
+    ) {
+      errors.push({
+        severity: "error",
+        code: "CORPUS_QUESTION_WITHOUT_RELEVANT_CHUNKS",
+        message:
+          "question is APPROVED and not answerable without the corpus, but relevant_chunk_ids is empty; recall@k cannot be computed",
+        question_id: q.question_id,
+      });
+    }
+    if (a.answerable_without_corpus === true && a.relevant_chunk_ids.length > 0) {
+      warnings.push({
+        severity: "warning",
+        code: "ANSWERABLE_WITHOUT_CORPUS_HAS_CHUNKS",
+        message:
+          "answerable_without_corpus is true but relevant_chunk_ids is not empty; confirm the intent before verification",
+        question_id: q.question_id,
+      });
+    }
+    if (q.category === "TRAP_AND_OUT_OF_SCOPE" && a.expected_behavior === "ANSWER") {
+      warnings.push({
+        severity: "warning",
+        code: "TRAP_EXPECTS_ANSWER",
+        message:
+          "TRAP_AND_OUT_OF_SCOPE item expects ANSWER; a trap item normally expects ABSTAIN, ASK_CLARIFICATION or REFUSE_OUT_OF_SCOPE",
+        question_id: q.question_id,
+      });
+    }
+    const chunkIds = new Set(a.relevant_chunk_ids);
+    if (chunkIds.size !== a.relevant_chunk_ids.length) {
+      errors.push({
+        severity: "error",
+        code: "DUPLICATE_RELEVANT_CHUNK_ID",
+        message: "relevant_chunk_ids contains a duplicate",
+        question_id: q.question_id,
+      });
+    }
+    const evidenceIds = new Set<string>();
+    for (const passage of a.evidence_bundle) {
+      if (evidenceIds.has(passage.evidence_id)) {
+        errors.push({
+          severity: "error",
+          code: "DUPLICATE_EVIDENCE_ID",
+          message: `evidence_id "${passage.evidence_id}" appears more than once`,
+          question_id: q.question_id,
+        });
+      }
+      evidenceIds.add(passage.evidence_id);
+      if (passage.chunk_id !== null && !chunkIds.has(passage.chunk_id)) {
+        warnings.push({
+          severity: "warning",
+          code: "EVIDENCE_CHUNK_NOT_LABELLED_RELEVANT",
+          message: `evidence "${passage.evidence_id}" cites chunk "${passage.chunk_id}" which is missing from relevant_chunk_ids`,
+          question_id: q.question_id,
+        });
+      }
+    }
+    if (
+      a.verification_status === "VERIFIED" &&
+      a.answerable_without_corpus === false &&
+      a.evidence_bundle.length === 0
+    ) {
+      warnings.push({
+        severity: "warning",
+        code: "VERIFIED_WITHOUT_ORACLE_EVIDENCE",
+        message:
+          "annotation is VERIFIED but evidence_bundle is empty; the oracle arm will skip this question",
+        question_id: q.question_id,
+      });
+    }
     if (q.review_status !== "APPROVED") {
       warnings.push({
         severity: "warning",
@@ -157,6 +243,8 @@ export function validateDataset(
     rejected_count: 0,
     annotated_count: annotations.length,
     verified_count: annotations.filter((a) => a.verification_status === "VERIFIED").length,
+    retrieval_ready_count: annotations.filter((a) => a.relevant_chunk_ids.length > 0).length,
+    oracle_ready_count: annotations.filter((a) => a.evidence_bundle.length > 0).length,
   };
   for (const q of questions) {
     stats.by_category[q.category] += 1;

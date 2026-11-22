@@ -1,22 +1,29 @@
 import { describe, expect, it } from "bun:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { buildCacheKey, readCache, writeCache } from "../../src/runner/cache";
+import { join, dirname } from "node:path";
+import { buildCacheKey, readCache, writeCache, CacheCorruptionError } from "../../src/runner/cache";
 import { RAW_GENERATION_V1 } from "../../src/config/generation";
 import type { ChatResult } from "../../src/providers/groq/client";
 
 const baseInput = {
+  mode: "raw" as const,
   model_id: "openai/gpt-oss-120b",
   prompt_version: "raw-v1",
   system_prompt: "fixed",
-  question: "Question ?",
+  user_message: "Question ?",
   generation: RAW_GENERATION_V1,
 };
 
 describe("buildCacheKey", () => {
   it("is deterministic", () => {
     expect(buildCacheKey(baseInput)).toBe(buildCacheKey(baseInput));
+  });
+
+  it("changes when the arm changes", () => {
+    const a = buildCacheKey(baseInput);
+    const b = buildCacheKey({ ...baseInput, mode: "oracle" });
+    expect(a).not.toBe(b);
   });
 
   it("changes when model changes", () => {
@@ -37,9 +44,15 @@ describe("buildCacheKey", () => {
     expect(a).not.toBe(b);
   });
 
-  it("changes when question changes", () => {
+  it("changes when the user message changes", () => {
     const a = buildCacheKey(baseInput);
-    const b = buildCacheKey({ ...baseInput, question: "Different ?" });
+    const b = buildCacheKey({ ...baseInput, user_message: "Different ?" });
+    expect(a).not.toBe(b);
+  });
+
+  it("changes when the evidence payload changes", () => {
+    const a = buildCacheKey({ ...baseInput, payload_hash: "aaa" });
+    const b = buildCacheKey({ ...baseInput, payload_hash: "bbb" });
     expect(a).not.toBe(b);
   });
 
@@ -79,6 +92,36 @@ describe("readCache / writeCache", () => {
     try {
       const result = await readCache(dir, "deadbeef");
       expect(result).toBeNull();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("throws on invalid JSON instead of silently re-calling the provider", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "bench-cache-"));
+    try {
+      const key = "ab".padEnd(64, "0");
+      const path = join(dir, key.slice(0, 2), `${key}.json`);
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, "{ not json", "utf8");
+      expect(readCache(dir, key)).rejects.toBeInstanceOf(CacheCorruptionError);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("throws when the filename does not match the stored key", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "bench-cache-"));
+    try {
+      const key = "cd".padEnd(64, "0");
+      const path = join(dir, key.slice(0, 2), `${key}.json`);
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(
+        path,
+        JSON.stringify({ cache_key: "other", result: { content: "x" } }),
+        "utf8",
+      );
+      expect(readCache(dir, key)).rejects.toBeInstanceOf(CacheCorruptionError);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

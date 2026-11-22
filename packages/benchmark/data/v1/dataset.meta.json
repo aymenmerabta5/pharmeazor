@@ -1,17 +1,30 @@
 {
   "version": "v1",
   "created_at": "2026-11-20T00:00:00Z",
-  "question_count": 30,
+  "updated_at": "2026-11-21T18:45:43.438Z",
+  "question_count": 50,
   "category_counts": {
-    "GENERAL_MEDICATION_KNOWLEDGE": 5,
-    "MEDICATION_IDENTIFICATION": 5,
-    "DOSAGE_AND_NUMERICAL_KNOWLEDGE": 5,
-    "CONTRAINDICATIONS_AND_WARNINGS": 5,
-    "DRUG_INTERACTIONS": 5,
-    "TRAP_AND_OUT_OF_SCOPE": 5
+    "GENERAL_MEDICATION_KNOWLEDGE": 7,
+    "MEDICATION_IDENTIFICATION": 9,
+    "DOSAGE_AND_NUMERICAL_KNOWLEDGE": 7,
+    "CONTRAINDICATIONS_AND_WARNINGS": 9,
+    "DRUG_INTERACTIONS": 9,
+    "TRAP_AND_OUT_OF_SCOPE": 9
   },
-  "language_counts": { "fr": 30, "en": 0, "ar": 0 },
+  "language_counts": {
+    "fr": 30,
+    "en": 10,
+    "ar": 10
+  },
   "status": "DRAFT",
-  "notes": "All 30 questions and all 30 gold annotations are DRAFT. A pharmacist must review each question and verify each annotation before any question can be scored. No reference answer has been fabricated: reference_answer is null on every annotation and must be filled in by a qualified reviewer.",
-  "review_workflow": "Step 1: pharmacist reviews the question text and sets review_status to APPROVED (or REJECTED). Step 2: pharmacist fills reference_answer, expected_facts, forbidden_claims and sets verification_status to VERIFIED. Only then does validateDataset() accept the question as scorable."
+  "parallel_items": [
+    "Q-DNK-001 / Q-DNK-006 / Q-DNK-008 — paracetamol maximum daily dose (fr/en/ar)",
+    "Q-CAW-001 / Q-CAW-006 / Q-CAW-008 — ibuprofen absolute contraindications (fr/en/ar)",
+    "Q-DRI-003 / Q-DRI-006 / Q-DRI-008 — metformin and iodinated contrast (fr/en/ar)",
+    "Q-TOS-001 / Q-TOS-006 / Q-TOS-008 — personal dosing safety trap (fr/en/ar)",
+    "Q-MID-003 / Q-MID-007 / Q-MID-009 — Ventoline active substance (fr/en/ar)",
+    "Q-GMK-004 / Q-GMK-006 / Q-GMK-007 — ACE inhibitor mechanism (fr/en/ar)"
+  ],
+  "notes": "All 50 questions and all 50 gold annotations are DRAFT. A pharmacist must review each question and verify each annotation before any question can be scored. No reference answer has been fabricated: reference_answer is null on every annotation, relevant_chunk_ids and evidence_bundle are empty, and answerable_without_corpus is null until a reviewer decides it.",
+  "review_workflow": "Step 1: pharmacist reviews the question text and sets review_status to APPROVED (or REJECTED). Step 2: pharmacist fills reference_answer, expected_facts, forbidden_claims, relevant_chunk_ids, the oracle evidence_bundle, difficulty, answerable_without_corpus, then sets verification_status to VERIFIED with reviewed_by and reviewed_at. Only then does validateDataset() accept the question as scorable."
 }

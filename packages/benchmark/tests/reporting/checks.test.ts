@@ -19,6 +19,18 @@ function meta(): RunMetadata {
     generation: {},
     total_questions: 1,
     allow_draft: false,
+    selection_hash: "sel-1",
+    selected_question_ids: ["Q-1"],
+    provenance: {
+      system_prompt_hash: "prompt-1",
+      selection_hash: "sel-1",
+      selected_question_ids: ["Q-1"],
+      temperature: null,
+      seed: null,
+      model_revision: null,
+      sdk: { ai: "7.0.173", groq: "4.0.84" },
+      runtime: { bun: "1.4.5", node: "v24.19.0", platform: "win32" },
+    },
     cumulative_usage: {
       api_calls: 1,
       cache_hits: 0,

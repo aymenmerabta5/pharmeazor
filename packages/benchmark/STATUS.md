@@ -1,196 +1,197 @@
 # Implementation Status — @repo/benchmark
 
+_Last updated: 2026-11-22_
+
+## Current state
+
+The package implements the three-arm benchmark's first two arms and the
+evaluation/reporting tooling around them. The third arm is deliberately not
+built yet.
+
+| Area                          | State                                                   |
+| ----------------------------- | ------------------------------------------------------- |
+| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `DRAFT`  |
+| Gold annotations              | 50 empty templates, extended retrieval/oracle schema    |
+| Raw arm (`raw`)               | implemented, tested                                     |
+| Oracle arm (`oracle`)         | implemented, tested, needs pharmacist-authored bundles  |
+| RAG arm (`rag`)               | **not implemented** — deferred until annotations exist  |
+| Deterministic evaluation      | implemented, advisory only                              |
+| Human review + reconciliation | implemented                                             |
+| Reporting / comparison        | implemented with identity guards                        |
+| Live runs                     | **blocked**: no `GROQ_API_KEY`, no verified annotations |
+
+`dataset stats` currently reports `scorable_questions: 0`. That is the honest
+state: no benchmark number can be produced or quoted until a pharmacist reviews
+the data.
+
 ## Design decisions
 
-- Groq integration uses **`@ai-sdk/groq@4.0.84`** (matching `apps/harness`),
-  not `groq-sdk`. Confirmed by project owner.
-- Model: `openai/gpt-oss-120b` via Groq.
-- Reasoning effort: `medium`. Concurrency: `1`.
-- One runtime dependency added (`@ai-sdk/groq`), plus `ai@7.0.173` (matches
-  `apps/harness`).
+- Groq integration uses **`@ai-sdk/groq@4.0.84`** and **`ai@7.0.173`**, matching
+  `apps/harness`, not `groq-sdk`.
+- Model: `openai/gpt-oss-120b` via Groq. Reasoning effort `medium`,
+  concurrency `1`.
+- No second LLM judge. Correctness is deterministic signals plus human review.
+- Gold annotations never reach the model. The raw runner has no import path to
+  the gold loader; an isolation test enforces it structurally.
+- The oracle arm uses a manually curated `evidence_bundle`, not retrieval. The
+  retrieval arm will be measured separately against the same questions.
+- `answerable_without_corpus` and `difficulty` are reviewer decisions and stay
+  `null` / `UNKNOWN` until a pharmacist makes them.
 
 ---
 
-## Phase 1 (Prompt 2) — Package Foundation and Benchmark Dataset — COMPLETE
+## Milestone 1 — Package foundation and dataset
 
-- Package skeleton, Zod schemas with `.strict()`, JSONL loaders, validator,
-  dataset hashing.
+- Package skeleton, strict Zod schemas, JSONL loaders, validator, dataset
+  hashing.
 - Isolation guarantee: `loader.ts` exports only `loadQuestions*`; the gold
-  loader is a separate module, not re-exported from the barrel, not imported
-  by the loader. Covered by `tests/dataset/isolation.test.ts`.
-- `data/v1/` with 30 DRAFT questions and 30 DRAFT gold-annotation stubs.
-  No reference answers fabricated.
-- 35 tests, all green. Typecheck, lint and format clean.
+  loader is separate, not re-exported, not imported by the loader.
+- `data/v1/` started with 30 French `DRAFT` questions and templates. No
+  reference answer fabricated.
+
+## Milestone 2 — Groq integration and raw arm
+
+- `src/config/env.ts`, `src/config/generation.ts` (`RAW_GENERATION_V1` frozen).
+- `src/prompts/raw/v1.ts` — fixed, versioned prompt; no tools, no retrieval.
+- `src/providers/groq/client.ts` — injectable `GroqClient` over `@ai-sdk/groq`.
+- `src/providers/groq/errors.ts` — transient vs permanent classification.
+- `src/runner/cache.ts` — deterministic request hash; global cache.
+- `src/runner/raw.ts` — orchestrator with retry, resume, JSONL artifacts.
+- CLI: `raw run`, `raw resume`, `raw status`.
+
+## Milestone 3 — Evaluation and human review
+
+- Deterministic signals: fact presence, forbidden claims, numerical comparison,
+  behaviour classification, safety patterns.
+- `metrics.ts` with explicit denominators and `NOT_APPLICABLE` excluded, never
+  counted as zero.
+- Review workflow: prepare, submit, reconcile. A single review is now
+  `SINGLE_REVIEW`, not `AGREED`; two reviews that differ become
+  `NEEDS_HUMAN_REVIEW` with the disagreeing fields listed.
+- CLI: `evaluate run`, `review prepare`, `review submit`, `summary`.
+
+## Milestone 4 — Reporting, comparison, reproducibility
+
+- `report.md` with experiment, generation settings, performance, errors, notes.
+- `compare` with hard compatibility guards and a soft `annotations_hash` path.
+- `reproduce` checklist including a secret scan over every file in the run.
+- Secrets are stripped from reports; a test asserts no `gsk_` in the output.
+
+## Milestone 5 — Dataset v1 expansion and three-arm schema
+
+- Merged `origin/main` into `LLM_Benchmark` (additive; `origin/main` had no
+  benchmark changes).
+- Dataset expanded from 30 to **50 questions**: 30 `fr`, 10 `en`, 10 `ar`.
+  Added ten English and ten Arabic questions plus six parallel fr/en/ar triples
+  recorded in `dataset.meta.json`.
+- Gold schema extended with:
+  - `relevant_chunk_ids` — retrieval ground truth, same `chunk_id` the retriever
+    returns;
+  - `evidence_bundle` — up to 8 curated passages, each with `evidence_id`,
+    `source_id`, `source_name`, `section_code`, `chunk_id`;
+  - `answerable_without_corpus` and `difficulty` — reviewer decisions;
+  - `reviewed_by` and `reviewed_at`.
+- Validator gained cross-field rules: approved questions need a verified
+  annotation, a reference answer, expected facts, an answerability decision, and
+  (for corpus questions) relevant chunks; evidence passages must point at
+  labelled relevant chunks; duplicate evidence or chunk ids are rejected; trap
+  questions may not expect an answer.
+- Stats now report `retrieval_ready_count` and `oracle_ready_count`.
+
+## Milestone 6 — Oracle arm and correctness hardening
+
+- `src/prompts/oracle/v1.ts` — `oracle-v1` system prompt, `CITATION_PATTERN`,
+  fenced data-only evidence block. Passage order is preserved so `[E1]` is
+  stable within a run.
+- `src/oracle/evidence.ts` — loads non-empty bundles, `hashEvidenceBundle`
+  (deterministic, order-insensitive across questions).
+- `src/runner/oracle.ts` — thin wrapper over the shared runner. Questions
+  without evidence are skipped and recorded, never answered empty.
+- `src/runner/chat.ts` — one generic runner for both arms:
+  - `SelectionMismatchError` when a run id is reused with a different selection;
+  - exact `selection_hash` and `selected_question_ids` stored and guarded;
+  - actual attempt counts, live vs replay token totals, failed attempts;
+  - daily request/token caps via `assertDailyCapacity`, `RATE_LIMITED` status;
+  - corrupt cache entries raise `CacheCorruptionError` instead of silently
+    replaying garbage.
+- `src/config/provenance.ts` — system prompt hash, selection hash, SDK versions,
+  runtime, temperature/seed (`null` = deliberately unset), model revision.
+- `src/evaluation/grounding.ts` — parses `[E#]`, checks citations against the
+  supplied bundle, checks numbers against the supplied text. Advisory only.
+- `evaluation/schema.ts` — optional `grounding` block, widened citation and
+  faithfulness enums, `SINGLE_REVIEW` reconciliation status.
+- `reporting/markdown.ts` — experiment table shows model revision, SDK, prompt
+  hash, selection hash, live/replay tokens, failed attempts, evidence hash; adds
+  a Grounding section for evidence arms.
+- `reporting/compare.ts` — hard guards on `selection_hash`,
+  `system_prompt_hash`, and `evidence_hash`; SDK mismatch warning.
+- `reporting/checks.ts` — identity fields, selection count, skipped-question
+  accounting.
+- CLI split into focused modules under `src/cli/`; `evaluate run` owns the
+  annotation hash, so the raw CLI no longer parses gold annotations.
+- Bun pins raised to `1.4.5` (`bun-types`, `packageManager`); lockfile is v3.
+
+**Gates run at this milestone**
+
+| Gate                   | Result                                            |
+| ---------------------- | ------------------------------------------------- |
+| `bun run typecheck`    | pass — 66 files                                   |
+| `bun run test`         | pass — 152 pass, 1 skip, 0 fail, 315 expect calls |
+| `bun run lint`         | pass                                              |
+| `bun run format:check` | pass                                              |
+| `dataset validate`     | valid, warnings only (all `DRAFT`)                |
+| `dataset stats`        | 50 total, 30 `fr` / 10 `en` / 10 `ar`, 0 scorable |
+
+**Tests added**
+
+- `tests/runner/selection.test.ts` — selection hash recorded, run-id reuse with
+  a different selection refused, resume only re-runs unanswered questions.
+- `tests/runner/rate-limit.test.ts` — daily request/token caps and UTC reset.
+- `tests/oracle/oracle.test.ts` — evidence hash determinism/order, bundle
+  loading, prompt shape, evidence sent, no-evidence questions skipped, cache
+  identity changes with evidence.
+- `tests/dataset/hash.test.ts` — `hashQuestions` order/status sensitivity,
+  `hashSelection` determinism and slice identity.
+- `tests/evaluation/grounding.test.ts` — citation parsing, invalid citations,
+  uncited answers, unsupported numbers, summary denominators.
+- `tests/evaluation/review.test.ts` — `SINGLE_REVIEW`, citation disagreement.
+- `tests/reporting/compare.test.ts` — selection/prompt/evidence guards, SDK
+  warning.
+- Existing cache tests cover `CacheCorruptionError`.
 
 ---
 
-## Phase 2 (Prompt 3) — Groq Integration and Raw Model Runner — COMPLETE
+## What is intentionally missing
 
-**Delivered:**
+- **RAG arm.** No live retrieval run is wired. The oracle arm must exist and the
+  annotations must be verified first, otherwise `retrievalGap` has no stable
+  ceiling to measure against. `run_mode` already accepts `"rag"` and the
+  retrieval contracts live in `packages/services/src/retrieval/`.
+- **Scored baseline.** Impossible with 50 `DRAFT` questions and empty gold
+  annotations.
+- **Embedding/model revision pinning beyond what Groq reports.**
+  `model_revision` records the provider's response field when present; the
+  benchmark cannot force a revision the provider does not expose.
 
-- `src/config/env.ts` — reads `GROQ_API_KEY`, throws `MissingEnvError` if absent.
-- `src/config/generation.ts` — `RAW_GENERATION_V1` (frozen): model
-  `openai/gpt-oss-120b`, reasoning effort `medium`, concurrency `1`,
-  `max_output_tokens: 2048`. Temperature deliberately **not** set until
-  compatibility is verified.
-- `src/prompts/raw/v1.ts` — fixed, versioned system prompt. No JSON forcing,
-  no tools, no retrieval. Same prompt for every question.
-- `src/providers/groq/client.ts` — `GroqClient` interface + implementation on
-  `@ai-sdk/groq`. Injectable so tests use fakes. Captures `text`,
-  `usage.{input,output,total}Tokens`, `finishReason`, `request_id`, latency.
-- `src/providers/groq/errors.ts` — transient vs permanent classification
-  based on `APICallError` status codes and `isRetryable`.
-- `src/runner/cache.ts` — deterministic SHA-256 request hash over model ID,
-  prompt version, system prompt, question and full generation config. Global
-  cache at `.cache/<prefix>/<hash>.json`.
-- `src/runner/raw.ts` — orchestrator. Loads approved questions only (or all
-  when `--allow-draft`). Skips questions already answered. Retries transient
-  errors up to 3 times with exponential backoff (500 ms, 1500 ms, 4500 ms).
-  Writes `responses.jsonl` / `errors.jsonl` per question and `run_metadata.json`
-  at start and end. Cache hit path writes `source: "cache"`.
-- `src/storage/fs.ts` — atomic writes for `run_metadata.json`, append-only
-  JSONL for responses and errors, resume-safe reader.
-- CLI: `benchmark raw run` (with `--category`, `--limit`, `--allow-draft`),
-  `benchmark raw resume --run-id`, `benchmark raw status [--run-id]`.
-- Tests:
-  - `errors.test.ts` — every class boundary
-  - `cache.test.ts` — determinism and every axis that should change the key
-  - `raw.test.ts` — no-approved-questions refusal, `--allow-draft`, one-call
-    per question, response persistence, cache reuse, transient retry to
-    exhaustion, error recording
-  - `smoke/live.test.ts` — gated by `BENCHMARK_LIVE=1`
+## Blocked on
 
-**Verified locally:** `bun run test`, `bun run typecheck`, `bun run lint`,
-`bun run format:check` all green. `dataset validate` unchanged.
+1. A pharmacist reviews all 50 questions and verifies the annotations.
+2. For corpus-dependent questions: chunk-level `relevant_chunk_ids` and a
+   curated `evidence_bundle`.
+3. A real `GROQ_API_KEY` for live runs. Local `.env.local` still contains
+   `REPLACE_WITH_GROQ_API_KEY`.
+4. Only then: measure `raw`, measure `oracle`, freeze dataset v1.0, record the
+   baseline, and build the RAG arm.
 
-**Not implemented yet (intentional):**
+## Next steps
 
-- Evaluation metrics (Prompt 4)
-- Human review workflow (Prompt 4)
-- Reporting, run comparison, reproducibility checks (Prompt 5)
-- PHARMEAZOR corpus, retrieval, evidence-grounded or RAG experiments
-
-**Known constraints:**
-
-- `providerOptions.groq.reasoningEffort` is set based on current SDK
-  expectations. If the installed `@ai-sdk/groq` rejects or ignores it,
-  remove it in `src/providers/groq/client.ts` (single location). The
-  experiment still records `reasoning_effort` in `run_metadata.json`.
-- `raw run` with no `--allow-draft` refuses when zero questions are
-  `APPROVED`. This is the designed gate, not a defect.
-
----
-
----
-
-## Phase 3 (Prompt 4) — Evaluation and Human Review — COMPLETE
-
-**Delivered:**
-
-- `src/evaluation/schema.ts` — Zod schemas for deterministic signals, human
-  scores, reconciliation status, and evaluation records.
-- `src/evaluation/text-normalize.ts` — accent/case/whitespace normalization
-  shared by fact matching and safety detection.
-- `src/evaluation/numerical.ts` — `(number, unit)` extraction (French
-  thousand separator, comma decimals) and unit-grouped comparison producing
-  correct / wrong_value / missed / unsupported.
-- `src/evaluation/behavior.ts` — phrase-list detection of ANSWER,
-  LIMITED_ANSWER, ABSTAIN, ASK_CLARIFICATION, REFUSE_OUT_OF_SCOPE.
-- `src/evaluation/safety.ts` — flags for diagnosis, treatment selection,
-  patient-specific advice, and uncertainty acknowledgment.
-- `src/evaluation/rubric.ts` — `computeDeterministicSignals` combining all
-  the above into one record.
-- `src/evaluation/metrics.ts` — `computeSummary` with explicit denominators
-  on every percentage; `null` when denominator is 0; `NOT_APPLICABLE` is
-  excluded from denominators, never counted as zero.
-- `src/evaluation/storage.ts` — `evaluation.jsonl` reader/writer;
-  `mergeHumanScore`.
-- `src/evaluation/review.ts` — review template builder, submit and reconcile
-  logic (flags disagreements as `NEEDS_HUMAN_REVIEW`).
-- CLI: `benchmark evaluate run`, `benchmark review prepare`,
-  `benchmark review submit`, `benchmark summary`.
-- Tests: `numerical.test.ts`, `behavior.test.ts`, `rubric.test.ts`,
-  `metrics.test.ts`, `review.test.ts`.
-- `docs/evaluation.md` — full rubric, review workflow, and metric definitions.
-
-**Constraints from the professor, enforced:**
-
-- No second LLM judge. Correctness is deterministic signals + human review.
-- Raw responses are never modified by the evaluator.
-- `citation_accuracy` and `evidence_faithfulness` are `NOT_APPLICABLE` in
-  this stage and never folded into any rate.
-- Gold annotations are loaded **only** by `evaluate run`, `review prepare`,
-  and tests. The raw runner path still has no path to gold.
-
-**Not implemented (intentional):** reports, run comparison, reproducibility
-checks. Those are Prompt 5.
-
----
-
-## Phase 4 (Prompt 5) — Reporting, Reproducibility and Final Validation — COMPLETE
-
-**Delivered:**
-
-- `src/reporting/markdown.ts` — `report.md` generator with the exact
-  sections Prompt 5 requires. Every percentage is written as `n/d (pct)`,
-  never as a bare rate. Zero-denominator cells are `N/A (0)`.
-- `src/reporting/compare.ts` — `compareRuns` with hard compatibility guards
-  (model, provider, prompt version, reasoning effort, dataset version, dataset
-  hash, total questions, run mode, full generation config) plus a soft
-  `annotations_hash` check with a warning path for older runs.
-- `src/reporting/checks.ts` — reproducibility checklist including a secret
-  scan (`gsk_...` and `GROQ_API_KEY=`) over every text file in the run
-  directory.
-- CLI: `benchmark report --run-id`, `benchmark compare --run-a --run-b`,
-  `benchmark reproduce --run-id`. `benchmark summary` now also writes
-  `report.md` automatically.
-- `raw run` / `raw resume` now record `annotations_hash` in
-  `run_metadata.json` (computed by the CLI, passed as a string to the
-  runner; `raw.ts` never imports the gold loader).
-- `run_mode` field added to `RunMetadata` (default `"raw"`) so evidence-
-  grounded and RAG stages can reuse the tooling later without breaking
-  comparisons.
-- Tests: `tests/reporting/markdown.test.ts` (report structure, no secrets,
-  N/A for unreviewed), `tests/reporting/compare.test.ts` (compatible,
-  every hard guard, warnings path), `tests/reporting/checks.test.ts`
-  (complete run, missing usage, count mismatch, secret leak).
-- Extended `tests/dataset/isolation.test.ts` with one more assertion that
-  `src/runner/raw.ts` does not import the gold loader.
-
-**Professor's usage rules — now fully enforced:**
-
-- **Secrets never in reports**: the markdown generator strips `gsk_...`
-  and a test asserts no `GROQ_API_KEY=` in the rendered body. The
-  reproducibility check fails the run if any file under the run directory
-  contains either pattern.
-- **API call count and token totals in the report**: present in the
-  Experiment table, sourced from `cumulative_usage`.
-- **Cache replay**: documented, tested, and reported (`API calls` /
-  `Cache hits` rows).
-- **No provider or model switching on outage**: not implemented because
-  it must not be — the tool reports failures, never works around them.
-- **Arabic legal-term verification**: noted in `docs/reporting.md` for the
-  future evidence phase. No Arabic question ships in v1.
-
-**Not implemented (final state):** evidence-grounded benchmarking and
-end-to-end RAG benchmarking. `run_mode` and `annotations_hash` are the only
-hooks added; no empty folders or speculative modules exist.
-
-**Final known limitations:**
-
-- The shipped dataset is all `DRAFT`. A pharmacist must approve questions
-  and verify annotations before the runner will score anything in a
-  non-`--allow-draft` run.
-- The deterministic rubric is intentionally conservative; the human review
-  is the authoritative score. No LLM judge.
-- Live smoke tests require `BENCHMARK_LIVE=1` and consume real quota.
-
----
-
-## Final status: Prompt 5 complete
-
-All five phases of the professor-approved benchmark plan are delivered:
-package foundation (P2), Groq raw runner (P3), deterministic evaluation
-plus human review (P4), and reporting, comparison and reproducibility (P5).
-The package is independent of PHARMEAZOR's corpus and retrieval, and is
-ready for later evidence-grounded and RAG stages.
+1. Hand the annotation schema to the reviewing pharmacist
+   ([`docs/dataset.md`](./docs/dataset.md), [`docs/oracle.md`](./docs/oracle.md)).
+2. Run `dataset validate` after each review batch; require zero errors and zero
+   non-`DRAFT` warnings before scoring.
+3. Freeze dataset v1.0 and record the `raw` baseline.
+4. Record the `oracle` baseline and compute `evidenceGain`.
+5. Build `rag-fixed` (recorded retrieval traces) and then live `rag`; compute
+   `retrievalGap` and `systemGain`.
+6. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) once the
+   golden set has chunk labels.

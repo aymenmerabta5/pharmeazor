@@ -1,33 +1,60 @@
 # @repo/benchmark
 
-LLM benchmark package for PHARMEAZOR. Measures the raw professor-approved model
-(`openai/gpt-oss-120b` via Groq) on a versioned, human-reviewed question set,
-without any PHARMEAZOR corpus or retrieval.
+Three-arm LLM benchmark for PHARMEAZOR. It measures the same model on the same
+human-reviewed questions under three evidence conditions:
+
+| Arm      | Input to the model                       | Status                       |
+| -------- | ---------------------------------------- | ---------------------------- |
+| `raw`    | the question only                        | implemented                  |
+| `oracle` | the question + a curated evidence bundle | implemented, awaiting review |
+| `rag`    | the question + PHARMEAZOR retrieval      | deferred                     |
+
+The deltas are the point, not any single score:
+
+```text
+evidenceGain = oracle − raw   how much perfect evidence is worth
+retrievalGap = oracle − rag   how much retrieval loses versus perfect evidence
+systemGain   = rag − raw      how much the full system adds over the model alone
+```
+
+`oracle` is the ceiling, not a product claim. If `rag` is close to `oracle`,
+retrieval is doing its job; the gap is the headroom left on the table.
 
 The package is **independent** of the production app, `@repo/api`, and the
-retrieval labs under `tooling/`. It is a workspace member that can be run
-standalone.
+retrieval code under `packages/modules`. It is a workspace member that can run
+standalone. The future `rag` arm will call the retrieval adapter through a
+recorded interface; it will not import app internals into the benchmark core.
 
 ## Status
 
-See [`STATUS.md`](./STATUS.md). This package is currently at **Prompt 2** —
-package foundation and dataset only. Groq integration, raw-model runs,
-evaluation, reporting and comparison are later phases.
+See [`STATUS.md`](./STATUS.md). The package is at **benchmark v1, awaiting
+pharmacist review**: all 50 shipped questions are `DRAFT`, so `dataset stats`
+reports `scorable_questions: 0`. No benchmark number exists yet, and none should
+be quoted until the dataset is verified.
 
 ## Requirements
 
-- Bun `1.4.4` (matches the root `packageManager` pin)
+- Bun `1.4.5` (matches the repository pin; local `1.4.4` also runs the tests)
 - Node `24.19.0` (matches `engines.node` in `apps/harness`)
-- No API key is needed for Prompt 2. `GROQ_API_KEY` is required from Prompt 3.
+- `GROQ_API_KEY` for live runs; unit tests and dataset validation need none
 
 ## Layout
 
-    data/v1/                     versioned benchmark dataset (DRAFT)
+    data/v1/                     versioned dataset (questions + gold annotations)
     docs/dataset.md              dataset format and reviewer workflow
+    docs/oracle.md               evidence-bundle authoring and the [E#] contract
+    docs/evaluation.md           deterministic rubric, human review, metrics
+    docs/reporting.md            run artifacts, comparison, reproducibility
     src/dataset/                 schemas, loaders, validators, hashing
-    src/shared/                  small shared utilities
-    src/cli/                     CLI entry (dataset validate/stats)
-    tests/dataset/               unit tests, including the isolation tests
+    src/prompts/                 versioned system prompts (raw-v1, oracle-v1)
+    src/providers/groq/          SDK adapter and error classification
+    src/runner/                  shared runner, raw arm, oracle arm, cache, limits
+    src/oracle/                  evidence-bundle loading and hashing
+    src/evaluation/              deterministic signals, grounding, review, metrics
+    src/reporting/               markdown report, comparison, reproducibility
+    src/config/                  generation settings, env, provenance
+    src/cli/                     command modules and dispatcher
+    tests/                       unit tests, including isolation tests
 
 ## Commands
 
@@ -35,13 +62,18 @@ evaluation, reporting and comparison are later phases.
     bun run typecheck
     bun run lint
     bun run format:check
+
     bun run benchmark dataset validate
     bun run benchmark dataset stats
-    bun run benchmark raw run   --allow-draft --limit 1
-    bun run benchmark raw run   --category DOSAGE_AND_NUMERICAL_KNOWLEDGE
-    bun run benchmark raw resume --run-id <ID>
-    bun run benchmark raw status [--run-id <ID>]
-    bun run benchmark evaluate run --run-id <ID>
+
+    bun run benchmark raw run      [--category <CAT>] [--limit <N>] [--allow-draft]
+    bun run benchmark raw resume   --run-id <ID>
+    bun run benchmark raw status   [--run-id <ID>]
+
+    bun run benchmark oracle run   [--category <CAT>] [--limit <N>] [--allow-draft]
+    bun run benchmark oracle resume --run-id <ID>
+
+    bun run benchmark evaluate run --run-id <ID> [--force]
     bun run benchmark review prepare --run-id <ID>
     bun run benchmark review submit --run-id <ID> --reviewer <name> --file <path>
     bun run benchmark summary --run-id <ID>
@@ -52,93 +84,119 @@ evaluation, reporting and comparison are later phases.
 Live smoke test (consumes Groq quota, only when explicitly authorized):
 
     $env:BENCHMARK_LIVE="1"
-    bun --env-file=.env.local run --cwd packages/benchmark test tests/smoke
+    bun --env-file=../../.env.local run test tests/smoke
 
-## Raw model run
+## Raw arm
 
 - Model: `openai/gpt-oss-120b` via Groq (`@ai-sdk/groq`)
-- Reasoning effort: `medium`
-- Concurrency: `1`
-- Prompt: fixed system prompt v1, one user message per question
-- Input: **questions.jsonl only**. No gold annotations, no PHARMEAZOR
-  corpus, no retrieval.
-- Output per question: `responses.jsonl` line with the visible answer,
-  token usage, latency, finish reason.
-- Failures: bounded retry (3 attempts, exponential backoff) on transient
-  errors only. Permanent errors are recorded and the next question runs.
-- Cache: global, keyed on model + prompt version + system prompt + question
-  - generation config. Resume and re-runs reuse cached responses.
+- Reasoning effort: `medium`; concurrency: `1`
+- Prompt: fixed `raw-v1` system prompt, one user message per question
+- Input: **`questions.jsonl` only**. No gold annotations, no evidence, no
+  retrieval. The runner has no code path to the gold loader.
+- Temperature and seed are deliberately unset; `run_metadata.json` records both
+  as `null` to distinguish "unset" from "unknown".
+- Failures: bounded retry (3 attempts, exponential backoff) on transient errors
+  only. Permanent errors are recorded and the next question runs.
+- Cache: keyed on model + prompt version + system prompt + user message +
+  generation config. Resume and re-runs reuse cached responses but label them
+  `source: "cache"`.
 
-`raw run` refuses to start when no question is `APPROVED`, unless
-`--allow-draft` is passed. `--allow-draft` runs are tagged in
-`run_metadata.json` and must not be scored.
+`raw run` refuses to start when no question is `APPROVED` unless `--allow-draft`
+is passed. `--allow-draft` runs are tagged in `run_metadata.json` and must not
+be scored.
 
-Live smoke test (consumes Groq quota):
+## Oracle arm
 
-    $env:BENCHMARK_LIVE="1"
-    bun --env-file=.env.local run --cwd packages/benchmark test tests/smoke
+The oracle arm gives the model a small, manually curated bundle of evidence
+passages and asks it to answer from that evidence with `[E1]`-style citations.
+The bundle is authored by a pharmacist, not retrieved. See
+[`docs/oracle.md`](./docs/oracle.md).
+
+- Only questions with a non-empty `evidence_bundle` are sent. Questions without
+  evidence are recorded in `skipped_question_ids`, never answered with an empty
+  bundle.
+- `evidence_hash` covers the exact bundle text, so two oracle runs over
+  different evidence cannot compare as the same experiment.
+- The deterministic layer checks mechanical grounding only: cited markers exist
+  in the bundle, and numbers in the answer appear in the bundle. A human still
+  owns the citation and faithfulness verdict.
 
 ## Dataset model
 
 Two files, both versioned under `data/v1/`:
 
-- `questions.jsonl` — the **only** file the raw benchmark runner will send to the model.
-- `gold_annotations.jsonl` — reference answers and evaluation criteria. **Never** sent to the model.
+- `questions.jsonl` — the **only** file the model-facing runners may load.
+- `gold_annotations.jsonl` — reference answers, expected facts, retrieval labels,
+  and oracle evidence. **Never** sent to the model.
 
-The raw runner path structurally cannot load gold annotations: see
-`src/dataset/loader.ts` (exports only `loadQuestions`) versus
-`src/dataset/gold-loader.ts` (not re-exported from `src/index.ts` and
-not imported by `loader.ts`). `tests/dataset/isolation.test.ts` enforces this.
+`src/dataset/loader.ts` exports only `loadQuestions*`. The gold loader is a
+separate module, not re-exported from `src/index.ts`, and not imported by the
+loader or the raw runner. `tests/dataset/isolation.test.ts` enforces this
+structurally (it inspects imports, not just runtime behaviour).
+
+The gold schema carries both retrieval ground truth (`relevant_chunk_ids`) and
+oracle input (`evidence_bundle`). Keeping them separate lets the retrieval gate
+and the oracle arm disagree for the right reasons instead of silently sharing
+one list. `answerable_without_corpus` and `difficulty` stay `null` / `UNKNOWN`
+until a pharmacist decides them.
+
+## Identity and provenance
+
+Every run records enough identity to make a comparison honest:
+
+- `dataset_hash` — the whole questions file
+- `selection_hash` + `selected_question_ids` — the exact slice a run saw, in
+  order. Two different `--category`/`--limit` slices of equal size are not the
+  same experiment.
+- `system_prompt_hash` — the prompt text, not just its version label
+- `evidence_hash` — the exact oracle bundle (oracle runs only)
+- `annotations_hash` — written by `evaluate run` from the gold file actually used
+- `sdk` + `runtime` + `model_revision` — the moving parts outside the prompt
+
+`compare` refuses to show deltas when identity fields disagree and warns when a
+field is missing. Run ids are also guarded: reusing a run id with a different
+selection of the same size throws `SelectionMismatchError`.
 
 ## Current state
 
-All 30 questions and all 30 gold annotations are `DRAFT`. No question is
-scorable until a pharmacist sets `review_status: "APPROVED"` on the question
-**and** `verification_status: "VERIFIED"` on its annotation, with a real
-`reference_answer` and non-empty `expected_facts`.
+All 50 questions and all 50 gold annotations are `DRAFT`:
 
-## What is not implemented yet (by design)
+| Language | Questions |
+| -------- | --------- |
+| `fr`     | 30        |
+| `en`     | 10        |
+| `ar`     | 10        |
 
-- Groq integration, model selection, prompt versioning (Prompt 3)
-- Raw-model runner, caching, resume (Prompt 3)
-- LLM scoring, deterministic rubric, human review interface (Prompt 4)
-- Reports, run comparison, reproducibility checks (Prompt 5)
+There are six parallel fr/en/ar triples for cross-language comparison; see
+`data/v1/dataset.meta.json`. No question is scorable until a pharmacist sets
+`review_status: "APPROVED"` and `verification_status: "VERIFIED"`, with a real
+`reference_answer`, non-empty `expected_facts`, and (for corpus questions)
+chunk-level labels and an oracle bundle.
 
 ## Environment
 
 - `BENCHMARK_LOG_LEVEL` (optional, default `info`): `debug | info | warn | error`
-- `GROQ_API_KEY` (Prompt 3 onwards, already declared in the root `.env.example`)
+- `GROQ_API_KEY` — required for live runs, declared in the root `.env.example`
 
-CLI usage from the repo root requires the root `.env.local` to be loaded for
-Prompt 3 and later:
+From the repository root:
 
     bun --env-file=.env.local run --cwd packages/benchmark benchmark raw run
 
-## Known limitations (Prompt 2)
+## Known limitations
 
-- The 30 shipped questions are realistic pharmacist-relevant prompts but **every
-  gold annotation is a template with `reference_answer: null`** and every
-  question is `DRAFT`. A pharmacist must fill them in. No medical fact has been
-  invented by this package.
-- No Arabic question is included in v1 (language enum supports `ar`, but v1
-  contains none). Adding `ar` questions is an additive change to `data/v2/`.
-- The validator refuses to score DRAFT questions; this is intentional.
+- **No scorable data yet.** Every annotation is an empty template; no medical
+  fact was invented by this package. `dataset validate` passes with warnings
+  because the questions are `DRAFT`, which is expected.
+- **No RAG arm yet.** `run_mode` already distinguishes `raw | oracle | rag`, and
+  the retrieval contracts exist upstream, but no live retrieval run is wired.
+  The RAG arm is deferred until the oracle arm and the annotation schema are
+  stable.
+- **No LLM judge.** Correctness is deterministic signals plus human review. The
+  deterministic layer is advisory and conservative by design.
+- **Provider outages are reported, never worked around.** No silent model or
+  provider switching.
+- **`dataset validate` is not a medical review.** It checks structure and
+  cross-field consistency, not whether a dose is correct.
 
-See [`docs/dataset.md`](./docs/dataset.md) for the full data model and reviewer workflow.
-
-## Reporting and comparison
-
-Each run produces `responses.jsonl`, `errors.jsonl`, `run_metadata.json`,
-`evaluation.jsonl`, `summary.json`, and `report.md` inside
-`packages/benchmark/runs/<run_id>/`. See [`docs/reporting.md`](./docs/reporting.md)
-for structure, comparison rules, and reproducibility checks.
-
-The report never contains the API key: the generator strips `gsk_...`
-substrings and a test asserts the rendered output has none.
-
-Comparing two runs is refused unless `model_id`, `provider`,
-`prompt_version`, `reasoning_effort`, `dataset_version`, `dataset_hash`,
-`total_questions`, `run_mode`, and the full `generation` block are
-identical. When both runs recorded an `annotations_hash`, that must match
-too; if one or both pre-Phase-5 runs lack the field, the tool warns but
-still compares.
+See [`docs/dataset.md`](./docs/dataset.md) for the data model and reviewer
+workflow, and [`docs/evaluation.md`](./docs/evaluation.md) for the rubric.

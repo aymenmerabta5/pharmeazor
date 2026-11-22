@@ -21,9 +21,15 @@ function a(overrides: Partial<GoldAnnotation> = {}): GoldAnnotation {
       "Chez l'adulte, la dose maximale est de 3 g par jour (3000 mg) en l'absence de facteur de risque.",
     expected_facts: ["3 g par jour", "adulte"],
     forbidden_claims: ["5 g par jour", "4 g"],
+    relevant_chunk_ids: [],
+    evidence_bundle: [],
+    answerable_without_corpus: true,
+    difficulty: "UNKNOWN",
     expected_behavior: "ANSWER",
     reviewer_notes: "verified",
     verification_status: "VERIFIED",
+    reviewed_by: null,
+    reviewed_at: null,
     ...overrides,
   };
 }

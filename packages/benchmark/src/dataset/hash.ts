@@ -23,3 +23,15 @@ export function hashQuestions(questions: readonly Question[]): string {
     .join(RECORD_SEP);
   return sha256(canonical);
 }
+
+/**
+ * Deterministic hash over the exact question selection of a run.
+ *
+ * `hashQuestions` describes the whole dataset file. A run with `--category`
+ * or `--limit` sees a subset, and two different subsets of equal size must
+ * never compare as the same experiment. This hash covers the selected ids in
+ * order, so selection drift is detectable independently of dataset drift.
+ */
+export function hashSelection(questionIds: readonly string[]): string {
+  return sha256([...questionIds].join(RECORD_SEP));
+}

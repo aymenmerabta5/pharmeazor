@@ -21,9 +21,15 @@ function a(overrides: Partial<GoldAnnotation> = {}): GoldAnnotation {
     reference_answer: null,
     expected_facts: [],
     forbidden_claims: [],
+    relevant_chunk_ids: [],
+    evidence_bundle: [],
+    answerable_without_corpus: true,
+    difficulty: "UNKNOWN",
     expected_behavior: "ANSWER",
     reviewer_notes: "",
     verification_status: "DRAFT",
+    reviewed_by: null,
+    reviewed_at: null,
     ...overrides,
   };
 }

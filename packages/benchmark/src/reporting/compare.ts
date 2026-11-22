@@ -60,6 +60,53 @@ export function compareRuns(a: ComparableRun, b: ComparableRun): ComparisonResul
   ];
 
   const warnings: string[] = [];
+
+  // Selection identity: two different `--category`/`--limit` slices of equal
+  // size must never compare as the same experiment.
+  const aSel = a.metadata.selection_hash ?? null;
+  const bSel = b.metadata.selection_hash ?? null;
+  if (aSel === null || bSel === null) {
+    warnings.push(
+      "At least one run is missing selection_hash; the exact question selection cannot be verified. Comparison is still attempted.",
+    );
+  } else {
+    checks.push(checkField("selection_hash", aSel, bSel));
+  }
+
+  // Prompt identity. `prompt_version` is a human label; the hash is the text.
+  const aPrompt = a.metadata.provenance?.system_prompt_hash ?? null;
+  const bPrompt = b.metadata.provenance?.system_prompt_hash ?? null;
+  if (aPrompt !== null && bPrompt !== null) {
+    checks.push(checkField("system_prompt_hash", aPrompt, bPrompt));
+  } else {
+    warnings.push(
+      "At least one run is missing provenance.system_prompt_hash; the prompt text cannot be compared, only its version label.",
+    );
+  }
+
+  const aSdk = a.metadata.provenance?.sdk ?? null;
+  const bSdk = b.metadata.provenance?.sdk ?? null;
+  if (aSdk && bSdk && JSON.stringify(aSdk) !== JSON.stringify(bSdk)) {
+    warnings.push(
+      `SDK versions differ (A: ${JSON.stringify(aSdk)}, B: ${JSON.stringify(bSdk)}); a provider SDK upgrade is an uncontrolled variable.`,
+    );
+  }
+
+  // Evidence identity for the oracle arm.
+  const aMode = a.metadata.run_mode ?? "raw";
+  const bMode = b.metadata.run_mode ?? "raw";
+  if (aMode === "oracle" || bMode === "oracle") {
+    const aEv = a.metadata.evidence_hash ?? null;
+    const bEv = b.metadata.evidence_hash ?? null;
+    if (aEv === null || bEv === null) {
+      warnings.push(
+        "At least one oracle run is missing evidence_hash; evidence compatibility cannot be verified.",
+      );
+    } else {
+      checks.push(checkField("evidence_hash", aEv, bEv));
+    }
+  }
+
   const aAnn = a.metadata.annotations_hash ?? null;
   const bAnn = b.metadata.annotations_hash ?? null;
   if (aAnn === null || bAnn === null) {

@@ -39,6 +39,8 @@ const REQUIRED_META_FIELDS = [
   "allow_draft",
 ] as const;
 
+const REQUIRED_IDENTITY_FIELDS = ["selection_hash", "selected_question_ids", "provenance"] as const;
+
 const SECRET_PATTERNS = [/gsk_[A-Za-z0-9_-]{10,}/, /GROQ_API_KEY=/];
 
 export function checkReproducibility(input: ReproInput): ReproReport {
@@ -64,6 +66,28 @@ export function checkReproducibility(input: ReproInput): ReproReport {
     details: missing.length === 0 ? "all present" : `missing: ${missing.join(", ")}`,
   });
 
+  // Identity fields were added after the first runs. A run that cannot prove
+  // which questions and which prompt it used is not reproducible, even if all
+  // the original fields are present.
+  const missingIdentity = REQUIRED_IDENTITY_FIELDS.filter(
+    (f) => (m as unknown as Record<string, unknown>)[f] === undefined,
+  );
+  checks.push({
+    name: "run identity recorded (selection + prompt provenance)",
+    passed: missingIdentity.length === 0,
+    details:
+      missingIdentity.length === 0
+        ? `selection_hash=${m.selection_hash}, questions=${m.selected_question_ids?.length ?? 0}`
+        : `missing: ${missingIdentity.join(", ")}; this run predates selection tracking and cannot prove its exact scope`,
+  });
+
+  const selectionIds = m.selected_question_ids ?? [];
+  checks.push({
+    name: "selected question count matches metadata",
+    passed: selectionIds.length === m.total_questions,
+    details: `selected_question_ids=${selectionIds.length}, total_questions=${m.total_questions}`,
+  });
+
   checks.push({
     name: "cumulative_usage recorded",
     passed: m.cumulative_usage !== undefined,
@@ -72,11 +96,12 @@ export function checkReproducibility(input: ReproInput): ReproReport {
       : "missing",
   });
 
-  const accounted = input.responses.length + input.errors.length;
+  const skipped = m.skipped_question_ids?.length ?? 0;
+  const accounted = input.responses.length + input.errors.length + skipped;
   checks.push({
     name: "every selected question accounted for",
     passed: accounted === m.total_questions,
-    details: `${input.responses.length} responses + ${input.errors.length} errors = ${accounted} of ${m.total_questions}`,
+    details: `${input.responses.length} responses + ${input.errors.length} errors + ${skipped} skipped = ${accounted} of ${m.total_questions}`,
   });
 
   const missingCacheKeys = input.responses.filter((r) => !r.cache_key).length;

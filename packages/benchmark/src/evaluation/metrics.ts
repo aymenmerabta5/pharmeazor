@@ -83,7 +83,13 @@ export interface SummaryMetrics {
   overall: SliceMetrics;
   by_category: SliceMetrics[];
   by_therapeutic_class: SliceMetrics[];
-  by_review_status: { agreed: number; needs_review: number; unreviewed: number };
+  by_review_status: {
+    agreed: number;
+    single_review: number;
+    reconciled: number;
+    needs_review: number;
+    unreviewed: number;
+  };
   notes: string[];
 }
 
@@ -248,6 +254,8 @@ export function computeSummary(input: SummaryInput): SummaryMetrics {
   const byCategory = new Map<string, SliceMetrics>();
   const byClass = new Map<string, SliceMetrics>();
   let agreed = 0;
+  let singleReview = 0;
+  let reconciled = 0;
   let needsReview = 0;
   let unreviewed = 0;
 
@@ -261,6 +269,8 @@ export function computeSummary(input: SummaryInput): SummaryMetrics {
     accumulate(byClass.get(cls)!, r);
 
     if (r.reconciliation?.status === "AGREED") agreed += 1;
+    else if (r.reconciliation?.status === "SINGLE_REVIEW") singleReview += 1;
+    else if (r.reconciliation?.status === "RECONCILED") reconciled += 1;
     else if (r.reconciliation?.status === "NEEDS_HUMAN_REVIEW") needsReview += 1;
     if (!r.human) unreviewed += 1;
   }
@@ -275,11 +285,18 @@ export function computeSummary(input: SummaryInput): SummaryMetrics {
     overall,
     by_category: [...byCategory.values()].sort((a, b) => a.label.localeCompare(b.label)),
     by_therapeutic_class: [...byClass.values()].sort((a, b) => a.label.localeCompare(b.label)),
-    by_review_status: { agreed, needs_review: needsReview, unreviewed },
+    by_review_status: {
+      agreed,
+      single_review: singleReview,
+      reconciled,
+      needs_review: needsReview,
+      unreviewed,
+    },
     notes: [
       "All percentages use the explicit denominator shown next to them. A null rate means denominator = 0.",
       "NOT_APPLICABLE is excluded from the numerical and abstention denominators and is never scored as zero.",
-      "citation_accuracy and evidence_faithfulness are NOT_APPLICABLE for the raw benchmark; the model was not given source evidence.",
+      "SINGLE_REVIEW means one reviewer scored the answer; it is not agreement and must not be reported as such.",
+      "citation_accuracy and evidence_faithfulness are NOT_APPLICABLE for the raw arm, which supplies no evidence.",
     ],
   };
 }

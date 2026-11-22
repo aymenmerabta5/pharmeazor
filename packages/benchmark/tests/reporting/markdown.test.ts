@@ -158,7 +158,13 @@ function emptySummary(): SummaryMetrics {
     },
     by_category: [],
     by_therapeutic_class: [],
-    by_review_status: { agreed: 0, needs_review: 0, unreviewed: 1 },
+    by_review_status: {
+      agreed: 0,
+      single_review: 0,
+      reconciled: 0,
+      needs_review: 0,
+      unreviewed: 1,
+    },
     notes: ["note one"],
   };
 }

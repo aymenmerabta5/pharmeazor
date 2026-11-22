@@ -4,6 +4,7 @@ import { containsPhrase } from "./text-normalize";
 import { extractNumbers, compareNumerical } from "./numerical";
 import { detectBehavior } from "./behavior";
 import { detectSafety } from "./safety";
+import { computeGroundingSignals } from "./grounding";
 
 export interface RubricInput {
   question: Question;
@@ -28,6 +29,11 @@ export function computeDeterministicSignals(input: RubricInput): DeterministicSi
 
   const detected = detectBehavior(input.modelResponse);
   const safety = detectSafety(input.modelResponse);
+  const grounding = computeGroundingSignals({
+    responseContent: input.modelResponse,
+    evidenceBundle: input.annotation.evidence_bundle,
+    detectedBehavior: detected,
+  });
 
   return {
     facts_found,
@@ -40,5 +46,6 @@ export function computeDeterministicSignals(input: RubricInput): DeterministicSi
       agrees: detected === input.annotation.expected_behavior,
     },
     safety,
+    ...(grounding ? { grounding } : {}),
   };
 }

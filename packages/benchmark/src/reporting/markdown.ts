@@ -1,6 +1,7 @@
 import type { RunMetadata, ResponseLine, ErrorLine } from "../storage/fs";
 import type { EvaluationRecord } from "../evaluation/schema";
 import type { SummaryMetrics, SliceMetrics } from "../evaluation/metrics";
+import { computeGroundingSummary } from "../evaluation/grounding";
 
 const MAX_FAILURE_SAMPLES = 5;
 const MAX_RESPONSE_PREVIEW = 800;
@@ -47,21 +48,43 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
     ["Status", metadata.status],
     ["Run mode", metadata.run_mode ?? "raw"],
     ["Model", metadata.model_id],
+    ["Model revision", metadata.provenance?.model_revision ?? "(not reported)"],
     ["Provider", metadata.provider],
+    [
+      "Provider SDK",
+      metadata.provenance
+        ? `ai ${metadata.provenance.sdk.ai} / groq ${metadata.provenance.sdk.groq}`
+        : "(not recorded)",
+    ],
     ["Prompt version", metadata.prompt_version],
+    ["System prompt hash", metadata.provenance?.system_prompt_hash ?? "(not recorded)"],
     ["Dataset version", metadata.dataset_version],
     ["Dataset hash", metadata.dataset_hash],
+    ["Selection hash", metadata.selection_hash ?? "(not recorded)"],
+    [
+      "Selected questions",
+      String(metadata.selected_question_ids?.length ?? metadata.total_questions),
+    ],
+    ["Skipped questions", String(metadata.skipped_question_ids?.length ?? 0)],
     ["Annotations hash", metadata.annotations_hash ?? "(not recorded)"],
+    ...(metadata.run_mode === "oracle"
+      ? ([["Evidence hash", metadata.evidence_hash ?? "(not recorded)"]] as [string, string][])
+      : []),
     ["Reasoning effort", metadata.reasoning_effort],
+    ["Temperature", String(metadata.provenance?.temperature ?? "unset")],
+    ["Seed", String(metadata.provenance?.seed ?? "unset")],
     ["Git SHA", metadata.git_sha ?? "(not available)"],
     ["Total questions", String(metadata.total_questions)],
     ["Successful requests", String(responses.length)],
     ["Failed requests", String(errors.length)],
     ["API calls", usage ? String(usage.api_calls) : "(not recorded)"],
+    ["Failed attempts", usage ? String(usage.failed_attempts ?? 0) : "(not recorded)"],
     ["Cache hits", usage ? String(usage.cache_hits) : "(not recorded)"],
-    ["Prompt tokens", usage ? String(usage.prompt_tokens) : "(not recorded)"],
-    ["Completion tokens", usage ? String(usage.completion_tokens) : "(not recorded)"],
-    ["Total tokens", usage ? String(usage.total_tokens) : "(not recorded)"],
+    ["Live tokens", usage ? String(usage.live_total_tokens ?? 0) : "(not recorded)"],
+    ["Replayed tokens", usage ? String(usage.replay_total_tokens ?? 0) : "(not recorded)"],
+    ["Prompt tokens (all)", usage ? String(usage.prompt_tokens) : "(not recorded)"],
+    ["Completion tokens (all)", usage ? String(usage.completion_tokens) : "(not recorded)"],
+    ["Total tokens (all)", usage ? String(usage.total_tokens) : "(not recorded)"],
     ["Average response latency", `${Math.round(avgLatency)} ms`],
   ];
   L.push("| Field | Value |");
@@ -104,6 +127,34 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
       : formatSliceTable(summary.by_therapeutic_class),
   );
   L.push("");
+
+  // --- Grounding (evidence arms only) ---
+  if ((metadata.run_mode ?? "raw") !== "raw") {
+    const g = computeGroundingSummary(evaluation);
+    L.push("## Grounding");
+    L.push("");
+    L.push(
+      "Deterministic signals only. A human reviewer still owns the authoritative citation and faithfulness verdict.",
+    );
+    L.push("");
+    L.push("| Signal | Value |");
+    L.push("|---|---|");
+    L.push(`| Responses with an evidence bundle | ${g.responses_with_bundle} |`);
+    L.push(
+      `| Responses citing at least one passage | ${g.responses_citing_at_least_once} / ${g.responses_with_bundle} |`,
+    );
+    L.push(`| Uncited answers | ${g.responses_uncited} |`);
+    L.push(`| Citations parsed | ${g.total_citations} |`);
+    L.push(`| Citations not in the supplied bundle | ${g.invalid_citations} |`);
+    L.push(
+      `| Citation validity rate | ${g.citation_validity_rate === null ? "N/A" : `${(g.citation_validity_rate * 100).toFixed(1)}%`} |`,
+    );
+    L.push(
+      `| Responses with an unsupported number | ${g.responses_with_unsupported_number} / ${g.responses_with_bundle} |`,
+    );
+    L.push(`| Unsupported numbers (total) | ${g.unsupported_numbers_total} |`);
+    L.push("");
+  }
 
   // --- Error analysis ---
   L.push("## Error analysis");
@@ -153,9 +204,15 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
   L.push("## Notes");
   L.push("");
   for (const note of summary.notes) L.push(`- ${note}`);
-  L.push(
-    "- This is the raw-model benchmark. Citation accuracy and evidence faithfulness are NOT_APPLICABLE for this stage.",
-  );
+  if ((metadata.run_mode ?? "raw") === "raw") {
+    L.push(
+      "- This is the closed-book raw arm. Citation accuracy and evidence faithfulness are NOT_APPLICABLE because no evidence was supplied.",
+    );
+  } else {
+    L.push(
+      "- This is an evidence arm. The grounding table is deterministic and advisory; the human review is authoritative.",
+    );
+  }
   L.push("");
 
   const markdown = L.join("\n").replace(/gsk_[A-Za-z0-9_-]+/g, "[REDACTED]");

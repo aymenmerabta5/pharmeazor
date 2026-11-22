@@ -33,6 +33,22 @@ export type AbstentionOutcome = (typeof ABSTENTION_OUTCOME_VALUES)[number];
 export const SAFETY_VALUES = ["SAFE", "UNSAFE", "UNVERIFIABLE"] as const;
 export type SafetyVerdict = (typeof SAFETY_VALUES)[number];
 
+/**
+ * Citation and faithfulness verdicts. They are scored only for evidence arms
+ * (oracle, later RAG); the raw arm keeps `NOT_APPLICABLE`.
+ */
+export const CITATION_VALUES = [
+  "ACCURATE",
+  "PARTIAL",
+  "INACCURATE",
+  "NOT_APPLICABLE",
+  "UNVERIFIABLE",
+] as const;
+export type CitationVerdict = (typeof CITATION_VALUES)[number];
+
+export const EVIDENCE_FAITHFULNESS_VALUES = CITATION_VALUES;
+export type EvidenceFaithfulness = (typeof CITATION_VALUES)[number];
+
 export const DETECTED_BEHAVIOR_VALUES = [
   "ANSWER",
   "LIMITED_ANSWER",
@@ -71,6 +87,23 @@ export const SafetySignalsSchema = z.object({
 });
 export type SafetySignals = z.infer<typeof SafetySignalsSchema>;
 
+/**
+ * Deterministic grounding signals for evidence arms. The marker vocabulary is
+ * `[E1] … [E99]`, matching the ids the oracle prompt assigns to its passages.
+ * These signals are advisory, exactly like the rest of the rubric: a human
+ * reviewer is still the authoritative score.
+ */
+export const GroundingSignalsSchema = z.object({
+  cited_evidence_ids: z.array(z.string()),
+  invalid_citations: z.array(z.string()),
+  /** The answer makes a claim but cites nothing. */
+  uncited: z.boolean(),
+  /** Numbers in the answer that do not appear in any supplied passage. */
+  unsupported_numbers: z.array(NumberWithUnitSchema),
+  supplied_passage_count: z.number().int().nonnegative(),
+});
+export type GroundingSignals = z.infer<typeof GroundingSignalsSchema>;
+
 export const DeterministicSignalsSchema = z.object({
   facts_found: z.array(z.string()),
   facts_missing: z.array(z.string()),
@@ -82,6 +115,8 @@ export const DeterministicSignalsSchema = z.object({
     agrees: z.boolean(),
   }),
   safety: SafetySignalsSchema,
+  /** Present only when the question carried an evidence bundle. */
+  grounding: GroundingSignalsSchema.optional(),
 });
 export type DeterministicSignals = z.infer<typeof DeterministicSignalsSchema>;
 
@@ -94,14 +129,14 @@ export const HumanScoreSchema = z.object({
   numerical_accuracy: z.enum(NUMERICAL_ACCURACY_VALUES),
   abstention_outcome: z.enum(ABSTENTION_OUTCOME_VALUES),
   safety: z.enum(SAFETY_VALUES),
-  citation_accuracy: z.literal("NOT_APPLICABLE"),
-  evidence_faithfulness: z.literal("NOT_APPLICABLE"),
+  citation_accuracy: z.enum(CITATION_VALUES),
+  evidence_faithfulness: z.enum(CITATION_VALUES),
   reviewer_notes: z.string(),
 });
 export type HumanScore = z.infer<typeof HumanScoreSchema>;
 
 export const ReconciliationSchema = z.object({
-  status: z.enum(["AGREED", "RECONCILED", "NEEDS_HUMAN_REVIEW"]),
+  status: z.enum(["AGREED", "SINGLE_REVIEW", "RECONCILED", "NEEDS_HUMAN_REVIEW"]),
   disagreements: z.array(z.string()),
   reconciled_by: z.string().optional(),
   reconciled_at: z.string().optional(),

@@ -19,6 +19,8 @@ export interface ChatResult {
   usage: ChatUsage;
   finish_reason: string;
   request_id: string;
+  /** Model revision reported by the provider, when available. */
+  response_model?: string;
   latency_ms: number;
 }
 
@@ -65,6 +67,7 @@ class AiSdkGroqClient implements GroqClient {
       },
       finish_reason: String(finishReason ?? "unknown"),
       request_id: response?.id ?? "",
+      response_model: response?.modelId ?? undefined,
       latency_ms: Date.now() - startedAt,
     };
   }

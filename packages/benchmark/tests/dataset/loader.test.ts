@@ -58,7 +58,16 @@ describe("loadQuestionsFromFile (real dataset)", () => {
 
   it("loads the shipped dataset", async () => {
     const qs = await loadQuestionsFromFile(path);
-    expect(qs.length).toBe(30);
+    expect(qs.length).toBe(50);
+  });
+
+  it("covers all three shipped languages", async () => {
+    const qs = await loadQuestionsFromFile(path);
+    const byLanguage = new Map<string, number>();
+    for (const q of qs) byLanguage.set(q.language, (byLanguage.get(q.language) ?? 0) + 1);
+    expect(byLanguage.get("fr")).toBe(30);
+    expect(byLanguage.get("en")).toBe(10);
+    expect(byLanguage.get("ar")).toBe(10);
   });
 
   it("every loaded question is DRAFT initially", async () => {

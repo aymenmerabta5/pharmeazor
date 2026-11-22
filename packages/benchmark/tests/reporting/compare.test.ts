@@ -97,7 +97,13 @@ const emptySummary: SummaryMetrics = {
   },
   by_category: [],
   by_therapeutic_class: [],
-  by_review_status: { agreed: 0, needs_review: 0, unreviewed: 0 },
+  by_review_status: {
+    agreed: 0,
+    single_review: 0,
+    reconciled: 0,
+    needs_review: 0,
+    unreviewed: 0,
+  },
   notes: [],
 };
 
@@ -137,5 +143,45 @@ describe("compareRuns", () => {
     const a = run({ annotations_hash: "aaa" });
     const b = run({ annotations_hash: "bbb" });
     expect(compareRuns(a, b).compatible).toBe(false);
+  });
+  it("rejects two different selections of equal size", () => {
+    const a = run({ selection_hash: "sel-a", selected_question_ids: ["Q-A"] });
+    const b = run({ selection_hash: "sel-b", selected_question_ids: ["Q-B"] });
+    expect(compareRuns(a, b).compatible).toBe(false);
+  });
+  it("accepts the same selection hash", () => {
+    const a = run({ selection_hash: "sel-a", selected_question_ids: ["Q-A"] });
+    const b = run({ selection_hash: "sel-a", selected_question_ids: ["Q-A"] });
+    expect(compareRuns(a, b).compatible).toBe(true);
+  });
+  it("warns but still compares when selection_hash is missing", () => {
+    const r = compareRuns(run(), run());
+    expect(r.warnings.some((w) => w.includes("selection_hash"))).toBe(true);
+    expect(r.compatible).toBe(true);
+  });
+  it("rejects runs whose prompt text differs despite the same version label", () => {
+    const a = run({
+      provenance: { system_prompt_hash: "prompt-a" } as RunMetadata["provenance"],
+    });
+    const b = run({
+      provenance: { system_prompt_hash: "prompt-b" } as RunMetadata["provenance"],
+    });
+    expect(compareRuns(a, b).compatible).toBe(false);
+  });
+  it("rejects oracle runs with different evidence bundles", () => {
+    const a = run({ run_mode: "oracle", evidence_hash: "evidence-a" });
+    const b = run({ run_mode: "oracle", evidence_hash: "evidence-b" });
+    expect(compareRuns(a, b).compatible).toBe(false);
+  });
+  it("warns when an oracle run has no evidence hash", () => {
+    const r = compareRuns(run({ run_mode: "oracle" }), run({ run_mode: "oracle" }));
+    expect(r.warnings.some((w) => w.includes("evidence_hash"))).toBe(true);
+  });
+  it("warns when SDK versions differ", () => {
+    const a = run({ provenance: { sdk: { ai: "1.0.0" } } as RunMetadata["provenance"] });
+    const b = run({ provenance: { sdk: { ai: "2.0.0" } } as RunMetadata["provenance"] });
+    const r = compareRuns(a, b);
+    expect(r.warnings.some((w) => w.includes("SDK versions differ"))).toBe(true);
+    expect(r.compatible).toBe(true);
   });
 });

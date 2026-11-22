@@ -1,11 +1,30 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { RunProvenance } from "../config/provenance";
+
+export interface CumulativeUsage {
+  api_calls: number;
+  cache_hits: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  /** Tokens actually spent against the provider during this run. */
+  live_prompt_tokens?: number;
+  live_completion_tokens?: number;
+  live_total_tokens?: number;
+  /** Historic usage replayed from the cache. Never billed again. */
+  replay_prompt_tokens?: number;
+  replay_completion_tokens?: number;
+  replay_total_tokens?: number;
+  /** HTTP attempts that failed, including retried ones. */
+  failed_attempts?: number;
+}
 
 export interface RunMetadata {
   run_id: string;
   started_at: string;
   updated_at: string;
-  status: "RUNNING" | "COMPLETED" | "COMPLETED_WITH_ERRORS" | "FAILED";
+  status: "RUNNING" | "COMPLETED" | "COMPLETED_WITH_ERRORS" | "FAILED" | "RATE_LIMITED";
   model_id: string;
   provider: string;
   reasoning_effort: string;
@@ -16,15 +35,19 @@ export interface RunMetadata {
   generation: Record<string, unknown>;
   total_questions: number;
   allow_draft: boolean;
-  run_mode?: "raw" | "evidence" | "rag";
+  run_mode?: "raw" | "oracle" | "rag";
   annotations_hash?: string | null;
-  cumulative_usage?: {
-    api_calls: number;
-    cache_hits: number;
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
+  /** Exact question selection of the run; guards `--category`/`--limit` drift. */
+  selection_hash?: string;
+  selected_question_ids?: string[];
+  /** Questions excluded because the arm had no input for them (oracle). */
+  skipped_question_ids?: string[];
+  provenance?: RunProvenance;
+  /** Hash of the oracle evidence bundle supplied to the run. */
+  evidence_hash?: string | null;
+  /** Hash of the retrieval configuration used by a RAG run. */
+  retrieval_config_hash?: string | null;
+  cumulative_usage?: CumulativeUsage;
 }
 
 export interface ResponseLine {
@@ -47,8 +70,11 @@ export interface ErrorLine {
   question_id: string;
   cache_key: string;
   class: "transient" | "permanent";
+  /** Machine-readable cause, e.g. CACHE_CORRUPT. */
+  code?: string;
   status_code?: number;
   message: string;
+  /** HTTP attempts actually made; 0 when the call never left the process. */
   attempts: number;
   recorded_at: string;
 }

@@ -33,4 +33,24 @@ describe("reconcileReviews", () => {
     expect(rec?.status).toBe("NEEDS_HUMAN_REVIEW");
     expect(rec?.disagreements).toContain("correctness");
   });
+  it("does not call a single review agreement", () => {
+    const { reconciliation, merged } = reconcileReviews(
+      [{ question_id: "Q-1", score: base }],
+      null,
+    );
+    expect(reconciliation.get("Q-1")?.status).toBe("SINGLE_REVIEW");
+    expect(merged).toHaveLength(1);
+  });
+  it("flags disagreement on citation accuracy", () => {
+    const { reconciliation } = reconcileReviews(
+      [{ question_id: "Q-1", score: { ...base, citation_accuracy: "ACCURATE" } }],
+      [
+        {
+          question_id: "Q-1",
+          score: { ...base, reviewer_id: "r2", citation_accuracy: "INACCURATE" },
+        },
+      ],
+    );
+    expect(reconciliation.get("Q-1")?.disagreements).toContain("citation_accuracy");
+  });
 });

@@ -62,9 +62,15 @@ const validAnnotation = {
   reference_answer: null as string | null,
   expected_facts: [] as string[],
   forbidden_claims: [] as string[],
+  relevant_chunk_ids: [] as string[],
+  evidence_bundle: [],
+  answerable_without_corpus: true as boolean | null,
+  difficulty: "UNKNOWN" as const,
   expected_behavior: "ANSWER" as const,
   reviewer_notes: "pending",
   verification_status: "DRAFT" as const,
+  reviewed_by: null as string | null,
+  reviewed_at: null as string | null,
 };
 
 describe("GoldAnnotationSchema", () => {
