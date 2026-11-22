@@ -33,8 +33,10 @@ and scorable**: all 50 questions are `APPROVED` and all 50 annotations are
 fact, retrieval label, and oracle passage is derived from
 `tooling/embedding-lab/output/embeddings/chunks.jsonl` using real chunk ids and
 verbatim text. Each row carries the reviewer note `corpus-derived, pharmacist
-sign-off pending`. No benchmark number has been run yet, and none should be
-quoted until a pharmacist signs off.
+sign-off pending`. Live `raw` and `oracle` baselines have been recorded and are
+documented in [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md),
+but no number should be quoted as a clinical result until a pharmacist signs
+off.
 
 ## Requirements
 
@@ -177,7 +179,9 @@ There are six parallel fr/en/ar triples for cross-language comparison; see
 `reference_answer`, non-empty `expected_facts`, real `relevant_chunk_ids`, and a
 verbatim `evidence_bundle`. The exact reviewer note is `corpus-derived,
 pharmacist sign-off pending`: structural verification is complete, but clinical
-sign-off is still required before any score is interpreted.
+sign-off is still required before any score is interpreted. The `raw` and
+`oracle` arms have each completed 50/50 live responses with zero failures;
+their human review count is still zero, so the scored deltas remain pending.
 
 ## Environment
 
@@ -192,8 +196,10 @@ From the repository root:
 
 - **Pharmacist sign-off is pending.** The data is corpus-grounded and scorable,
   but the exact reviewer note is `corpus-derived, pharmacist sign-off pending`.
-  `dataset validate` passes with zero errors and zero non-`DRAFT` warnings; that
-  is a structural result, not a clinical endorsement.
+  `dataset validate` passes with zero errors; four intentional
+  `TRAP_EXPECTS_ANSWER` warnings remain because the curated evidence directly
+  answers those rows. That is a structural result, not a clinical endorsement,
+  and both live runs are provisional.
 - **No RAG arm yet.** `run_mode` already distinguishes `raw | oracle | rag`, and
   the retrieval contracts exist upstream, but no live retrieval run is wired.
   The RAG arm is deferred until the oracle arm and the annotation schema are

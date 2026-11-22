@@ -1,0 +1,1848 @@
+{
+  "run_id": "raw-20261122-161936-esgy4s",
+  "generated_at": "2026-11-22T16:34:40.991Z",
+  "overall": {
+    "label": "ALL",
+    "total": 50,
+    "human_reviewed": 0,
+    "correctness": {
+      "correct": 0,
+      "partially_correct": 0,
+      "incorrect": 0,
+      "unverifiable": 0,
+      "denominator": 0,
+      "correct_rate": null,
+      "partially_correct_rate": null,
+      "incorrect_rate": null,
+      "unverifiable_rate": null
+    },
+    "completeness": {
+      "complete": 0,
+      "partial": 0,
+      "incomplete": 0,
+      "unverifiable": 0,
+      "denominator": 0,
+      "complete_rate": null,
+      "partial_rate": null,
+      "incomplete_rate": null
+    },
+    "numerical": {
+      "accurate": 0,
+      "partial": 0,
+      "inaccurate": 0,
+      "unverifiable": 0,
+      "not_applicable": 0,
+      "denominator": 0,
+      "accurate_rate": null,
+      "inaccurate_rate": null
+    },
+    "abstention": {
+      "correct_abstention": 0,
+      "incorrect_abstention": 0,
+      "missed_abstention": 0,
+      "unsupported_confident_answer": 0,
+      "appropriate_clarification": 0,
+      "not_applicable": 0,
+      "denominator": 0,
+      "correct_abstention_rate": null,
+      "missed_abstention_rate": null,
+      "unsupported_confident_answer_rate": null
+    },
+    "safety": {
+      "safe": 0,
+      "unsafe": 0,
+      "unverifiable": 0,
+      "denominator": 0,
+      "safe_rate": null,
+      "unsafe_rate": null
+    },
+    "unsupported": {
+      "responses_with_any_unsupported_claim": 0,
+      "total_unsupported_claims": 0,
+      "denominator": 0,
+      "rate": null
+    },
+    "unverifiable_rate": null
+  },
+  "by_category": [
+    {
+      "label": "CONTRAINDICATIONS_AND_WARNINGS",
+      "total": 9,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "DOSAGE_AND_NUMERICAL_KNOWLEDGE",
+      "total": 7,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "DRUG_INTERACTIONS",
+      "total": 9,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "GENERAL_MEDICATION_KNOWLEDGE",
+      "total": 7,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "MEDICATION_IDENTIFICATION",
+      "total": 9,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "TRAP_AND_OUT_OF_SCOPE",
+      "total": 9,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    }
+  ],
+  "by_therapeutic_class": [
+    {
+      "label": "Analgésiques opioïdes - Tramadol",
+      "total": 4,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Anti-inflammatoires non stéroïdiens - Célécoxib",
+      "total": 2,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Anti-inflammatoires non stéroïdiens (AINS)",
+      "total": 7,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Anti-inflammatoires non stéroïdiens (AINS) - Ibuprofène",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Anti-inflammatory drugs - Celecoxib",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Antiagrégants plaquettaires",
+      "total": 2,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Antihypertenseurs",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Celecoxib",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Célécoxib",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Inhibiteurs calciques",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Inhibiteurs de l'enzyme de conversion (IEC)",
+      "total": 5,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Macrolides - Clarithromycin",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Macrolides - Clarithromycine",
+      "total": 3,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Paracétamol",
+      "total": 8,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Paracétamol pédiatrique",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Pénicillines - Aminopénicillines",
+      "total": 3,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Registre de nomenclature - Portée des données",
+      "total": 2,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "Urgence pédiatrique - Posologie pondérale",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "أملوديبين/فالسارتان",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "سجل النomenclatura - نطاق البيانات",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "سيلكوكسيب",
+      "total": 1,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    },
+    {
+      "label": "ماكروليدات - كلاريثروميسين",
+      "total": 2,
+      "human_reviewed": 0,
+      "correctness": {
+        "correct": 0,
+        "partially_correct": 0,
+        "incorrect": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "correct_rate": null,
+        "partially_correct_rate": null,
+        "incorrect_rate": null,
+        "unverifiable_rate": null
+      },
+      "completeness": {
+        "complete": 0,
+        "partial": 0,
+        "incomplete": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "complete_rate": null,
+        "partial_rate": null,
+        "incomplete_rate": null
+      },
+      "numerical": {
+        "accurate": 0,
+        "partial": 0,
+        "inaccurate": 0,
+        "unverifiable": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "accurate_rate": null,
+        "inaccurate_rate": null
+      },
+      "abstention": {
+        "correct_abstention": 0,
+        "incorrect_abstention": 0,
+        "missed_abstention": 0,
+        "unsupported_confident_answer": 0,
+        "appropriate_clarification": 0,
+        "not_applicable": 0,
+        "denominator": 0,
+        "correct_abstention_rate": null,
+        "missed_abstention_rate": null,
+        "unsupported_confident_answer_rate": null
+      },
+      "safety": {
+        "safe": 0,
+        "unsafe": 0,
+        "unverifiable": 0,
+        "denominator": 0,
+        "safe_rate": null,
+        "unsafe_rate": null
+      },
+      "unsupported": {
+        "responses_with_any_unsupported_claim": 0,
+        "total_unsupported_claims": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "unverifiable_rate": null
+    }
+  ],
+  "by_review_status": {
+    "agreed": 0,
+    "single_review": 0,
+    "reconciled": 0,
+    "needs_review": 0,
+    "unreviewed": 50
+  },
+  "notes": [
+    "All percentages use the explicit denominator shown next to them. A null rate means denominator = 0.",
+    "NOT_APPLICABLE is excluded from the numerical and abstention denominators and is never scored as zero.",
+    "SINGLE_REVIEW means one reviewer scored the answer; it is not agreement and must not be reported as such.",
+    "citation_accuracy and evidence_faithfulness are NOT_APPLICABLE for the raw arm, which supplies no evidence."
+  ]
+}

@@ -8,22 +8,24 @@ The package implements the three-arm benchmark's first two arms and the
 evaluation/reporting tooling around them. The third arm is deliberately not
 built yet.
 
-| Area                          | State                                                                                  |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED`                              |
-| Gold annotations              | 50 `VERIFIED` corpus-derived annotations                                               |
-| Raw arm (`raw`)               | implemented, tested                                                                    |
-| Oracle arm (`oracle`)         | implemented, tested, corpus-derived bundles populated                                  |
-| RAG arm (`rag`)               | **not implemented** — deferred until baselines exist                                   |
-| Deterministic evaluation      | implemented, advisory only                                                             |
-| Human review + reconciliation | implemented                                                                            |
-| Reporting / comparison        | implemented with identity guards                                                       |
-| Live runs                     | runnable with configured `GROQ_API_KEY`; results provisional until pharmacist sign-off |
+| Area                          | State                                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED`                                             |
+| Gold annotations              | 50 `VERIFIED` corpus-derived annotations                                                              |
+| Raw arm (`raw`)               | implemented, tested                                                                                   |
+| Oracle arm (`oracle`)         | implemented, tested, corpus-derived bundles populated                                                 |
+| RAG arm (`rag`)               | **not implemented** — deferred until baselines exist                                                  |
+| Deterministic evaluation      | implemented, advisory only                                                                            |
+| Human review + reconciliation | implemented                                                                                           |
+| Reporting / comparison        | implemented with identity guards                                                                      |
+| Live runs                     | `raw` and `oracle` baselines recorded (50/50 each, 0 failures); provisional until pharmacist sign-off |
 
 `dataset stats` now reports `scorable_questions: 50`. That is a structural
 result, not a clinical endorsement: every row carries the exact note
-`corpus-derived, pharmacist sign-off pending`. No benchmark number should be
-quoted until that sign-off exists.
+`corpus-derived, pharmacist sign-off pending`. Live `raw` and `oracle` runs are
+recorded in [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md);
+their human review count is zero, so no benchmark number should be quoted until
+that sign-off exists.
 
 ## Design decisions
 
@@ -200,6 +202,40 @@ The two failing gates are pre-existing, repository-wide findings outside this
 change. No detector, exception, or safeguard was changed to obtain the passing
 results.
 
+## Milestone 8 — Credibility audit and provisional baselines
+
+- Before any live call, all 50 questions and gold annotations were audited
+  against `tooling/embedding-lab/output/embeddings/chunks.jsonl`. The audit
+  checked evidence support, answerability, answer/query language agreement,
+  expected behavior, clinical plausibility, and numeric/dose accuracy.
+- Eight confirmed issues were corrected: one ACE-inhibitor overgeneralization,
+  one unsupported brand mapping, two language mismatches, one missing overdose
+  warning, and four trap rows whose labels penalized the evidence-backed
+  answer. The four trap rows now intentionally expect `ANSWER`.
+- The independent chunk verifier then reported 50 questions, 50 annotations,
+  38 referenced chunks and 0 errors. `dataset validate` reported 50 approved,
+  50 verified, 50 retrieval-ready and 50 oracle-ready with four intentional
+  `TRAP_EXPECTS_ANSWER` warnings and no errors.
+- Live baselines were recorded:
+  - `raw-20261122-161936-esgy4s` — 50/50 answered, 0 failed, 40,695 live tokens.
+  - `oracle-20261122-162607-ergtb5` — 50/50 answered, 0 failed, 47,632 live tokens.
+- `evaluate run`, `summary`, `report` and `reproduce` were run for both arms.
+  Reproducibility passes for both. Human review count is 0 and `correct_rate`
+  is `null`, so both baselines are provisional; see
+  [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md) and
+  [`runs/PROVISIONAL_BASELINES.json`](./runs/PROVISIONAL_BASELINES.json).
+
+**Gates run for this change**
+
+| Gate                                                          | Result                                                                            |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `python verify_grounded_data.py`                              | pass — 50/50 rows, 38 chunks, 0 errors                                            |
+| `bun run --cwd packages/benchmark benchmark dataset validate` | pass — 50 approved, 50 verified, 50 scorable, 0 errors, 4 intentional warnings    |
+| `bun run --cwd packages/benchmark benchmark dataset stats`    | pass — `scorable_questions: 50`; fr 30 / en 10 / ar 10; category counts unchanged |
+| `bun run --cwd packages/benchmark test`                       | pass — 152 pass, 1 live smoke skip, 0 fail                                        |
+| `bun run --cwd packages/benchmark typecheck`                  | pass — 66 files, no type errors                                                   |
+| `bun run --cwd packages/benchmark benchmark reproduce`        | pass — both runs, no secrets in run directories                                   |
+
 ---
 
 ## What is intentionally missing
@@ -208,9 +244,10 @@ results.
   annotations must be verified first, otherwise `retrievalGap` has no stable
   ceiling to measure against. `run_mode` already accepts `"rag"` and the
   retrieval contracts live in `packages/services/src/retrieval/`.
-- **Scored baseline.** The dataset is now scorable, but no `raw` or `oracle` run
-  has been executed. A verified dataset is a prerequisite, not the baseline
-  itself.
+- **Human-scored baseline.** The `raw` and `oracle` runs are recorded, but the
+  human review count is 0 for both. No correctness score, `evidenceGain`,
+  `retrievalGap` or `systemGain` has been computed yet; the deterministic
+  proxies in `runs/PROVISIONAL_BASELINES.md` are advisory only.
 - **Embedding/model revision pinning beyond what Groq reports.**
   `model_revision` records the provider's response field when present; the
   benchmark cannot force a revision the provider does not expose.
@@ -220,19 +257,19 @@ results.
 1. Pharmacist sign-off is required before any score is quoted or used as a
    clinical result. The exact current note on all 50 rows is
    `corpus-derived, pharmacist sign-off pending`.
-2. No live-run blocker remains on the key: `GROQ_API_KEY` is configured in the
-   local `.env.local`. `raw` and `oracle` can be measured now, with results
-   labelled provisional until sign-off.
+2. Human review of both provisional runs is still required. The key is
+   configured and both live runs have completed; the remaining blockers are the
+   review worksheets and pharmacist sign-off, not API access.
 
 ## Next steps
 
-1. Record the `raw` baseline with the configured `GROQ_API_KEY`, labelled
-   provisional pending pharmacist sign-off.
-2. Record the `oracle` baseline and compute a provisional `evidenceGain`.
-3. Pharmacist sign-off on the corpus-derived dataset
+1. Prepare and complete the review worksheets for both provisional runs, then
+   submit the human scores.
+2. Pharmacist sign-off on the corpus-derived dataset
    ([`docs/dataset.md`](./docs/dataset.md), [`docs/oracle.md`](./docs/oracle.md)).
-4. Freeze dataset v1.0 once sign-off and both baselines exist.
-5. Build `rag-fixed` (recorded retrieval traces) and then live `rag`; compute
+3. Compute the actual `evidenceGain` from the human-reviewed `raw` and `oracle`
+   scores and freeze dataset v1.0.
+4. Build `rag-fixed` (recorded retrieval traces) and then live `rag`; compute
    `retrievalGap` and `systemGain`.
-6. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) using the
+5. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) using the
    chunk labels already in the gold annotations.

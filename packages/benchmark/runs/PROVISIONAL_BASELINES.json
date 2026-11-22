@@ -1,0 +1,61 @@
+{
+  "label": "provisional deterministic evidenceGain proxy — NOT a clinical benchmark score",
+  "note": "Human review count is 0 for both runs. These deltas are deterministic advisory signals only; pharmacist sign-off is pending.",
+  "runs": {
+    "raw": {
+      "run_id": "raw-20261122-161936-esgy4s",
+      "evaluated_responses": 50,
+      "expected_facts": 174,
+      "facts_found": 46,
+      "fact_coverage_pct": 26.4,
+      "full_fact_rows": 1,
+      "full_fact_rows_pct": 2,
+      "behavior_agreement": 41,
+      "behavior_agreement_pct": 82,
+      "forbidden_claim_rows": 1,
+      "forbidden_claim_rows_pct": 2,
+      "numerical_correct": 16,
+      "numerical_wrong_value": 8,
+      "numerical_missed": 6,
+      "numerical_unsupported": 22,
+      "numerical_problem_rows": 15,
+      "numerical_problem_rows_pct": 30,
+      "cited_rows": 0,
+      "cited_rows_pct": 0,
+      "invalid_citation_rows": 0,
+      "unsupported_number_rows": 12
+    },
+    "oracle": {
+      "run_id": "oracle-20261122-162607-ergtb5",
+      "evaluated_responses": 50,
+      "expected_facts": 174,
+      "facts_found": 92,
+      "fact_coverage_pct": 52.9,
+      "full_fact_rows": 8,
+      "full_fact_rows_pct": 16,
+      "behavior_agreement": 45,
+      "behavior_agreement_pct": 90,
+      "forbidden_claim_rows": 1,
+      "forbidden_claim_rows_pct": 2,
+      "numerical_correct": 20,
+      "numerical_wrong_value": 5,
+      "numerical_missed": 5,
+      "numerical_unsupported": 7,
+      "numerical_problem_rows": 8,
+      "numerical_problem_rows_pct": 16,
+      "cited_rows": 24,
+      "cited_rows_pct": 48,
+      "invalid_citation_rows": 0,
+      "unsupported_number_rows": 4
+    }
+  },
+  "evidence_gain_proxy": {
+    "fact_coverage_pp": 26.5,
+    "full_fact_rows_pp": 14,
+    "behavior_agreement_pp": 8,
+    "forbidden_claim_rows_pp": 0,
+    "numerical_problem_rows_pp": -14,
+    "facts_found_delta": 46,
+    "behavior_agreement_delta": 4
+  }
+}

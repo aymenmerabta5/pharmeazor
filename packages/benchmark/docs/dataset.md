@@ -94,8 +94,11 @@ oracle may use a subset, but every chunk-backed passage should also appear in
    are ordered: `[E1]` refers to the first passage. See
    [`oracle.md`](./oracle.md).
 6. **Validation.** `bun run benchmark dataset validate` must pass with zero
-   errors and zero non-`DRAFT` warnings. The current corpus-grounded dataset
-   meets that bar.
+   errors. The current corpus-grounded dataset has zero errors and four
+   intentional `TRAP_EXPECTS_ANSWER` warnings; each warning is a row where the
+   curated evidence directly and correctly answers the trap, so `ANSWER` is
+   the credible expected behavior. These warnings are documented in
+   [`../runs/PROVISIONAL_BASELINES.md`](../runs/PROVISIONAL_BASELINES.md).
 7. **Sign-off.** The current rows are `APPROVED`/`VERIFIED` with the exact note
    `corpus-derived, pharmacist sign-off pending`. A pharmacist must still review
    the questions, evidence spans, and reference answers before any score is
@@ -129,6 +132,10 @@ Warnings (review or confirm, do not block):
 - `VERIFIED_WITHOUT_ORACLE_EVIDENCE` — the oracle arm will skip the question
 - `TRAP_EXPECTS_ANSWER`
 - `NOT_APPROVED_EXCLUDED_FROM_SCORING` — expected for every `DRAFT` row
+
+`TRAP_EXPECTS_ANSWER` is a prompt for review, not a hard rule: when the curated
+passage states a direct prohibition or an age-based dose, the credible gold
+behavior is `ANSWER` even though the question sits in the trap category.
 
 `dataset stats` reports `retrieval_ready_count` (annotations with at least one
 relevant chunk) and `oracle_ready_count` (annotations with at least one passage)
