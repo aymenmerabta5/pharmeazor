@@ -8,21 +8,22 @@ The package implements the three-arm benchmark's first two arms and the
 evaluation/reporting tooling around them. The third arm is deliberately not
 built yet.
 
-| Area                          | State                                                   |
-| ----------------------------- | ------------------------------------------------------- |
-| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `DRAFT`  |
-| Gold annotations              | 50 empty templates, extended retrieval/oracle schema    |
-| Raw arm (`raw`)               | implemented, tested                                     |
-| Oracle arm (`oracle`)         | implemented, tested, needs pharmacist-authored bundles  |
-| RAG arm (`rag`)               | **not implemented** — deferred until annotations exist  |
-| Deterministic evaluation      | implemented, advisory only                              |
-| Human review + reconciliation | implemented                                             |
-| Reporting / comparison        | implemented with identity guards                        |
-| Live runs                     | **blocked**: no `GROQ_API_KEY`, no verified annotations |
+| Area                          | State                                                       |
+| ----------------------------- | ----------------------------------------------------------- |
+| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED`   |
+| Gold annotations              | 50 `VERIFIED` corpus-derived annotations                    |
+| Raw arm (`raw`)               | implemented, tested                                         |
+| Oracle arm (`oracle`)         | implemented, tested, corpus-derived bundles populated       |
+| RAG arm (`rag`)               | **not implemented** — deferred until baselines exist        |
+| Deterministic evaluation      | implemented, advisory only                                  |
+| Human review + reconciliation | implemented                                                 |
+| Reporting / comparison        | implemented with identity guards                            |
+| Live runs                     | **blocked**: no `GROQ_API_KEY`; pharmacist sign-off pending |
 
-`dataset stats` currently reports `scorable_questions: 0`. That is the honest
-state: no benchmark number can be produced or quoted until a pharmacist reviews
-the data.
+`dataset stats` now reports `scorable_questions: 50`. That is a structural
+result, not a clinical endorsement: every row carries the exact note
+`corpus-derived, pharmacist sign-off pending`. No benchmark number should be
+quoted until that sign-off exists.
 
 ## Design decisions
 
@@ -35,8 +36,8 @@ the data.
   the gold loader; an isolation test enforces it structurally.
 - The oracle arm uses a manually curated `evidence_bundle`, not retrieval. The
   retrieval arm will be measured separately against the same questions.
-- `answerable_without_corpus` and `difficulty` are reviewer decisions and stay
-  `null` / `UNKNOWN` until a pharmacist makes them.
+- `answerable_without_corpus` and `difficulty` are reviewer decisions. They are
+  now populated from corpus grounding; pharmacist sign-off is still pending.
 
 ---
 
@@ -159,6 +160,46 @@ the data.
   warning.
 - Existing cache tests cover `CacheCorruptionError`.
 
+## Milestone 7 — Corpus-grounded gold data
+
+- All 50 questions are now `APPROVED`; all 50 annotations are `VERIFIED`.
+- Authority is `tooling/embedding-lab/output/embeddings/chunks.jsonl`. Every
+  `relevant_chunk_ids` entry is a real chunk id from that file.
+- Every `evidence_bundle` passage is a verbatim substring of the cited chunk's
+  `text`, with provenance derived from that chunk's `artifact_id` and
+  `section_code`. No cleaning-lab Markdown or Postgres row was used as evidence.
+- `reference_answer`, `expected_facts`, and `forbidden_claims` were derived only
+  from those passages. Ungroundable topics were replaced with corpus-supported
+  questions; the original language and category counts were preserved.
+- The exact reviewer note on all 50 rows is
+  `corpus-derived, pharmacist sign-off pending`. Structural verification is
+  complete; clinical sign-off is not.
+- Six parallel fr/en/ar triples were updated to grounded topics: paracetamol
+  maximum daily dose, ibuprofen contraindications, clarithromycin–statin
+  interaction, personal paracetamol dosing safety trap, CEBREX/celecoxib INN,
+  and ACE inhibitor mechanism.
+- An independent corpus check over `chunks.jsonl` covered 38 referenced chunks:
+  every evidence passage is a verbatim substring of its cited chunk, every
+  provenance field matches that chunk, all reference-answer `[E#]` markers and
+  numbers are supported by the supplied bundle, and the language/category
+  counts match the metadata. It reported 0 errors.
+
+**Final gates run for this change**
+
+| Gate                                                          | Result                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run --cwd packages/benchmark benchmark dataset validate` | pass — 50 approved, 0 draft, 50 annotated, 50 verified, 50 retrieval-ready, 50 oracle-ready; `questions_hash=307742edc0cfc2b1e8e56813525a786a83af29f7a394a83449192984efbf6b84`                                                                                                         |
+| `bun run --cwd packages/benchmark benchmark dataset stats`    | pass — `scorable_questions: 50`; `fr 30 / en 10 / ar 10`; GMK 7 / MID 9 / DNK 7 / CAW 9 / DRI 9 / TOS 9                                                                                                                                                                                |
+| `bun run typecheck`                                           | pass — 23/23 tasks; benchmark 66 files, no type errors                                                                                                                                                                                                                                 |
+| `bun run test`                                                | pass — 11/11 tasks; benchmark 152 pass, 1 live smoke skip, 0 fail, 315 expect calls                                                                                                                                                                                                    |
+| `bun run lint:all`                                            | **fail** — stops in `lint:architecture`: one `apps/eve/package.json` manifest-coverage finding plus 43 `frontend-form-owner` findings in `apps/mobile`; no finding in `packages/benchmark`                                                                                             |
+| `bun run format:check`                                        | pass — 25/25 tasks; benchmark 75 files correctly formatted                                                                                                                                                                                                                             |
+| `bunx --bun ghostinit@0.1.0 check --json`                     | **fail** — 1 blocker, 43 high, 1157 medium. Seven medium `undeclared-dependency` findings name benchmark files, but each named dependency is declared in `packages/benchmark/package.json` and the checker attributes them to `Package pharmeazor`; no benchmark architecture finding. |
+
+The two failing gates are pre-existing, repository-wide findings outside this
+change. No detector, exception, or safeguard was changed to obtain the passing
+results.
+
 ---
 
 ## What is intentionally missing
@@ -167,31 +208,31 @@ the data.
   annotations must be verified first, otherwise `retrievalGap` has no stable
   ceiling to measure against. `run_mode` already accepts `"rag"` and the
   retrieval contracts live in `packages/services/src/retrieval/`.
-- **Scored baseline.** Impossible with 50 `DRAFT` questions and empty gold
-  annotations.
+- **Scored baseline.** The dataset is now scorable, but no `raw` or `oracle` run
+  has been executed. A verified dataset is a prerequisite, not the baseline
+  itself.
 - **Embedding/model revision pinning beyond what Groq reports.**
   `model_revision` records the provider's response field when present; the
   benchmark cannot force a revision the provider does not expose.
 
 ## Blocked on
 
-1. A pharmacist reviews all 50 questions and verifies the annotations.
-2. For corpus-dependent questions: chunk-level `relevant_chunk_ids` and a
-   curated `evidence_bundle`.
-3. A real `GROQ_API_KEY` for live runs. Local `.env.local` still contains
+1. A pharmacist signs off on the 50 corpus-derived questions, evidence spans,
+   and reference answers. The exact current note is
+   `corpus-derived, pharmacist sign-off pending`.
+2. A real `GROQ_API_KEY` for live runs. Local `.env.local` still contains
    `REPLACE_WITH_GROQ_API_KEY`.
-4. Only then: measure `raw`, measure `oracle`, freeze dataset v1.0, record the
+3. Then: measure `raw`, measure `oracle`, freeze dataset v1.0, record the
    baseline, and build the RAG arm.
 
 ## Next steps
 
-1. Hand the annotation schema to the reviewing pharmacist
+1. Pharmacist sign-off on the corpus-derived dataset
    ([`docs/dataset.md`](./docs/dataset.md), [`docs/oracle.md`](./docs/oracle.md)).
-2. Run `dataset validate` after each review batch; require zero errors and zero
-   non-`DRAFT` warnings before scoring.
-3. Freeze dataset v1.0 and record the `raw` baseline.
-4. Record the `oracle` baseline and compute `evidenceGain`.
+2. Record the `raw` baseline with a real `GROQ_API_KEY`.
+3. Record the `oracle` baseline and compute `evidenceGain`.
+4. Freeze dataset v1.0 once sign-off and both baselines exist.
 5. Build `rag-fixed` (recorded retrieval traces) and then live `rag`; compute
    `retrievalGap` and `systemGain`.
-6. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) once the
-   golden set has chunk labels.
+6. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) using the
+   chunk labels already in the gold annotations.

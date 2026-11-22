@@ -8,9 +8,13 @@ answered first:
 
 > If the model had exactly the right evidence, would it answer correctly?
 
-That is the oracle arm. It replaces retrieval with a small, manually curated
-`evidence_bundle` from the gold annotation. The difference between `oracle` and
-`raw` is the value of evidence itself:
+That is the oracle arm. It replaces retrieval with a small, curated
+`evidence_bundle` from the gold annotation. The shipped bundles are derived from
+`tooling/embedding-lab/output/embeddings/chunks.jsonl`: each passage is a
+verbatim substring of a real chunk and carries that chunk's provenance. They are
+`VERIFIED` with the exact note `corpus-derived, pharmacist sign-off pending`, so
+pharmacist sign-off is still required before any score is interpreted. The
+difference between `oracle` and `raw` is the value of evidence itself:
 
 ```text
 evidenceGain = oracle − raw
@@ -133,5 +137,7 @@ An oracle run answers a specific diagnostic question:
 - **Uncited but correct oracle answers** → the prompt contract is not being
   followed; that is a generation failure even when the fact is right.
 
-Do not compute `evidenceGain` from an unverified dataset. A `DRAFT` annotation
-has no trustworthy reference answer, so the delta would be measuring noise.
+Do not quote `evidenceGain` from data that lacks pharmacist sign-off. The corpus
+grounding is structurally verified, but the exact reviewer note is
+`corpus-derived, pharmacist sign-off pending`; the delta is not a clinical
+result until that sign-off is recorded.

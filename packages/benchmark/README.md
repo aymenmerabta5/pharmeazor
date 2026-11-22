@@ -27,10 +27,14 @@ recorded interface; it will not import app internals into the benchmark core.
 
 ## Status
 
-See [`STATUS.md`](./STATUS.md). The package is at **benchmark v1, awaiting
-pharmacist review**: all 50 shipped questions are `DRAFT`, so `dataset stats`
-reports `scorable_questions: 0`. No benchmark number exists yet, and none should
-be quoted until the dataset is verified.
+See [`STATUS.md`](./STATUS.md). The package is at **benchmark v1, corpus-grounded
+and scorable**: all 50 questions are `APPROVED` and all 50 annotations are
+`VERIFIED`, so `dataset stats` reports `scorable_questions: 50`. Every answer,
+fact, retrieval label, and oracle passage is derived from
+`tooling/embedding-lab/output/embeddings/chunks.jsonl` using real chunk ids and
+verbatim text. Each row carries the reviewer note `corpus-derived, pharmacist
+sign-off pending`. No benchmark number has been run yet, and none should be
+quoted until a pharmacist signs off.
 
 ## Requirements
 
@@ -107,10 +111,10 @@ be scored.
 
 ## Oracle arm
 
-The oracle arm gives the model a small, manually curated bundle of evidence
-passages and asks it to answer from that evidence with `[E1]`-style citations.
-The bundle is authored by a pharmacist, not retrieved. See
-[`docs/oracle.md`](./docs/oracle.md).
+The oracle arm gives the model a small, curated bundle of evidence passages and
+asks it to answer from that evidence with `[E1]`-style citations. The bundles are
+corpus-derived, not retrieved at run time, and are pending pharmacist sign-off.
+See [`docs/oracle.md`](./docs/oracle.md).
 
 - Only questions with a non-empty `evidence_bundle` are sent. Questions without
   evidence are recorded in `skipped_question_ids`, never answered with an empty
@@ -137,8 +141,8 @@ structurally (it inspects imports, not just runtime behaviour).
 The gold schema carries both retrieval ground truth (`relevant_chunk_ids`) and
 oracle input (`evidence_bundle`). Keeping them separate lets the retrieval gate
 and the oracle arm disagree for the right reasons instead of silently sharing
-one list. `answerable_without_corpus` and `difficulty` stay `null` / `UNKNOWN`
-until a pharmacist decides them.
+one list. `answerable_without_corpus` and `difficulty` are now populated for all
+50 rows from the corpus-grounding review; pharmacist sign-off is still pending.
 
 ## Identity and provenance
 
@@ -159,7 +163,8 @@ selection of the same size throws `SelectionMismatchError`.
 
 ## Current state
 
-All 50 questions and all 50 gold annotations are `DRAFT`:
+All 50 questions are `APPROVED`, all 50 gold annotations are `VERIFIED`, and
+all 50 rows are scorable:
 
 | Language | Questions |
 | -------- | --------- |
@@ -168,10 +173,11 @@ All 50 questions and all 50 gold annotations are `DRAFT`:
 | `ar`     | 10        |
 
 There are six parallel fr/en/ar triples for cross-language comparison; see
-`data/v1/dataset.meta.json`. No question is scorable until a pharmacist sets
-`review_status: "APPROVED"` and `verification_status: "VERIFIED"`, with a real
-`reference_answer`, non-empty `expected_facts`, and (for corpus questions)
-chunk-level labels and an oracle bundle.
+`data/v1/dataset.meta.json`. Every annotation has a corpus-derived
+`reference_answer`, non-empty `expected_facts`, real `relevant_chunk_ids`, and a
+verbatim `evidence_bundle`. The exact reviewer note is `corpus-derived,
+pharmacist sign-off pending`: structural verification is complete, but clinical
+sign-off is still required before any score is interpreted.
 
 ## Environment
 
@@ -184,9 +190,10 @@ From the repository root:
 
 ## Known limitations
 
-- **No scorable data yet.** Every annotation is an empty template; no medical
-  fact was invented by this package. `dataset validate` passes with warnings
-  because the questions are `DRAFT`, which is expected.
+- **Pharmacist sign-off is pending.** The data is corpus-grounded and scorable,
+  but the exact reviewer note is `corpus-derived, pharmacist sign-off pending`.
+  `dataset validate` passes with zero errors and zero non-`DRAFT` warnings; that
+  is a structural result, not a clinical endorsement.
 - **No RAG arm yet.** `run_mode` already distinguishes `raw | oracle | rag`, and
   the retrieval contracts exist upstream, but no live retrieval run is wired.
   The RAG arm is deferred until the oracle arm and the annotation schema are

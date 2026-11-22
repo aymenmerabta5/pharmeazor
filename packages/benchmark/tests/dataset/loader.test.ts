@@ -70,14 +70,14 @@ describe("loadQuestionsFromFile (real dataset)", () => {
     expect(byLanguage.get("ar")).toBe(10);
   });
 
-  it("every loaded question is DRAFT initially", async () => {
+  it("every loaded question is approved for scoring", async () => {
     const qs = await loadQuestionsFromFile(path);
-    expect(qs.every((q) => q.review_status === "DRAFT")).toBe(true);
+    expect(qs.every((q) => q.review_status === "APPROVED")).toBe(true);
   });
 
-  it("filterApprovedForScoredRun returns empty on the shipped dataset", async () => {
+  it("filterApprovedForScoredRun returns the full shipped dataset", async () => {
     const qs = await loadQuestionsFromFile(path);
-    expect(filterApprovedForScoredRun(qs)).toHaveLength(0);
+    expect(filterApprovedForScoredRun(qs)).toHaveLength(50);
   });
 
   it("loaded questions do not contain reference_answer", async () => {

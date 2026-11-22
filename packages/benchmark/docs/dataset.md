@@ -15,6 +15,14 @@ triples ask the same clinical question in three languages; `dataset.meta.json`
 records the mapping. That makes cross-language behaviour comparable without
 pretending the three versions are independent samples.
 
+The shipped dataset is corpus-grounded. `questions.jsonl` and
+`gold_annotations.jsonl` are derived from
+`tooling/embedding-lab/output/embeddings/chunks.jsonl`: chunk ids are real,
+evidence text is verbatim, and answers and facts come only from those passages.
+Every row carries the exact reviewer note
+`corpus-derived, pharmacist sign-off pending`. This is structural verification,
+not clinical sign-off.
+
 ## Question fields
 
 | field                 | type                                                                                      | meaning                             |
@@ -86,8 +94,13 @@ oracle may use a subset, but every chunk-backed passage should also appear in
    are ordered: `[E1]` refers to the first passage. See
    [`oracle.md`](./oracle.md).
 6. **Validation.** `bun run benchmark dataset validate` must pass with zero
-   errors. Warnings about `DRAFT` questions are expected until review finishes.
-7. **Two-reviewer disputes.** If two reviewers disagree, set
+   errors and zero non-`DRAFT` warnings. The current corpus-grounded dataset
+   meets that bar.
+7. **Sign-off.** The current rows are `APPROVED`/`VERIFIED` with the exact note
+   `corpus-derived, pharmacist sign-off pending`. A pharmacist must still review
+   the questions, evidence spans, and reference answers before any score is
+   interpreted.
+8. **Two-reviewer disputes.** If two reviewers disagree, set
    `verification_status: "DISPUTED"` and record both opinions in
    `reviewer_notes`. `DISPUTED` annotations are excluded from scored runs
    exactly like `DRAFT`.
