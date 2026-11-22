@@ -8,17 +8,17 @@ The package implements the three-arm benchmark's first two arms and the
 evaluation/reporting tooling around them. The third arm is deliberately not
 built yet.
 
-| Area                          | State                                                       |
-| ----------------------------- | ----------------------------------------------------------- |
-| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED`   |
-| Gold annotations              | 50 `VERIFIED` corpus-derived annotations                    |
-| Raw arm (`raw`)               | implemented, tested                                         |
-| Oracle arm (`oracle`)         | implemented, tested, corpus-derived bundles populated       |
-| RAG arm (`rag`)               | **not implemented** — deferred until baselines exist        |
-| Deterministic evaluation      | implemented, advisory only                                  |
-| Human review + reconciliation | implemented                                                 |
-| Reporting / comparison        | implemented with identity guards                            |
-| Live runs                     | **blocked**: no `GROQ_API_KEY`; pharmacist sign-off pending |
+| Area                          | State                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED`                              |
+| Gold annotations              | 50 `VERIFIED` corpus-derived annotations                                               |
+| Raw arm (`raw`)               | implemented, tested                                                                    |
+| Oracle arm (`oracle`)         | implemented, tested, corpus-derived bundles populated                                  |
+| RAG arm (`rag`)               | **not implemented** — deferred until baselines exist                                   |
+| Deterministic evaluation      | implemented, advisory only                                                             |
+| Human review + reconciliation | implemented                                                                            |
+| Reporting / comparison        | implemented with identity guards                                                       |
+| Live runs                     | runnable with configured `GROQ_API_KEY`; results provisional until pharmacist sign-off |
 
 `dataset stats` now reports `scorable_questions: 50`. That is a structural
 result, not a clinical endorsement: every row carries the exact note
@@ -217,20 +217,20 @@ results.
 
 ## Blocked on
 
-1. A pharmacist signs off on the 50 corpus-derived questions, evidence spans,
-   and reference answers. The exact current note is
+1. Pharmacist sign-off is required before any score is quoted or used as a
+   clinical result. The exact current note on all 50 rows is
    `corpus-derived, pharmacist sign-off pending`.
-2. A real `GROQ_API_KEY` for live runs. Local `.env.local` still contains
-   `REPLACE_WITH_GROQ_API_KEY`.
-3. Then: measure `raw`, measure `oracle`, freeze dataset v1.0, record the
-   baseline, and build the RAG arm.
+2. No live-run blocker remains on the key: `GROQ_API_KEY` is configured in the
+   local `.env.local`. `raw` and `oracle` can be measured now, with results
+   labelled provisional until sign-off.
 
 ## Next steps
 
-1. Pharmacist sign-off on the corpus-derived dataset
+1. Record the `raw` baseline with the configured `GROQ_API_KEY`, labelled
+   provisional pending pharmacist sign-off.
+2. Record the `oracle` baseline and compute a provisional `evidenceGain`.
+3. Pharmacist sign-off on the corpus-derived dataset
    ([`docs/dataset.md`](./docs/dataset.md), [`docs/oracle.md`](./docs/oracle.md)).
-2. Record the `raw` baseline with a real `GROQ_API_KEY`.
-3. Record the `oracle` baseline and compute `evidenceGain`.
 4. Freeze dataset v1.0 once sign-off and both baselines exist.
 5. Build `rag-fixed` (recorded retrieval traces) and then live `rag`; compute
    `retrievalGap` and `systemGain`.
