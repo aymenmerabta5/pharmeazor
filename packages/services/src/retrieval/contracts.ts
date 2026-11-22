@@ -62,6 +62,25 @@ export interface RetrievalCandidate {
   readonly sourceUrls: readonly string[];
   /** True when ingest detected instruction-like text in the chunk. */
   readonly injectionRisk: boolean;
+  /**
+   * When the regulator published or last revised the source document, as a
+   * `YYYY-MM-DD` string, or null when the source did not state one.
+   *
+   * This is the currency of the clinical claim. It is never substituted with an
+   * ingestion timestamp: a 2013 label extracted in 2026 is old evidence, and
+   * reporting the extraction date in its place would say the opposite.
+   */
+  readonly publicationDate: string | null;
+  /** When the application fetched the source document. */
+  readonly collectedAt: string | null;
+  /** When the application parsed and normalised the document. */
+  readonly extractedAt: string | null;
+  /** When the chunk entered the vector index. */
+  readonly indexedAt: string | null;
+  /** `EXTRACTED`, `PARTIAL`, or null when the source recorded no status. */
+  readonly extractionStatus: string | null;
+  /** True when the extraction pipeline flagged the document for review. */
+  readonly reviewRequired: boolean;
 }
 
 export interface RetrievalScores {
@@ -107,6 +126,10 @@ export interface RetrievalDiagnostics {
   readonly droppedForInjection: number;
   readonly rerank: RerankStatus;
   readonly elapsedMs: number;
+  /** Terms the alias layer appended to the lexical query, if any. */
+  readonly expandedTerms: readonly string[];
+  /** Brands that matched more than one substance and were therefore not expanded. */
+  readonly ambiguousAliases: readonly string[];
 }
 
 export interface RetrievalResult {

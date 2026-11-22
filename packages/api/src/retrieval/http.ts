@@ -7,6 +7,7 @@ import {
   type RetrievalRequest,
 } from "@repo/services/retrieval";
 import { createRetrievalServiceFromEnv } from "../composition/retrieval";
+import { toRetrievalWireResponse } from "./wire";
 
 /**
  * Internal retrieval transport.
@@ -234,10 +235,9 @@ export async function handleRetrievalSearch(request: Request): Promise<Response>
   try {
     const service = createRetrievalServiceFromEnv();
     const result = await service.search({ actorId: input.actorId }, input.request);
-    return Response.json(
-      { ok: true, ...result },
-      { headers: { "Cache-Control": "private, no-store", Pragma: "no-cache" } },
-    );
+    return Response.json(toRetrievalWireResponse(result), {
+      headers: { "Cache-Control": "private, no-store", Pragma: "no-cache" },
+    });
   } catch (error) {
     if (isRetrievalError(error)) {
       const status = STATUS_BY_CODE[error.code] ?? 500;

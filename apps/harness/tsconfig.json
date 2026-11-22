@@ -17,7 +17,7 @@
       "#evals/*": ["./evals/*"],
       "@repo/*": ["../../packages/*/src"]
     },
-    "rootDir": "."
+    "rootDir": "../.."
   },
   "include": ["agent/**/*", "lib/**/*"],
   "exclude": ["node_modules", "dist", ".eve"]

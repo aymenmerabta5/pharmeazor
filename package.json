@@ -31,6 +31,7 @@
     "db:migrate:billing": "bun --env-file=.env.local packages/database/src/workers/database/migrate-billing-subscriptions.ts --ghostinit-billing-migration",
     "db:verify": "bun --env-file=.env.local packages/database/src/workers/database/verify.ts",
     "retrieval:ensure-schema": "bun --conditions=react-server --env-file=.env.local packages/database/src/workers/database/ensure-retrieval.ts --retrieval-schema",
+    "retrieval:backfill-provenance": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/backfill-provenance.ts",
     "retrieval:contextualize": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/contextualize.ts",
     "retrieval:ingest": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts",
     "retrieval:ingest:dry": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --dry-run",

@@ -108,6 +108,8 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
             droppedForInjection: 0,
             rerank: reranker ? "applied" : "disabled",
             elapsedMs: Math.round(now() - startedAt),
+            expandedTerms: [],
+            ambiguousAliases: [],
           },
         };
       }
@@ -210,6 +212,8 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
           droppedForInjection,
           rerank: rerankStatus,
           elapsedMs: Math.round(now() - startedAt),
+          expandedTerms: [],
+          ambiguousAliases: [],
         },
       };
     },

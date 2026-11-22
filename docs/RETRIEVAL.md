@@ -402,6 +402,8 @@ online:   query -> BGE-M3 embed ─┬─> dense search (cosine, HNSW)
 | Composition root              | `packages/api/src/composition/retrieval.ts`                     |
 | Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`  |
 | Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                  |
+| Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`     |
+| Wire contract                 | `packages/contracts/src/retrieval.ts`                           |
 | Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`             |
 
 `ghostinit sync` owns `packages/database/src/schema/index.ts` and
@@ -424,6 +426,8 @@ bun run retrieval:ingest:vectors  # load vectors.npy + chunks.jsonl; no embeddin
 bun run retrieval:ingest          # embed changed chunks through RETRIEVAL_EMBEDDING_URL
 bun run retrieval:ingest --force  # re-embed every selected chunk
 bun run retrieval:ingest --prune  # delete documents absent from the manifest
+bun run retrieval:backfill-provenance          # metadata-only: dates, status, review flag
+bun run retrieval:backfill-provenance -- --dry-run
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,
@@ -440,6 +444,42 @@ The indexer is incremental: a chunk is re-embedded only when its content hash,
 embedding model or embedding revision changed, and its postings are rebuilt
 only when the chunk or the tokenizer version changed. Documents that disappear
 from the manifest are deleted only under `--prune`, on an unfiltered run.
+
+### Dates and extraction quality
+
+Every returned passage carries four timestamps. They answer different
+questions and are never merged:
+
+| Field             | Source                                                    | Populated | Meaning                                              |
+| ----------------- | --------------------------------------------------------- | --------- | ---------------------------------------------------- |
+| `publicationDate` | manifest `publication_date`                               | 498/528   | when the regulator issued or last revised the source |
+| `collectedAt`     | manifest `collected_at`                                   | 528/528   | when this system fetched it                          |
+| `extractedAt`     | extraction report `extracted_at`, else cleaning timestamp | 528/528   | when this system parsed and normalised it            |
+| `indexedAt`       | `retrieval_chunks.created_at`                             | 528/528   | when the chunk entered the vector index              |
+
+`publicationDate` is the currency of the clinical claim. A label published in
+2013 and extracted in 2026 is old evidence; reporting the extraction date in
+its place would tell the reader the opposite of the truth. The wire contract
+therefore renders a single `citationStamp` server-side:
+
+```text
+ANPP SmPC · published 2021-11-29 · extracted 2026-11-21
+```
+
+The agent copies that stamp verbatim and never formats a date itself. When the
+source never stated a publication date the stamp says `published unknown`, and
+the extraction date is not substituted. A stamp gains `· partial extraction`
+when the extraction report recorded `PARTIAL`, and `· review required` when the
+document was flagged for human review.
+
+Extraction status and the review flag live in
+`retrieval_documents.metadata` (`extraction_status`, `review_required`,
+`extracted_at`). The ingest worker writes them from the extraction report on
+every run; the corpus data is not committed, so a checkout without that report
+indexes documents with no status rather than inventing one. For an index built
+before this metadata existed, `retrieval:backfill-provenance` updates the rows
+in place: it touches only `metadata`, never `content_hash`, `embedding`, or the
+HNSW index, and it is idempotent.
 
 ### Serving the models
 

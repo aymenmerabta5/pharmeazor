@@ -55,6 +55,7 @@ function successPayload() {
         sectionHeading: "Indications thérapeutiques",
         sectionPath: "smpc > indications",
         sectionCodes: ["indications"],
+        sourceId: "ANPP_RCP",
         sourceName: "ANPP SmPC",
         documentType: "smpc",
         language: "fr",
@@ -68,6 +69,12 @@ function successPayload() {
           description: "ANPP summary of product characteristics",
         },
         medicineNames: ["Paracétamol"],
+        publicationDate: "2021-11-29",
+        collectedAt: "2026-11-20",
+        extractedAt: "2026-11-21",
+        indexedAt: "2026-11-21",
+        extractionStatus: "EXTRACTED",
+        reviewRequired: false,
         content: "Traitement symptomatique des douleurs d'intensité légère à modérée.",
       },
     ],
@@ -184,6 +191,71 @@ describe("harness retrieval client", () => {
     expect(result.diagnostics.rerankerModel).toBe("BAAI/bge-reranker-v2-m3");
     expect(result.authorityOverlaps[0]?.preferredAuthorityLevel).toBe(1);
     expect(result.authorityOverlaps[0]?.numericDivergence).toEqual(["500 mg"]);
+  });
+
+  it("carries all four dates and a citation stamp the model can copy", async () => {
+    capture(() => jsonResponse(successPayload()));
+
+    const result = await searchMedicalCorpus("user_1", { query: "q" });
+    const chunk = result.chunks[0]!;
+
+    expect(chunk.publicationDate).toBe("2021-11-29");
+    expect(chunk.collectedAt).toBe("2026-11-20");
+    expect(chunk.extractedAt).toBe("2026-11-21");
+    expect(chunk.indexedAt).toBe("2026-11-21");
+    expect(chunk.extractionStatus).toBe("EXTRACTED");
+    expect(chunk.reviewRequired).toBe(false);
+    expect(chunk.citationStamp).toBe("ANPP SmPC · published 2021-11-29 · extracted 2026-11-21");
+  });
+
+  it("reports a missing publication date as unknown instead of reusing the extraction date", async () => {
+    const payload = successPayload();
+    payload.chunks[0]!.publicationDate = null;
+    capture(() => jsonResponse(payload));
+
+    const result = await searchMedicalCorpus("user_1", { query: "q" });
+    const chunk = result.chunks[0]!;
+
+    expect(chunk.publicationDate).toBeNull();
+    expect(chunk.citationStamp).toBe("ANPP SmPC · published unknown · extracted 2026-11-21");
+    // The extraction date must never be promoted into the publication slot.
+    expect(chunk.citationStamp).not.toContain("published 2026-11-21");
+  });
+
+  it("marks a partial extraction and a document flagged for review", async () => {
+    const payload = successPayload();
+    payload.chunks[0]!.extractionStatus = "PARTIAL";
+    payload.chunks[0]!.reviewRequired = true;
+    capture(() => jsonResponse(payload));
+
+    const result = await searchMedicalCorpus("user_1", { query: "q" });
+
+    expect(result.chunks[0]?.citationStamp).toBe(
+      "ANPP SmPC · published 2021-11-29 · extracted 2026-11-21 · partial extraction · review required",
+    );
+  });
+
+  it("copies a server-rendered stamp verbatim and truncates timestamps to a day", async () => {
+    const payload = successPayload();
+    payload.chunks[0]!.publicationDate = "2013-04-02T00:00:00.000Z";
+    payload.chunks[0]!.citationStamp =
+      "DailyMed label · published 2013-04-02 · extracted 2026-11-21";
+    capture(() => jsonResponse(payload));
+
+    const result = await searchMedicalCorpus("user_1", { query: "q" });
+
+    expect(result.chunks[0]?.publicationDate).toBe("2013-04-02");
+    expect(result.chunks[0]?.citationStamp).toBe(
+      "DailyMed label · published 2013-04-02 · extracted 2026-11-21",
+    );
+  });
+
+  it("surfaces a non-2xx status even when the body claims success", async () => {
+    capture(() => jsonResponse(successPayload(), 502));
+
+    await expect(searchMedicalCorpus("user_1", { query: "q" })).rejects.toThrow(
+      /failed \(HTTP 502\)/,
+    );
   });
 
   it("truncates a passage that would blow the model's context budget", async () => {

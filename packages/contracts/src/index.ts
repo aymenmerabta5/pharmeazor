@@ -1,5 +1,20 @@
 export { BILLING_PLAN_IDS } from "./billing";
 export type { BillingPlanId } from "./billing";
+export {
+  RETRIEVAL_WIRE_VERSION,
+  buildCitationStamp,
+  formatRetrievalDate,
+  parseRetrievalSearchResponse,
+  type CitationStampInput,
+  type RetrievalDate,
+  type RetrievalWireAuthority,
+  type RetrievalWireChunk,
+  type RetrievalWireDiagnostics,
+  type RetrievalWireError,
+  type RetrievalWireOverlap,
+  type RetrievalWireOverlapEntry,
+  type RetrievalWireResponse,
+} from "./retrieval";
 
 export const ErrorCode = {
   UNAUTHORIZED: "UNAUTHORIZED",

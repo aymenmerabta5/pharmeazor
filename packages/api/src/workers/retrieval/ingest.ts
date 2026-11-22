@@ -44,6 +44,13 @@ import {
   type PrecomputedVectorSource,
 } from "../../adapters/retrieval/precomputed";
 import { textArray } from "../../adapters/retrieval/sql";
+import {
+  DEFAULT_EXTRACTIONS_PATH,
+  applyProvenance,
+  provenanceForArtifact,
+  readExtractionsIfPresent,
+  type ExtractionProvenance,
+} from "./provenance";
 
 interface ManifestRow {
   readonly artifact_id?: unknown;
@@ -85,6 +92,8 @@ interface IngestOptions {
   readonly notes: string | null;
   readonly requireContext: boolean;
   readonly vectors: string | null;
+  /** Extraction report path, or null to index without extraction provenance. */
+  readonly extractions: string | null;
 }
 
 interface IngestSummary {
@@ -111,6 +120,9 @@ async function main(): Promise<void> {
   const rows = await readManifest(options);
   const selected = selectRows(rows, options);
   const documents = await Promise.all(selected.map((row) => loadDocument(row, options, notes)));
+  const extractions = options.extractions
+    ? await readExtractionsIfPresent(options.extractions)
+    : null;
   const vectorSource = options.vectors ? await openPrecomputedVectors(options.vectors) : null;
   const vectorCoverage = vectorSource
     ? validatePrecomputedCoverage(documents, vectorSource, options)
@@ -118,12 +130,14 @@ async function main(): Promise<void> {
 
   if (options.dryRun) {
     const summary = summarizeDryRun(documents, startedAt, options, notes);
+    const provenance = summarizeProvenance(documents, extractions);
     console.log(
       JSON.stringify(
         {
           ok: true,
           dryRun: true,
           ...summary,
+          ...provenance,
           vectorSource: vectorSource?.describe() ?? null,
           vectors: vectorCoverage,
         },
@@ -243,7 +257,12 @@ async function main(): Promise<void> {
         revisionDate: document.revisionDate,
         contentSha256: document.contentSha256,
         contentMarkdown: document.markdown,
-        metadata: document.row,
+        metadata: extractions
+          ? applyProvenance(
+              { ...document.row } as Record<string, unknown>,
+              provenanceForArtifact(extractions, document.source.artifactId),
+            )
+          : document.row,
         updatedAt: new Date(),
       };
       await transaction.insert(retrievalDocuments).values(documentRow).onConflictDoUpdate({
@@ -352,7 +371,18 @@ async function main(): Promise<void> {
     vectorSource: vectorSource ? "precomputed" : "http",
     notesPath: options.notes,
   };
-  console.log(JSON.stringify({ ok: true, ...summary }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        ...summary,
+        ...summarizeProvenance(documents, extractions),
+        extractionsPath: options.extractions,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 function parseOptions(argv: readonly string[]): IngestOptions {
@@ -367,6 +397,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
   let notes: string | null = resolve("tooling/cleaning-lab/output/context/notes.jsonl");
   let requireContext = false;
   let vectors: string | null = null;
+  let extractions: string | null = DEFAULT_EXTRACTIONS_PATH;
   const medicineIds: string[] = [];
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -412,6 +443,12 @@ function parseOptions(argv: readonly string[]): IngestOptions {
       case "--vectors":
         vectors = resolve(next());
         break;
+      case "--extractions":
+        extractions = resolve(next());
+        break;
+      case "--no-provenance":
+        extractions = null;
+        break;
       case "--dry-run":
         dryRun = true;
         break;
@@ -435,6 +472,9 @@ function parseOptions(argv: readonly string[]): IngestOptions {
             "  --no-notes          ignore model context notes and use the fallback note",
             "  --require-context   fail when any selected chunk has no model-written note",
             "  --vectors <dir>     load vectors.npy + chunks.jsonl instead of an embedding server",
+            "  --extractions <csv> extraction report carrying status, review flag and timestamp",
+            "                      (default tooling/retrieval-lab/data/metadata/extractions.csv)",
+            "  --no-provenance     index without extraction status or review flags",
             "  --dry-run           chunk and report without a database or embedding server",
             "  --force             re-embed every selected chunk",
             "  --prune             delete documents absent from the manifest (full run only)",
@@ -465,6 +505,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
     notes: notes ? resolve(notes) : null,
     requireContext,
     vectors,
+    extractions: extractions ? resolve(extractions) : null,
   };
 }
 
@@ -744,6 +785,35 @@ function summarizeDryRun(
     ),
     sections: [...new Set(chunks.flatMap((chunk) => chunk.sectionCodes))].sort(),
     elapsedMs: Math.round(performance.now() - startedAt),
+  };
+}
+
+/**
+ * Report how many selected documents carry extraction provenance.
+ *
+ * The corpus data is not committed, so a checkout without the extraction
+ * report is normal. The count makes the gap visible in the dry run instead of
+ * silently indexing every document as if it extracted cleanly.
+ */
+function summarizeProvenance(
+  documents: readonly LoadedDocument[],
+  extractions: ReadonlyMap<string, ExtractionProvenance> | null,
+) {
+  let withStatus = 0;
+  let partial = 0;
+  let review = 0;
+  for (const document of documents) {
+    const provenance = extractions
+      ? provenanceForArtifact(extractions, document.source.artifactId)
+      : null;
+    if (provenance?.extractionStatus) withStatus += 1;
+    if (provenance?.extractionStatus === "PARTIAL") partial += 1;
+    if (provenance?.reviewRequired === true) review += 1;
+  }
+  return {
+    documentsWithExtractionStatus: withStatus,
+    partialExtractions: partial,
+    reviewRequired: review,
   };
 }
 

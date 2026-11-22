@@ -35,6 +35,22 @@ function whereClause(conditions: readonly SQL[]): SQL {
   return sql.join([...conditions], sql` AND `);
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Keep only the calendar date of a timestamp.
+ *
+ * Citations name a day, not an instant. Truncating in SQL and again here means
+ * a database that returns a full timestamp (or a driver that formats it
+ * differently) still produces the same `YYYY-MM-DD` string, and a value that is
+ * not a date becomes `null` rather than a plausible-looking wrong date.
+ */
+function isoDate(value: string | null | undefined): string | null {
+  if (typeof value !== "string") return null;
+  const prefix = value.slice(0, 10);
+  return ISO_DATE.test(prefix) ? prefix : null;
+}
+
 /**
  * PostgreSQL hybrid retrieval adapter.
  *
@@ -153,6 +169,12 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       medicine_names: string[];
       source_urls: string[];
       injection_risk: boolean;
+      publication_date: string | null;
+      collected_at: string | null;
+      extracted_at: string | null;
+      indexed_at: string | null;
+      extraction_status: string | null;
+      review_required: boolean;
     }>(sql`
       SELECT
         c.chunk_id,
@@ -174,7 +196,16 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
         c.medicine_ids,
         c.medicine_names,
         c.source_urls,
-        c.injection_risk
+        c.injection_risk,
+        to_char(d.publication_date AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS publication_date,
+        to_char(d.collected_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS collected_at,
+        -- The extraction instant is recorded by the provenance backfill (the
+        -- extraction report when the document was sectioned, otherwise the
+        -- cleaning timestamp). Only the calendar date is meaningful here.
+        left(d.metadata->>'extracted_at', 10) AS extracted_at,
+        to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS indexed_at,
+        d.metadata->>'extraction_status' AS extraction_status,
+        COALESCE((d.metadata->>'review_required') = 'yes', false) AS review_required
       FROM retrieval_chunks c
       JOIN retrieval_documents d ON d.artifact_id = c.artifact_id
       WHERE c.chunk_id = ANY(${textArray(chunkIds)})
@@ -200,6 +231,12 @@ export const postgresRetrievalIndex: RetrievalIndexPort = {
       medicineNames: row.medicine_names ?? [],
       sourceUrls: row.source_urls ?? [],
       injectionRisk: row.injection_risk === true,
+      publicationDate: isoDate(row.publication_date),
+      collectedAt: isoDate(row.collected_at),
+      extractedAt: isoDate(row.extracted_at),
+      indexedAt: isoDate(row.indexed_at),
+      extractionStatus: row.extraction_status ?? null,
+      reviewRequired: row.review_required === true,
     }));
   },
 };
