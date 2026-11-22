@@ -1,9 +1,10 @@
 import {
   RETRIEVAL_WIRE_VERSION,
   buildCitationStamp,
+  type RetrievalWireRegistryResponse,
   type RetrievalWireResponse,
 } from "@repo/contracts";
-import type { RetrievalResult } from "@repo/services/retrieval";
+import type { RegistryLookupResult, RetrievalResult } from "@repo/services/retrieval";
 
 /**
  * Map the service result onto the wire contract.
@@ -71,5 +72,48 @@ export function toRetrievalWireResponse(
       expandedTerms: extra.expandedTerms ?? result.diagnostics.expandedTerms ?? [],
       ambiguousAliases: extra.ambiguousAliases ?? result.diagnostics.ambiguousAliases ?? [],
     },
+  };
+}
+
+/**
+ * Map the register result onto the wire contract.
+ *
+ * The disclaimer is attached here, server-side, rather than left to the model:
+ * a register row that reaches the user without the "not a clinical
+ * recommendation" boundary is the failure mode this whole route exists to
+ * prevent.
+ */
+export function toRegistryWireResponse(
+  result: RegistryLookupResult,
+): RetrievalWireRegistryResponse {
+  return {
+    ok: true,
+    wireVersion: RETRIEVAL_WIRE_VERSION,
+    query: result.query,
+    kind: result.kind,
+    products: result.products.map((product) => ({
+      registrationNumber: product.registrationNumber,
+      brand: product.brand,
+      dci: product.dci,
+      dciCode: product.dciCode,
+      form: product.form,
+      dosage: product.dosage,
+      pack: product.pack,
+      schedule: product.schedule,
+      holder: product.holder,
+      holderCountry: product.holderCountry,
+      productType: product.productType,
+      registrationStatus: product.registrationStatus,
+      withdrawalDate: product.withdrawalDate,
+      withdrawalReason: product.withdrawalReason,
+      shelfLife: product.shelfLife,
+      isCombination: product.isCombination,
+      inScope: product.inScope,
+      medicineIds: product.medicineIds,
+    })),
+    total: result.total,
+    truncated: result.truncated,
+    includeWithdrawn: result.includeWithdrawn,
+    disclaimer: result.disclaimer,
   };
 }

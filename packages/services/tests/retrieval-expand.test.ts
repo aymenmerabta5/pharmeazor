@@ -1,11 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import {
-  MAX_EXPANDED_TERMS,
-  aliasCandidateKeys,
-  expandQueryTerms,
-} from "../src/retrieval/expand.ts";
-import type { AliasMatch } from "../src/retrieval/ports.ts";
+import { retrieval } from "@repo/services";
+
+const { MAX_EXPANDED_TERMS, aliasCandidateKeys, expandQueryTerms } = retrieval;
+
+type AliasMatch = retrieval.AliasMatch;
 
 function match(overrides: Partial<AliasMatch> & { aliasNorm: string }): AliasMatch {
   return {

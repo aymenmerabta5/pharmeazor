@@ -348,3 +348,125 @@ export function parseRetrievalSearchResponse(payload: unknown): RetrievalWireRes
     },
   };
 }
+
+/** One row of the Algerian product register, as it crosses the wire. */
+export interface RetrievalWireRegistryProduct {
+  readonly registrationNumber: string;
+  readonly brand: string;
+  readonly dci: string | null;
+  readonly dciCode: string | null;
+  readonly form: string | null;
+  readonly dosage: string | null;
+  readonly pack: string | null;
+  /** `LISTE I`, `LISTE II`, `STUPEFIANT`, or null. */
+  readonly schedule: string | null;
+  readonly holder: string | null;
+  readonly holderCountry: string | null;
+  /** `GE` (generic), `RE` (reference), `BIO`, or null. */
+  readonly productType: string | null;
+  /** `registered`, `withdrawn`, `non_renewed`, or `unknown`. */
+  readonly registrationStatus: string;
+  readonly withdrawalDate: string | null;
+  readonly withdrawalReason: string | null;
+  readonly shelfLife: string | null;
+  readonly isCombination: boolean;
+  readonly inScope: boolean;
+  readonly medicineIds: readonly string[];
+}
+
+export interface RetrievalWireRegistryResponse {
+  readonly ok: true;
+  readonly wireVersion: number;
+  readonly query: string;
+  readonly kind: string;
+  readonly products: readonly RetrievalWireRegistryProduct[];
+  /** Rows matching the query, before the page limit. */
+  readonly total: number;
+  /** True when the register held more rows than the page returned. */
+  readonly truncated: boolean;
+  readonly includeWithdrawn: boolean;
+  /**
+   * Server-rendered boundary: register facts, never a clinical recommendation.
+   * The agent repeats this instead of inventing its own caveat.
+   */
+  readonly disclaimer: string;
+}
+
+export interface RetrievalWireRegistryError {
+  readonly ok: false;
+  readonly code: string;
+  readonly error: string;
+}
+
+function parseRegistryProduct(entry: unknown, index: number): RetrievalWireRegistryProduct {
+  const product = asRecord(entry);
+  if (!product) throw new Error(`Registry response product ${index} is not an object`);
+  const registrationNumber = requireString(
+    product.registrationNumber,
+    `products[${index}].registrationNumber`,
+  );
+  const brand = requireString(product.brand, `products[${index}].brand`);
+  const registrationStatus = requireString(
+    product.registrationStatus,
+    `products[${index}].registrationStatus`,
+  );
+  return {
+    registrationNumber,
+    brand,
+    dci: optionalString(product.dci),
+    dciCode: optionalString(product.dciCode),
+    form: optionalString(product.form),
+    dosage: optionalString(product.dosage),
+    pack: optionalString(product.pack),
+    schedule: optionalString(product.schedule),
+    holder: optionalString(product.holder),
+    holderCountry: optionalString(product.holderCountry),
+    productType: optionalString(product.productType),
+    registrationStatus,
+    withdrawalDate: dateValue(product.withdrawalDate),
+    withdrawalReason: optionalString(product.withdrawalReason),
+    shelfLife: optionalString(product.shelfLife),
+    isCombination: product.isCombination === true,
+    inScope: product.inScope === true,
+    medicineIds: stringArray(product.medicineIds),
+  };
+}
+
+/**
+ * Validate and normalise a register lookup response.
+ *
+ * A register row drives a safety statement ("this product is withdrawn"), so a
+ * malformed payload throws instead of degrading into a partial row that reads
+ * as `registered`.
+ */
+export function parseRetrievalRegistryResponse(payload: unknown): RetrievalWireRegistryResponse {
+  const envelope = asRecord(payload);
+  if (!envelope) throw new Error("Registry response is not an object");
+  if (envelope.ok !== true) {
+    const code = typeof envelope.code === "string" ? `${envelope.code}: ` : "";
+    const message = typeof envelope.error === "string" ? envelope.error : "unknown error";
+    throw new Error(`Product register lookup failed (${code}${message})`);
+  }
+  if (!Array.isArray(envelope.products)) {
+    throw new Error("Product register lookup returned no product list.");
+  }
+  const products = envelope.products.map(parseRegistryProduct);
+  return {
+    ok: true,
+    wireVersion:
+      typeof envelope.wireVersion === "number" ? envelope.wireVersion : RETRIEVAL_WIRE_VERSION,
+    query: requireString(envelope.query, "query"),
+    kind: optionalString(envelope.kind) ?? "auto",
+    products,
+    total:
+      typeof envelope.total === "number" && Number.isFinite(envelope.total)
+        ? envelope.total
+        : products.length,
+    truncated: envelope.truncated === true,
+    includeWithdrawn: envelope.includeWithdrawn !== false,
+    disclaimer:
+      optionalString(envelope.disclaimer) ??
+      "Register facts only: registration status, dispensing schedule, holder, pack and withdrawal. " +
+        "A register row is not an indication, a dose, or a clinical recommendation.",
+  };
+}

@@ -132,6 +132,57 @@ export interface RetrievalDiagnostics {
   readonly ambiguousAliases: readonly string[];
 }
 
+/** How a registry query should be matched. */
+export type RegistryQueryKind = "auto" | "brand" | "substance" | "registration";
+
+/**
+ * One row of the Algerian product register.
+ *
+ * These are register facts. `registrationStatus` and `withdrawalReason` are the
+ * reason this table exists: a brand that is no longer registered must not be
+ * presented as available, and a vector index cannot answer that reliably.
+ */
+export interface RegistryProduct {
+  readonly registrationNumber: string;
+  readonly brand: string;
+  readonly dci: string | null;
+  readonly dciCode: string | null;
+  readonly form: string | null;
+  readonly dosage: string | null;
+  readonly pack: string | null;
+  /** `LISTE I`, `LISTE II`, `STUPEFIANT`, or null. */
+  readonly schedule: string | null;
+  readonly holder: string | null;
+  readonly holderCountry: string | null;
+  /** `GE` (generic), `RE` (reference), `BIO`, or null. */
+  readonly productType: string | null;
+  /** `registered`, `withdrawn`, `non_renewed`, or `unknown`. */
+  readonly registrationStatus: string;
+  readonly withdrawalDate: string | null;
+  readonly withdrawalReason: string | null;
+  readonly shelfLife: string | null;
+  readonly isCombination: boolean;
+  readonly inScope: boolean;
+  readonly medicineIds: readonly string[];
+}
+
+export interface RegistryLookupInput {
+  readonly query: string;
+  readonly kind: RegistryQueryKind;
+  readonly limit: number;
+  readonly includeWithdrawn: boolean;
+  /** True when the query looks like a registration number rather than a name. */
+  readonly registrationShaped: boolean;
+}
+
+export interface RegistryPage {
+  readonly products: readonly RegistryProduct[];
+  /** Rows matching the query, before the page limit. */
+  readonly total: number;
+  /** True when the register held more rows than the caller asked for. */
+  readonly truncated: boolean;
+}
+
 export interface RetrievalResult {
   readonly chunks: readonly RetrievedChunk[];
   /**

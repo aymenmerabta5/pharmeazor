@@ -4,6 +4,7 @@ export {
   RETRIEVAL_WIRE_VERSION,
   buildCitationStamp,
   formatRetrievalDate,
+  parseRetrievalRegistryResponse,
   parseRetrievalSearchResponse,
   type CitationStampInput,
   type RetrievalDate,
@@ -13,6 +14,9 @@ export {
   type RetrievalWireError,
   type RetrievalWireOverlap,
   type RetrievalWireOverlapEntry,
+  type RetrievalWireRegistryError,
+  type RetrievalWireRegistryProduct,
+  type RetrievalWireRegistryResponse,
   type RetrievalWireResponse,
 } from "./retrieval";
 

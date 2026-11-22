@@ -2,6 +2,10 @@ import "server-only";
 
 export type {
   RankedCandidate,
+  RegistryLookupInput,
+  RegistryPage,
+  RegistryProduct,
+  RegistryQueryKind,
   RerankStatus,
   RetrievalCandidate,
   RetrievalCitation,
@@ -45,7 +49,21 @@ export {
   expandQueryTerms,
   type QueryExpansion,
 } from "./expand";
-export type { AliasMatch, AliasPort } from "./ports";
+export type { AliasMatch, AliasPort, RegistryPort } from "./ports";
+export {
+  REGISTRY_DISCLAIMER,
+  REGISTRY_LIMITS,
+  RegistryError,
+  compactRegistryText,
+  createRegistryService,
+  foldRegistryText,
+  isRegistryError,
+  normalizeRegistryRequest,
+  type RegistryLookupRequest,
+  type RegistryLookupResult,
+  type RegistryService,
+  type RegistryServiceDependencies,
+} from "./registry";
 export { normalizeRetrievalRequest, RETRIEVAL_LIMITS } from "./policy";
 export {
   LEXICAL_TOKENIZER_VERSION,

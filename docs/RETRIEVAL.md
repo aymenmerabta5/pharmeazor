@@ -390,23 +390,27 @@ online:   query -> BGE-M3 embed ─┬─> dense search (cosine, HNSW)
           -> injection scan -> citation-labelled passages
 ```
 
-| Concern                       | Implementation                                                  |
-| ----------------------------- | --------------------------------------------------------------- |
-| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                       |
-| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`          |
-| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts` |
-| Tables                        | `packages/database/src/schema/retrieval.ts`                     |
-| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`    |
-| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`               |
-| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`   |
-| Composition root              | `packages/api/src/composition/retrieval.ts`                     |
-| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`  |
-| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                  |
-| Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`     |
-| Brand expansion               | `packages/services/src/retrieval/expand.ts`                     |
-| Alias import                  | `packages/api/src/workers/retrieval/import-aliases.ts`          |
-| Wire contract                 | `packages/contracts/src/retrieval.ts`                           |
-| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`             |
+| Concern                       | Implementation                                                            |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                                 |
+| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`                    |
+| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts`           |
+| Tables                        | `packages/database/src/schema/retrieval.ts`                               |
+| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`              |
+| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`                         |
+| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`             |
+| Composition root              | `packages/api/src/composition/retrieval.ts`                               |
+| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`            |
+| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                            |
+| Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`               |
+| Brand expansion               | `packages/services/src/retrieval/expand.ts`                               |
+| Alias import                  | `packages/api/src/workers/retrieval/import-aliases.ts`                    |
+| Registry import               | `packages/api/src/workers/retrieval/import-registry.ts`                   |
+| Registry adapter              | `packages/api/src/adapters/retrieval/registry.ts`                         |
+| Registry transport            | `packages/api/src/retrieval/registry-http.ts` + `/api/retrieval/registry` |
+| Registry agent tool           | `apps/harness/agent/tools/lookup_algerian_registry.ts`                    |
+| Wire contract                 | `packages/contracts/src/retrieval.ts`                                     |
+| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`                       |
 
 `ghostinit sync` owns `packages/database/src/schema/index.ts` and
 `packages/modules/src/index.ts`, so the retrieval module and schema are
@@ -432,6 +436,8 @@ bun run retrieval:backfill-provenance          # metadata-only: dates, status, r
 bun run retrieval:backfill-provenance -- --dry-run
 bun run retrieval:import-aliases               # brand -> substance expansion table
 bun run retrieval:import-aliases -- --dry-run
+bun run retrieval:import-registry              # merge the two register catalogues
+bun run retrieval:import-registry -- --dry-run
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,
@@ -506,6 +512,31 @@ folded brands are ambiguous (`COPARAMOL` is paracetamol alone and paracetamol
 with codeine); they are returned in `diagnostics.ambiguousAliases` so the agent
 asks which product the user means instead of silently dosing a combination
 product as a single agent.
+
+### Registry lookup
+
+Registration status, dispensing schedule, holder, pack, generic/reference and
+withdrawal are rows, not passages. `retrieval_products` merges the Ministry
+nomenclature (9,595 rows) with Pharm'Net (9,560); 9,448 registration numbers
+appear in both. Nomenclature wins every field it carries, Pharm'Net fills
+`observation` and `shelf_life_months`, and the importer reports every
+disagreement instead of resolving it silently.
+
+A registration number alone is not a product identity: one dossier can carry
+several brand names (`LYANA` and `YASMINE` share `285/11 H 078/21`). The table
+therefore keys on registration number + folded brand + folded dosage and
+collapses pack variants. Keying on the registration number dropped five brands
+and fifty rows. Lookups fold accents on both sides: the register mixes
+`PARACÉTAMOL` and `PARACETAMOL`, and a pharmacist may type either.
+
+The agent reaches it through `lookup_algerian_registry`, which signs the same
+envelope as retrieval and calls `/api/retrieval/registry`. The route needs no
+embedding server, so a register question still answers while the models are
+down. Every response carries a server-rendered disclaimer: a register row is
+never an indication, a dose, or a recommendation. A `withdrawn` or
+`non_renewed` status is a safety fact, not noise, and is returned by default.
+`total` reports how many rows match before the page limit, so "how many
+paracetamol products are registered" is answerable without paging.
 
 ### Serving the models
 

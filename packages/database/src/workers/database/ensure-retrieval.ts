@@ -133,6 +133,72 @@ CREATE TABLE IF NOT EXISTS retrieval_aliases (
 
 CREATE INDEX IF NOT EXISTS retrieval_aliases_ambiguous_idx
   ON retrieval_aliases (ambiguous);
+
+-- retrieval_products shipped briefly with the registration number as the
+-- primary key, which cannot represent one dossier carrying several brand
+-- names. The table is a rebuildable projection of the two register CSVs, so a
+-- shape change drops it instead of migrating derived rows in place.
+DO $$
+BEGIN
+  IF to_regclass('public.retrieval_products') IS NOT NULL
+     AND (
+       NOT EXISTS (
+         SELECT 1
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'retrieval_products'
+           AND column_name = 'product_key'
+       )
+       OR NOT EXISTS (
+         SELECT 1
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'retrieval_products'
+           AND column_name = 'brand_norm'
+       )
+     ) THEN
+    DROP TABLE retrieval_products;
+  END IF;
+END
+$$;
+
+CREATE TABLE IF NOT EXISTS retrieval_products (
+  product_key          text PRIMARY KEY,
+  registration_number  text NOT NULL,
+  registration_norm    text NOT NULL,
+  brand                text NOT NULL,
+  brand_norm           text NOT NULL,
+  dci                  text,
+  dci_norm             text,
+  dci_code             text,
+  form                 text,
+  dosage               text,
+  pack                 text,
+  schedule             text,
+  holder               text,
+  holder_country       text,
+  product_type         text,
+  registration_status  text NOT NULL,
+  withdrawal_date      text,
+  withdrawal_reason    text,
+  shelf_life           text,
+  observation          text,
+  is_combination       boolean NOT NULL DEFAULT false,
+  in_scope             boolean NOT NULL DEFAULT false,
+  medicine_ids         text[] NOT NULL DEFAULT '{}',
+  sources              text[] NOT NULL DEFAULT '{}',
+  source_sheet         text,
+  updated_at           timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS retrieval_products_registration_norm_idx
+  ON retrieval_products (registration_norm);
+CREATE INDEX IF NOT EXISTS retrieval_products_brand_norm_idx
+  ON retrieval_products (brand_norm);
+CREATE INDEX IF NOT EXISTS retrieval_products_dci_norm_idx
+  ON retrieval_products (dci_norm);
+CREATE INDEX IF NOT EXISTS retrieval_products_status_idx
+  ON retrieval_products (registration_status);
 `;
 
 async function main(): Promise<void> {

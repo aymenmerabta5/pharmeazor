@@ -173,13 +173,17 @@ reverted rather than tuned.
 Deterministic answers for exact-match questions that similarity search answers
 badly.
 
-- New table `retrieval_products` merged from nomenclature (9,595) and Pharm'Net
-  (9,560). 9,448 registration numbers are shared; the sources are complementary
-  rather than redundant — nomenclature carries `withdrawal_date`,
+- New table `retrieval_products` merged from nomenclature (9,595 rows) and
+  Pharm'Net (9,560). 9,448 registration numbers are shared; the sources are
+  complementary rather than redundant — nomenclature carries `withdrawal_date`,
   `withdrawal_reason`, `shelf_life`, Pharm'Net carries `observation` and
   `shelf_life_months`. Merge policy: nomenclature wins for status and
-  withdrawal, Pharm'Net for observation; the 13 brand disagreements and 1,546
-  DCI disagreements are logged, not silently resolved.
+  withdrawal, Pharm'Net for observation; 1,673 field disagreements and the
+  shared-dossier brand collisions are reported, not silently resolved.
+- A registration number is not a product identity: one dossier can carry
+  several brands (`LYANA` and `YASMINE` share `285/11 H 078/21`). The table keys
+  on registration number + folded brand + folded dosage, so no brand is dropped
+  and pack variants stay one row.
 - New read-only tool `lookup_algerian_registry`. Per AGENTS.md, retrieval tools
   are read-only; anything that writes, sends, or spends needs human approval.
 - Answers: registered or withdrawn (and why — 824 import bans, 17

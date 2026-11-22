@@ -1,4 +1,10 @@
-import type { RankedCandidate, RetrievalCandidate, RetrievalFilter } from "./contracts";
+import type {
+  RankedCandidate,
+  RegistryLookupInput,
+  RegistryPage,
+  RetrievalCandidate,
+  RetrievalFilter,
+} from "./contracts";
 
 /**
  * Inward-facing retrieval ports. Adapters live in `packages/api`; domain code
@@ -71,4 +77,15 @@ export interface AliasMatch {
  */
 export interface AliasPort {
   resolveAliases(keys: readonly string[]): Promise<readonly AliasMatch[]>;
+}
+
+/**
+ * Deterministic lookup over the Algerian product register.
+ *
+ * Deliberately separate from `RetrievalIndexPort`: this answers a row question
+ * (`is this brand registered, on which schedule, by whom`) and must not be
+ * satisfied by a nearest-neighbour search over prose.
+ */
+export interface RegistryPort {
+  lookupProducts(input: RegistryLookupInput): Promise<RegistryPage>;
 }
