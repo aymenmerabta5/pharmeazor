@@ -1,16 +1,21 @@
 # Reviewed v1 baselines — raw and oracle
 
-_Recorded 2026-11-22. The filename is retained from the earlier provisional
-record; this document now reports the human-reviewed runs._
+_Recorded 2026-11-22; re-run 2026-11-23. The filename is retained from the
+earlier provisional record; this document now reports the current human-reviewed
+runs._
 
 ## Scope and review status
 
-Both arms have 50/50 completed live responses, deterministic evaluation,
-submitted response review, summaries, reports, and passing reproducibility
-checks. Response scoring is **single review** by
+Both arms have 50/50 completed responses, deterministic evaluation, submitted
+response review, summaries, reports, and passing reproducibility checks. The
+2026-11-23 re-run was fully served from the response cache with byte-identical
+content to the 2026-11-22 reviewed baseline, so the single-review scores were
+carried forward by question id and only `scored_at` was refreshed. Response
+scoring is **single review** by
 `benchmark-maintainer (deterministic-assisted response review)`; it is not a
-two-reviewer agreement and not a second LLM judge. The pharmacist sheet signs
-off the **dataset**, not the model responses.
+two-reviewer agreement, not a second LLM judge, and not pharmacist response
+adjudication. The pharmacist sheet signs off the **dataset**, not the model
+responses.
 
 The dataset sign-off was returned with the literal identity
 `student — licence 12er4567 — affiliation NTIC`. The project owner confirmed
@@ -24,8 +29,8 @@ it, and upstream-metadata or intentional-trap conflicts are documented in
 remaining `TRAP_EXPECTS_ANSWER` warnings are intentional and were not suppressed.
 A later annotation-only revision strengthened the reference answers and
 dispositions; questions, expected facts, forbidden claims, chunk labels, and
-evidence bundles are unchanged, so the reviewed responses and scores below
-remain valid.
+evidence bundles are unchanged. Both arms were re-run after that revision and
+evaluated against the current annotation file.
 
 The oracle arm is an upper bound with curator-selected evidence. It is not a
 product claim about the retrieval system.
@@ -43,26 +48,27 @@ Ungroundable topics were replaced while preserving the 30 `fr` / 10 `en` /
 
 ## Runs
 
-| Arm      | Run ID                                | Status    | Responses | API calls | Cache hits | Failed | Live tokens |
-| -------- | ------------------------------------- | --------- | --------- | --------- | ---------- | ------ | ----------- |
-| `raw`    | `raw-20261122-191450-l8bqkn`          | COMPLETED | 50/50     | 1         | 49         | 0      | 1,025       |
-| `oracle` | `oracle-20261122-191458-yqo6sy`       | COMPLETED | 50/50     | 50        | 0          | 0      | 50,652      |
+| Arm      | Run ID                                | Status    | Responses | API calls | Cache hits | Failed | Live tokens | Replayed tokens |
+| -------- | ------------------------------------- | --------- | --------- | --------- | ---------- | ------ | ----------- | --------------- |
+| `raw`    | `raw-20261123-174647-amkm5t`          | COMPLETED | 50/50     | 0         | 50         | 0      | 0           | 40,584          |
+| `oracle` | `oracle-20261123-174652-b455gt`       | COMPLETED | 50/50     | 0         | 50         | 0      | 0           | 50,652          |
 
 Shared identity:
 
 - `dataset_hash` = `df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56`
   (unchanged by the annotation-only revision)
 - `selection_hash` = `fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804`
-- Reviewed-run `annotations_hash` =
-  `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
-- Current `annotations_hash` after the annotation-only REVISE revision =
-  `cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a`
+- `annotations_hash` = `cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a`
+  (the 2026-11-22 reviewed baseline runs were scored under
+  `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`)
 - Oracle `evidence_hash` = `57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6`
 
-The older runs `raw-20261122-161936-esgy4s` and
-`oracle-20261122-162607-ergtb5` are superseded: they were evaluated against an
-older annotation hash and must not be quoted. `benchmark reproduce` passes for
-both current runs, and no API key or secret appears in either run directory.
+The 2026-11-22 runs `raw-20261122-191450-l8bqkn` and
+`oracle-20261122-191458-yqo6sy` are the historical reviewed baseline whose
+scores were carried forward into the current runs. The older 2026-11-16 runs
+`raw-20261122-161936-esgy4s` and `oracle-20261122-162607-ergtb5` are superseded
+and must not be quoted. `benchmark reproduce` passes for both current runs, and
+no API key or secret appears in either run directory.
 
 ## Human-reviewed scores
 

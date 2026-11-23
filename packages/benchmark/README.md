@@ -188,11 +188,13 @@ project owner confirmed that reviewer is a licensed pharmacist.
 
 | Arm      | Run ID                          | Correct     | Partially correct | Incorrect  | Reviewed |
 | -------- | ------------------------------- | ----------- | ----------------- | ---------- | -------- |
-| `raw`    | `raw-20261122-191450-l8bqkn`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%) | 50/50    |
-| `oracle` | `oracle-20261122-191458-yqo6sy` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)  | 50/50    |
+| `raw`    | `raw-20261123-174647-amkm5t`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%) | 50/50    |
+| `oracle` | `oracle-20261123-174652-b455gt` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)  | 50/50    |
 
 Response review is single review by the benchmark maintainer, not the pharmacist
-sheet and not a second LLM judge. `evidenceGain = 0.68 − 0.16 = +0.52`.
+sheet and not a second LLM judge. The re-run responses were cache replays with
+content identical to the 2026-11-22 baseline, so the scores were carried forward
+by question id with only `scored_at` refreshed. `evidenceGain = 0.68 − 0.16 = +0.52`.
 `retrievalGap` and `systemGain` remain unmeasured because RAG is deferred.
 
 ## Environment

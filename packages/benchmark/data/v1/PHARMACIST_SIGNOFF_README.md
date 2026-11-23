@@ -64,14 +64,17 @@ Scoring the model answers is a different step. The current response-review
 worksheets and submitted reviews are:
 
 ```text
-runs/raw-20261122-191450-l8bqkn/review/review_template.jsonl
-runs/raw-20261122-191450-l8bqkn/review/review_primary.jsonl
-runs/oracle-20261122-191458-yqo6sy/review/review_template.jsonl
-runs/oracle-20261122-191458-yqo6sy/review/review_primary.jsonl
+runs/raw-20261123-174647-amkm5t/review/review_template.jsonl
+runs/raw-20261123-174647-amkm5t/review/review_primary.jsonl
+runs/oracle-20261123-174652-b455gt/review/review_template.jsonl
+runs/oracle-20261123-174652-b455gt/review/review_primary.jsonl
 ```
 
 Response review was performed by
 `benchmark-maintainer (deterministic-assisted response review)` and submitted
-with `benchmark review submit`. It is single review, not pharmacist response
-adjudication and not a second LLM judge. The `runs/` directory is gitignored,
-so filled review files must be force-added if they should be committed.
+with `benchmark review submit`. The re-run responses were cache replays with
+content identical to the 2026-11-22 reviewed baseline, so the scores were
+carried forward by question id and only `scored_at` was refreshed. It is single
+review, not pharmacist response adjudication and not a second LLM judge. The
+`runs/` directory is gitignored, so filled review files must be force-added if
+they should be committed.

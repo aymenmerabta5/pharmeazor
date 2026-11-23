@@ -34,9 +34,11 @@ is a licensed pharmacist; that confirmation is recorded in `dataset.meta.json`.
 The sheet signs off the dataset, not model responses.
 
 The current raw and oracle runs each have 50/50 submitted response reviews.
-Response scoring is single review by
-`benchmark-maintainer (deterministic-assisted response review)`, not a second
-LLM judge and not pharmacist response adjudication. The reviewed result is:
+Every response in the re-run was a cache replay with content byte-identical to
+the 2026-11-22 reviewed baseline, so the single-review scores were carried
+forward by question id and only `scored_at` was refreshed. This introduces no
+second LLM judge and no pharmacist response adjudication. The reviewed result
+is unchanged:
 
 ```text
 raw correct_rate    = 8/50  = 0.16
@@ -150,30 +152,31 @@ outcomes:
   refusal or abstention were not applied literally because the supplied
   evidence directly answers those rows.
 
-The annotation-only revision postdates the reviewed runs. Questions,
-`expected_facts`, `forbidden_claims`, `relevant_chunk_ids`, and evidence bundles
-are unchanged, so the reviewed raw/oracle responses and human scores remain
-valid. The reviewed runs retain the annotation hash they were scored under
-(`b822439d...`); the current annotation file hashes to `cbc89482...`.
-Re-evaluating those runs against the revised annotation file would require
-`--force` and was not performed.
+The annotation-only REVISE revision was followed by a full raw/oracle re-run on
+2026-11-23. Questions, `expected_facts`, `forbidden_claims`,
+`relevant_chunk_ids`, and evidence bundles are unchanged, so every response was
+a cache replay with content byte-identical to the 2026-11-22 baseline. The new
+runs were evaluated against the current annotation file
+(`cbc89482...`). The 2026-11-22 runs remain the historical reviewed baseline
+under `b822439d...`; their human scores were carried forward by question id into
+the new runs with only `scored_at` refreshed. No `--force` re-evaluation was
+needed for the new runs, and no live Groq quota was consumed.
 
 Current live runs:
 
-| Arm      | Run ID                          | Responses | API calls | Cache hits | Failed | Live tokens |
-| -------- | ------------------------------- | --------- | --------- | ---------- | ------ | ----------- |
-| `raw`    | `raw-20261122-191450-l8bqkn`    | 50/50     | 1         | 49         | 0      | 1,025       |
-| `oracle` | `oracle-20261122-191458-yqo6sy` | 50/50     | 50        | 0          | 0      | 50,652      |
+| Arm      | Run ID                          | Responses | API calls | Cache hits | Failed | Live tokens | Replayed tokens |
+| -------- | ------------------------------- | --------- | --------- | ---------- | ------ | ----------- | --------------- |
+| `raw`    | `raw-20261123-174647-amkm5t`    | 50/50     | 0         | 50         | 0      | 0           | 40,584          |
+| `oracle` | `oracle-20261123-174652-b455gt` | 50/50     | 0         | 50         | 0      | 0           | 50,652          |
 
 Shared identity:
 
 - `dataset_hash` = `df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56`
   (unchanged by the annotation-only revision)
 - `selection_hash` = `fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804`
-- Reviewed-run `annotations_hash` =
-  `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
-- Current `annotations_hash` after the annotation-only REVISE revision =
-  `cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a`
+- `annotations_hash` = `cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a`
+  (the 2026-11-22 baseline runs were scored under
+  `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`)
 - Oracle `evidence_hash` = `57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6`
 
 The per-run artifacts, including submitted `review_primary.jsonl`, were
