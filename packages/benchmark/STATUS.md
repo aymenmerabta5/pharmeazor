@@ -1,6 +1,6 @@
 # Implementation Status — @repo/benchmark
 
-_Last updated: 2026-11-22_
+_Last updated: 2026-11-23_
 
 ## Current state
 
@@ -122,22 +122,41 @@ superseded by the current reviewed runs below and must not be quoted:
 
 ### 9 — Sign-off reconciliation and reviewed baselines
 
-All 32 `REVISE` rows from the pharmacist sheet were reconciled against the
-current corpus: 12 were already fixed, 7 required a documented decision, and 13
-remained open because the corpus source itself was the authority. Only
-corpus-supported corrections were applied. Notable outcomes:
+All 32 `REVISE` rows from the pharmacist sheet were re-reviewed against the
+current corpus. Every row now has an explicit disposition: the requested
+correction was applied where the cited chunk supports it, and the remaining
+upstream-metadata or intentional-trap conflicts are documented in
+`reviewer_notes`. Only corpus-supported corrections were applied. Notable
+outcomes:
 
+- `Q-GMK-004`, `Q-GMK-006`, and `Q-GMK-007` state the ACE-inhibitor class
+  mechanism first and present perindopril as the corpus example.
+- `Q-GMK-005` names the DailyMed olmesartan/amlodipine/hydrochlorothiazide
+  combination and maps olmesartan medoxomil to the ARB component.
+- `Q-DNK-001` attributes the 4 g/day maximum to the ANPP PANADOL 1 g label;
+  `Q-DNK-005` marks the 3,200 mg/day ceiling as label-specific and not
+  self-medication advice.
 - `Q-DNK-002` retains `250 mg toutes les 12 heures pendant 7 à 14 jours`; the
-  proposed 10-day claim is not supported by the exact corpus table.
-- `Q-CAW-005` uses the amoxicillin-alone source
-  `MED013__SRC_DAILYMED__DOC003__label#warnings-0#0` and the contraindication
-  passage, not the old amoxicillin/clavulanate association.
+  cited DailyMed table does not support the sheet's proposed 10-day value, and
+  the answer now names the label source.
+- `Q-CAW-005` uses the amoxicillin-alone DailyMed warning and distinguishes a
+  documented serious beta-lactam reaction from an uncertain or mild history.
+- `Q-TOS-003` asks for weight and product before giving the label's age-band
+  fallback.
 - Corrected ibuprofen contraindication lists, pediatric paracetamol qualifiers,
-  the overdose warning, registry source-boundary wording, and unrelated-detail
-  removals.
-- The six `TRAP_EXPECTS_ANSWER` rows were intentionally retained. Notes asking
-  for refusal or abstention were not applied literally because the supplied
+  the overdose warning, registry source-boundary wording, translations, and
+  unrelated-detail removals are retained.
+- The six `TRAP_EXPECTS_ANSWER` rows remain intentional. Notes asking for
+  refusal or abstention were not applied literally because the supplied
   evidence directly answers those rows.
+
+The annotation-only revision postdates the reviewed runs. Questions,
+`expected_facts`, `forbidden_claims`, `relevant_chunk_ids`, and evidence bundles
+are unchanged, so the reviewed raw/oracle responses and human scores remain
+valid. The reviewed runs retain the annotation hash they were scored under
+(`b822439d...`); the current annotation file hashes to `cbc89482...`.
+Re-evaluating those runs against the revised annotation file would require
+`--force` and was not performed.
 
 Current live runs:
 
@@ -149,8 +168,12 @@ Current live runs:
 Shared identity:
 
 - `dataset_hash` = `df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56`
+  (unchanged by the annotation-only revision)
 - `selection_hash` = `fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804`
-- `annotations_hash` = `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
+- Reviewed-run `annotations_hash` =
+  `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
+- Current `annotations_hash` after the annotation-only REVISE revision =
+  `cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a`
 - Oracle `evidence_hash` = `57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6`
 
 The per-run artifacts, including submitted `review_primary.jsonl`, were

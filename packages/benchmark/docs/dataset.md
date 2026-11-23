@@ -102,11 +102,14 @@ oracle may use a subset, but every chunk-backed passage should also appear in
    source-boundary answers. These warnings are documented and not suppressed in
    [`../runs/PROVISIONAL_BASELINES.md`](../runs/PROVISIONAL_BASELINES.md).
 7. **Sign-off.** The returned sheet was reconciled against the current corpus:
-   18 `APPROVE`, 32 `REVISE`, and 0 `REJECT` rows. Of the `REVISE` rows, 12 were
-   already fixed, 7 required a documented decision, and 13 remained open because
-   the source itself was the authority. Only corpus-supported corrections were
-   applied. The literal sheet identity and owner confirmation are recorded in
-   `dataset.meta.json` and the strict annotation fields.
+   18 `APPROVE`, 32 `REVISE`, and 0 `REJECT` rows. All 32 `REVISE` rows were
+   re-reviewed; corpus-supported corrections were applied and each row now has
+   an explicit disposition in `reviewer_notes`. Upstream metadata mismatches and
+   intentional trap-design conflicts are documented rather than patched in
+   benchmark JSONL alone. The literal sheet identity and owner confirmation are
+   recorded in `dataset.meta.json` and the strict annotation fields. A later
+   annotation-only revision strengthened reference answers and dispositions
+   without changing the model-facing questions.
 8. **Two-reviewer disputes.** If two reviewers disagree, set
    `verification_status: "DISPUTED"` and record both opinions in
    `reviewer_notes`. `DISPUTED` annotations are excluded from scored runs

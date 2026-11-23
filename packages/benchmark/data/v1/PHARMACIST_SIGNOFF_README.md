@@ -45,11 +45,13 @@ The schema rejects extra fields, so no new column is added to the JSONL.
 The returned sheet contained 18 `APPROVE`, 32 `REVISE`, and 0 `REJECT` rows.
 Every row was reconciled against the current corpus and the audit result was
 carried into `questions.jsonl`, `gold_annotations.jsonl`, and
-`dataset.meta.json` using only the existing strict fields. Of the `REVISE`
-rows, 12 were already fixed, 7 required a documented decision, and 13 remained
-open because the corpus source itself was the authority. Corpus-supported
-corrections were applied; upstream `section_code`/metadata mismatches were
-documented rather than patched in benchmark JSONL alone.
+`dataset.meta.json` using only the existing strict fields. All 32 `REVISE` rows
+were re-reviewed: corpus-supported corrections were applied and each row now
+has an explicit disposition in `reviewer_notes`. Upstream `section_code`/
+metadata mismatches and intentional trap-design conflicts are documented rather
+than patched in benchmark JSONL alone. The later annotation-only revision
+strengthened reference answers and dispositions without changing the questions,
+expected facts, forbidden claims, chunk labels, or evidence bundles.
 
 The literal `signoff_reviewer` is `student — licence 12er4567 — affiliation
 NTIC`. It is preserved exactly as supplied. The project owner confirmed that

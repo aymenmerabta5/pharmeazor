@@ -17,10 +17,15 @@ The dataset sign-off was returned with the literal identity
 that reviewer is a licensed pharmacist. The literal identity is preserved in
 `PHARMACIST_SIGNOFF_SHEET.csv` and in the strict JSONL fields;
 `dataset.meta.json` records the owner confirmation. All 32 `REVISE` rows were
-reconciled against the current corpus: 12 were already fixed, 7 required a
-decision, and 13 remained open. Only corpus-supported corrections were applied.
-The six remaining `TRAP_EXPECTS_ANSWER` warnings are intentional and were not
-suppressed.
+re-reviewed against the current corpus. Every row now has an explicit
+disposition: the requested correction was applied where the cited chunk supports
+it, and upstream-metadata or intentional-trap conflicts are documented in
+`reviewer_notes`. Only corpus-supported corrections were applied. The six
+remaining `TRAP_EXPECTS_ANSWER` warnings are intentional and were not suppressed.
+A later annotation-only revision strengthened the reference answers and
+dispositions; questions, expected facts, forbidden claims, chunk labels, and
+evidence bundles are unchanged, so the reviewed responses and scores below
+remain valid.
 
 The oracle arm is an upper bound with curator-selected evidence. It is not a
 product claim about the retrieval system.
@@ -46,8 +51,12 @@ Ungroundable topics were replaced while preserving the 30 `fr` / 10 `en` /
 Shared identity:
 
 - `dataset_hash` = `df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56`
+  (unchanged by the annotation-only revision)
 - `selection_hash` = `fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804`
-- `annotations_hash` = `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
+- Reviewed-run `annotations_hash` =
+  `b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71`
+- Current `annotations_hash` after the annotation-only REVISE revision =
+  `cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a`
 - Oracle `evidence_hash` = `57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6`
 
 The older runs `raw-20261122-161936-esgy4s` and
