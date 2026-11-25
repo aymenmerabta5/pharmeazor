@@ -1,4 +1,4 @@
-import type { GoldAnnotation, Question } from "../dataset/schema";
+import type { EvidencePassage, GoldAnnotation, Question } from "../dataset/schema";
 import type { DeterministicSignals } from "./schema";
 import { containsPhrase } from "./text-normalize";
 import { extractNumbers, compareNumerical } from "./numerical";
@@ -10,6 +10,8 @@ export interface RubricInput {
   question: Question;
   annotation: GoldAnnotation;
   modelResponse: string;
+  /** Evidence actually shown to the model; defaults to the oracle bundle. */
+  evidenceBundle?: readonly EvidencePassage[];
 }
 
 export function computeDeterministicSignals(input: RubricInput): DeterministicSignals {
@@ -31,7 +33,7 @@ export function computeDeterministicSignals(input: RubricInput): DeterministicSi
   const safety = detectSafety(input.modelResponse);
   const grounding = computeGroundingSignals({
     responseContent: input.modelResponse,
-    evidenceBundle: input.annotation.evidence_bundle,
+    evidenceBundle: input.evidenceBundle ?? input.annotation.evidence_bundle,
     detectedBehavior: detected,
   });
 

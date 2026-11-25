@@ -1,25 +1,26 @@
 # Implementation Status — @repo/benchmark
 
-_Last updated: 2026-11-23_
+_Last updated: 2026-11-25_
 
 ## Current state
 
-The package implements the first two arms of the three-arm benchmark and the
-evaluation, review, reporting, and reproducibility tooling around them. The RAG
-arm is deliberately not built yet; the annotations, oracle baseline, and dataset
-sign-off that it depends on are now stable.
+The package implements all three arms of the benchmark and the evaluation,
+review, reporting, and reproducibility tooling around them. The RAG arm reads a
+recorded retrieval trace produced by the offline indexer; the deterministic
+retrieval gate has a committed baseline.
 
-| Area                          | State                                                                                  |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED` and signed off               |
-| Gold annotations              | 50 `VERIFIED` corpus-derived annotations with reconciled sign-off fields               |
-| Raw arm (`raw`)               | implemented, tested, live run reviewed (single review)                                 |
-| Oracle arm (`oracle`)         | implemented, tested, curated bundles populated, live run reviewed (single review)      |
-| RAG arm (`rag`)               | **not implemented** — deferred workstream; `retrievalGap` and `systemGain` remain null |
-| Deterministic evaluation      | implemented, advisory only                                                             |
-| Human review + reconciliation | implemented; 100/100 current responses scored once                                     |
-| Reporting / comparison        | implemented with identity guards; raw/oracle `compare` refusal is expected             |
-| Live runs                     | raw and oracle baselines completed, reviewed, and recorded with 0 failures per arm     |
+| Area                          | State                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| Dataset                       | 50 questions, 30 `fr` / 10 `en` / 10 `ar`, all `APPROVED` and signed off          |
+| Gold annotations              | 50 `VERIFIED` corpus-derived annotations with reconciled sign-off fields          |
+| Raw arm (`raw`)               | implemented, tested, live run reviewed (single review)                            |
+| Oracle arm (`oracle`)         | implemented, tested, curated bundles populated, live run reviewed (single review) |
+| RAG arm (`rag`)               | implemented, reviewed (single review); `retrievalGap` and `systemGain` measured   |
+| Retrieval gate                | implemented; recall/precision/MRR/nDCG baseline committed                         |
+| Deterministic evaluation      | implemented, advisory only                                                        |
+| Human review + reconciliation | implemented; 150/150 current responses scored once                                |
+| Reporting / comparison        | implemented with identity guards; raw/oracle `compare` refusal is expected        |
+| Live runs                     | all three baselines completed, reviewed, and recorded with 0 failures per arm     |
 
 `dataset stats` reports `scorable_questions: 50`. Every question, fact, retrieval
 label, and oracle passage is derived from
@@ -196,41 +197,42 @@ numerical and abstention denominators. Advisory deterministic signals and their
 deltas are tabulated in
 [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md).
 
-Still unmeasured:
+Measured with the reviewed RAG arm:
 
-- `retrievalGap = oracle − rag` — no RAG arm is wired.
-- `systemGain = rag − raw` — no RAG arm is wired.
+- `retrievalGap = oracle − rag = 0.68 − 0.46 = +0.22`
+- `systemGain = rag − raw = 0.46 − 0.16 = +0.30`
 
 ## Final gates
 
-| Gate                                                            | Result                                                                                                                                         |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `python packages/benchmark/scripts/verify_grounded_data.py`     | pass — 50 questions, 50 annotations, 39 chunks, 0 errors                                                                                       |
-| `bun run --cwd packages/benchmark benchmark dataset validate`   | pass — 50 approved, 50 annotated, 50 verified, 50 scorable, 0 errors, 6 intentional warnings                                                   |
-| `bun run --cwd packages/benchmark benchmark dataset stats`      | pass — `fr 30 / en 10 / ar 10`; GMK 7 / MID 9 / DNK 7 / CAW 9 / DRI 9 / TOS 9                                                                  |
-| `bun run --cwd packages/benchmark typecheck`                    | pass — 66 files, no type errors                                                                                                                |
-| `bun run --cwd packages/benchmark test`                         | pass — 152 pass, 1 skip, 0 fail, 315 expect() calls                                                                                            |
-| `bun run --cwd packages/benchmark lint`                         | pass                                                                                                                                           |
-| `bun run --cwd packages/benchmark format:check`                 | pass                                                                                                                                           |
-| `bun run typecheck` (root)                                      | pass — 23/23 tasks                                                                                                                             |
-| `bun run test` (root)                                           | pass — 11/11 tasks                                                                                                                             |
-| `bun run format:check` (root)                                   | pass — 25/25 tasks                                                                                                                             |
-| `bun run lint:all` (root)                                       | **fail** — pre-existing repository-wide findings outside this change (`apps/eve/package.json` manifest coverage, `apps/mobile` form ownership) |
-| `bunx --bun ghostinit@0.1.0 check --json`                       | **fail** — pre-existing repository-wide architecture/dependency-declaration findings; no detector, exception, or safeguard was changed         |
-| `bun run --cwd packages/benchmark benchmark reproduce` (both)   | pass — identity, accounting, and secret scan                                                                                                   |
-| `bun run --cwd packages/benchmark benchmark compare raw oracle` | expected refusal — arms differ by design in `prompt_version`, `run_mode`, and `system_prompt_hash`                                             |
+| Gate                                                            | Result                                                                                             |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `python packages/benchmark/scripts/verify_grounded_data.py`     | pass — 50 questions, 50 annotations, 39 chunks, 0 errors                                           |
+| `bun run --cwd packages/benchmark benchmark dataset validate`   | pass — 50 approved, 50 annotated, 50 verified, 50 scorable, 0 errors, 6 intentional warnings       |
+| `bun run --cwd packages/benchmark benchmark dataset stats`      | pass — `fr 30 / en 10 / ar 10`; GMK 7 / MID 9 / DNK 7 / CAW 9 / DRI 9 / TOS 9                      |
+| `bun run --cwd packages/benchmark typecheck`                    | pass — 74 files, no type errors                                                                    |
+| `bun run --cwd packages/benchmark test`                         | pass — 155 pass, 1 skip, 0 fail, 327 expect() calls                                                |
+| `bun run --cwd packages/benchmark lint`                         | pass                                                                                               |
+| `bun run --cwd packages/benchmark format:check`                 | pass                                                                                               |
+| `bun run --cwd packages/benchmark benchmark retrieval evaluate` | pass — 50 questions, gate against committed baseline                                               |
+| `bun run typecheck` (root)                                      | pass — 23/23 tasks                                                                                 |
+| `bun run test` (root)                                           | pass — 11/11 tasks                                                                                 |
+| `bun run format:check` (root)                                   | pass — 25/25 tasks                                                                                 |
+| `bun run lint:all` (root)                                       | pass — clean checkout, 23/23 tasks                                                                 |
+| `bunx --bun ghostinit@0.1.0 check --json`                       | pass — 0 blockers, 0 highs                                                                         |
+| `bun run build` (Bun 1.4.5, CI env)                             | pass                                                                                               |
+| `bun run --cwd packages/benchmark benchmark reproduce` (all)    | pass — identity, accounting, and secret scan                                                       |
+| `bun run --cwd packages/benchmark benchmark compare raw oracle` | expected refusal — arms differ by design in `prompt_version`, `run_mode`, and `system_prompt_hash` |
+| `bun run --cwd packages/benchmark benchmark compare raw rag`    | expected refusal — arms differ by design                                                           |
 
-Repository-wide `lint:all` and `ghostinit check` failures predate this change and
-are outside `packages/benchmark`. No detector, exception, or safeguard was
-suppressed or weakened to obtain the passing results.
+All gates ran from a clean checkout where needed so local ignored artifacts
+(such as `apps/eve/`) could not distort repository-wide checks. No detector,
+exception, or safeguard was suppressed or weakened to obtain these results.
 
 ## Remaining work
 
-1. Build `rag-fixed` with recorded retrieval traces, then wire the live `rag`
-   arm against the same frozen questions.
-2. Compute `retrievalGap` and `systemGain` once the RAG arm has reviewed scores.
-3. Add the retrieval PR gate (recall@k, precision@k, MRR, nDCG@10) using the
-   chunk labels already in the gold annotations.
-4. Restore the generator-owned seven-day dependency release-age delay when a
+1. Raise retrieval quality: measured recall@20 is 0.49 against the 0.90 target;
+   tune one stage at a time and re-run the golden set.
+2. Add judge-based generation metrics as a nightly trend, not a merge gate.
+3. Restore the generator-owned seven-day dependency release-age delay when a
    GhostInit release supports Bun 1.4.5 (repository follow-up, not benchmark
    scope).

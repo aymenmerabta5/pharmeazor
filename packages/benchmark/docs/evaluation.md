@@ -22,8 +22,9 @@ retrievalGap = oracle − rag
 systemGain   = rag − raw
 ```
 
-`oracle` is a ceiling, not a product claim. `rag` is deferred, so `retrievalGap`
-and `systemGain` cannot be measured yet.
+`oracle` is a ceiling, not a product claim. The `rag` arm reads the recorded
+retrieval trace and is scored with the same rubric; `retrievalGap` and
+`systemGain` are reported in the baseline once its human review is submitted.
 
 ## Deterministic signals (computed, never final)
 
@@ -123,9 +124,10 @@ review file with `--reviewer reconciler`.
 
 - **Does** evaluate: answer accuracy, factual completeness, unsupported
   claims, numerical correctness against the reference, abstention behavior,
-  safety-language signals, and (oracle arm) citation mechanics.
-- **Does not** evaluate: retrieval quality. That needs chunk-level labels and
-  `recall@k` / `MRR` / `nDCG@10`, which are a separate measurement.
+  safety-language signals, and (oracle/rag arms) citation mechanics.
+- **Retrieval quality** is measured separately by `benchmark retrieval evaluate`
+  over the recorded trace, using `relevant_chunk_ids` for `recall@k`,
+  `precision@k`, `MRR` and `nDCG@10`. It is a deterministic PR gate.
 - **Does not** score correctness with an LLM. Ever.
 
 ## Adding a new metric

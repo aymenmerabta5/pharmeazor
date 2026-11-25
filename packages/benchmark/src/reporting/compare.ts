@@ -107,6 +107,20 @@ export function compareRuns(a: ComparableRun, b: ComparableRun): ComparisonResul
     }
   }
 
+  // Retrieval identity for the RAG arm.
+  if (aMode === "rag" || bMode === "rag") {
+    const aConfig = a.metadata.retrieval_config_hash ?? null;
+    const bConfig = b.metadata.retrieval_config_hash ?? null;
+    const missing = (aMode === "rag" && aConfig === null) || (bMode === "rag" && bConfig === null);
+    if (missing) {
+      warnings.push(
+        "At least one RAG run is missing retrieval_config_hash; retrieval compatibility cannot be verified.",
+      );
+    } else if (aConfig !== null && bConfig !== null) {
+      checks.push(checkField("retrieval_config_hash", aConfig, bConfig));
+    }
+  }
+
   const aAnn = a.metadata.annotations_hash ?? null;
   const bAnn = b.metadata.annotations_hash ?? null;
   if (aAnn === null || bAnn === null) {

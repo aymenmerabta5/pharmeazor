@@ -43,6 +43,7 @@ import {
   openPrecomputedVectors,
   type PrecomputedVectorSource,
 } from "../../adapters/retrieval/precomputed";
+import { artifactDocumentsFromSnapshot, type LoadedDocument } from "./artifact-documents";
 import { textArray } from "../../adapters/retrieval/sql";
 import {
   DEFAULT_EXTRACTIONS_PATH,
@@ -77,6 +78,7 @@ interface ManifestRow {
   readonly collected_at?: unknown;
   readonly revision_date?: unknown;
   readonly content_sha256?: unknown;
+  readonly [key: string]: unknown;
 }
 
 interface IngestOptions {
@@ -92,6 +94,8 @@ interface IngestOptions {
   readonly notes: string | null;
   readonly requireContext: boolean;
   readonly vectors: string | null;
+  /** Treat the precomputed artifact as the corpus snapshot instead of re-chunking. */
+  readonly vectorsAsSource: boolean;
   /** Extraction report path, or null to index without extraction provenance. */
   readonly extractions: string | null;
 }
@@ -111,6 +115,7 @@ interface IngestSummary {
   readonly embeddingRevision: string | null;
   readonly vectorSource: "http" | "precomputed";
   readonly notesPath: string | null;
+  readonly partialProvenanceDocuments: number;
 }
 
 async function main(): Promise<void> {
@@ -118,12 +123,18 @@ async function main(): Promise<void> {
   const startedAt = performance.now();
   const notes = await readContextNotes(options.notes);
   const rows = await readManifest(options);
-  const selected = selectRows(rows, options);
-  const documents = await Promise.all(selected.map((row) => loadDocument(row, options, notes)));
+  const vectorSource = options.vectors ? await openPrecomputedVectors(options.vectors) : null;
+  let documents: LoadedDocument[];
+  if (options.vectorsAsSource) {
+    if (!vectorSource) throw new Error("--vectors-as-source requires --vectors");
+    documents = artifactDocumentsFromSnapshot(vectorSource.artifactChunks(), rows);
+  } else {
+    const selected = selectRows(rows, options);
+    documents = await Promise.all(selected.map((row) => loadDocument(row, options, notes)));
+  }
   const extractions = options.extractions
     ? await readExtractionsIfPresent(options.extractions)
     : null;
-  const vectorSource = options.vectors ? await openPrecomputedVectors(options.vectors) : null;
   const vectorCoverage = vectorSource
     ? validatePrecomputedCoverage(documents, vectorSource, options)
     : null;
@@ -148,7 +159,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (options.requireContext) {
+  if (options.requireContext && !options.vectorsAsSource) {
     const missing = documents.flatMap((document) =>
       document.chunks.filter((chunk) => !notes.has(chunk.contextKey)),
     );
@@ -351,15 +362,15 @@ async function main(): Promise<void> {
   await db.execute(sql`ANALYZE retrieval_chunks`);
   await db.execute(sql`ANALYZE retrieval_chunk_terms`);
 
+  const allChunks = documents.flatMap((document) => document.chunks);
+  const contextualizedChunks = options.vectorsAsSource
+    ? allChunks.length
+    : allChunks.filter((chunk) => notes.has(chunk.contextKey)).length;
   const summary: IngestSummary = {
     documents: documents.length,
     chunks: chunkCount,
-    contextualizedChunks: documents
-      .flatMap((document) => document.chunks)
-      .filter((chunk) => notes.has(chunk.contextKey)).length,
-    fallbackChunks: documents
-      .flatMap((document) => document.chunks)
-      .filter((chunk) => !notes.has(chunk.contextKey)).length,
+    contextualizedChunks,
+    fallbackChunks: allChunks.length - contextualizedChunks,
     embeddedChunks,
     retokenizedChunks,
     reusedChunks,
@@ -369,7 +380,10 @@ async function main(): Promise<void> {
     embeddingModel,
     embeddingRevision,
     vectorSource: vectorSource ? "precomputed" : "http",
-    notesPath: options.notes,
+    notesPath: options.vectorsAsSource ? null : options.notes,
+    partialProvenanceDocuments: options.vectorsAsSource
+      ? documents.filter((document) => document.row.partial_provenance === true).length
+      : 0,
   };
   console.log(
     JSON.stringify(
@@ -397,6 +411,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
   let notes: string | null = resolve("tooling/cleaning-lab/output/context/notes.jsonl");
   let requireContext = false;
   let vectors: string | null = null;
+  let vectorsAsSource = false;
   let extractions: string | null = DEFAULT_EXTRACTIONS_PATH;
   const medicineIds: string[] = [];
 
@@ -443,6 +458,9 @@ function parseOptions(argv: readonly string[]): IngestOptions {
       case "--vectors":
         vectors = resolve(next());
         break;
+      case "--vectors-as-source":
+        vectorsAsSource = true;
+        break;
       case "--extractions":
         extractions = resolve(next());
         break;
@@ -472,6 +490,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
             "  --no-notes          ignore model context notes and use the fallback note",
             "  --require-context   fail when any selected chunk has no model-written note",
             "  --vectors <dir>     load vectors.npy + chunks.jsonl instead of an embedding server",
+            "  --vectors-as-source treat the artifact chunks as the corpus snapshot (no re-chunk)",
             "  --extractions <csv> extraction report carrying status, review flag and timestamp",
             "                      (default tooling/retrieval-lab/data/metadata/extractions.csv)",
             "  --no-provenance     index without extraction status or review flags",
@@ -490,6 +509,9 @@ function parseOptions(argv: readonly string[]): IngestOptions {
   if (prune && (limit !== null || medicineIds.length > 0 || artifactId)) {
     throw new Error("--prune is only allowed on a full, unfiltered ingest");
   }
+  if (vectorsAsSource && !vectors) {
+    throw new Error("--vectors-as-source requires --vectors");
+  }
 
   const resolvedRoot = resolve(root);
   return {
@@ -505,6 +527,7 @@ function parseOptions(argv: readonly string[]): IngestOptions {
     notes: notes ? resolve(notes) : null,
     requireContext,
     vectors,
+    vectorsAsSource,
     extractions: extractions ? resolve(extractions) : null,
   };
 }
@@ -546,19 +569,6 @@ function selectRows(rows: readonly ManifestRow[], options: IngestOptions): Manif
     if (options.limit !== null && selected.length >= options.limit) break;
   }
   return selected;
-}
-
-interface LoadedDocument {
-  readonly row: ManifestRow;
-  readonly source: ChunkSourceDocument;
-  readonly partId: string | null;
-  readonly authorityTier: string | null;
-  readonly publicationDate: Date | null;
-  readonly collectedAt: Date | null;
-  readonly revisionDate: Date | null;
-  readonly contentSha256: string;
-  readonly markdown: string;
-  readonly chunks: ChunkDraft[];
 }
 
 async function loadDocument(
@@ -767,12 +777,18 @@ function summarizeDryRun(
   notes: ReadonlyMap<string, string>,
 ) {
   const chunks = documents.flatMap((document) => document.chunks);
+  const contextualizedChunks = options.vectorsAsSource
+    ? chunks.length
+    : chunks.filter((chunk) => notes.has(chunk.contextKey)).length;
   return {
     documents: documents.length,
     chunks: chunks.length,
-    contextualizedChunks: chunks.filter((chunk) => notes.has(chunk.contextKey)).length,
-    fallbackChunks: chunks.filter((chunk) => !notes.has(chunk.contextKey)).length,
-    notesPath: options.notes,
+    contextualizedChunks,
+    fallbackChunks: chunks.length - contextualizedChunks,
+    notesPath: options.vectorsAsSource ? null : options.notes,
+    partialProvenanceDocuments: options.vectorsAsSource
+      ? documents.filter((document) => document.row.partial_provenance === true).length
+      : 0,
     injectionChunks: chunks.filter((chunk) => chunk.injectionRisk).length,
     terms: chunks.reduce(
       (total, chunk) =>

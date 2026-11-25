@@ -49,6 +49,26 @@ jobs:
         run: bun run audit:lock
 
   # ---------------------------------------------------------------------
+  # Stage 1b — retrieval gate. Deterministic metrics over the recorded trace;
+  # no generation, no judge, no TEI or database required.
+  # ---------------------------------------------------------------------
+  retrieval-gate:
+    name: Retrieval gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Check retrieval metrics against the committed baseline
+        run: bun run --cwd packages/benchmark benchmark retrieval evaluate
+
+  # ---------------------------------------------------------------------
   # Stage 2 — generated state. The generator owns the module registry, the
   # API contract, the router, and the database schema barrel. Drift there
   # means the committed source no longer matches what the generator would

@@ -2,9 +2,8 @@
 
 ## Why it exists
 
-The raw arm measures the model from memory. The future RAG arm measures the
-model plus PHARMEAZOR retrieval. Between them sits a question that must be
-answered first:
+The raw arm measures the model from memory. The RAG arm measures the model plus
+PHARMEAZOR retrieval. Between them sits a question that must be answered first:
 
 > If the model had exactly the right evidence, would it answer correctly?
 
@@ -21,7 +20,7 @@ The difference between `oracle` and `raw` is the value of evidence itself:
 evidenceGain = oracle − raw
 ```
 
-Once the RAG arm exists, `oracle` becomes the ceiling for it:
+`oracle` is the ceiling for the RAG arm:
 
 ```text
 retrievalGap = oracle − rag

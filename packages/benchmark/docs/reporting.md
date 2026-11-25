@@ -20,6 +20,12 @@ The oracle arm writes the same artifacts in the same layout, with
 `run_mode: "oracle"` and `evidence_hash` in the metadata. Only questions with a
 non-empty bundle are sent; the rest are listed in `skipped_question_ids`.
 
+The RAG arm writes the same layout with `run_mode: "rag"`,
+`retrieval_config_hash`, and `evidence_hash` set to the retrieval trace hash. The
+trace itself is a dataset artifact at `data/v1/retrieval-trace.jsonl`; the
+deterministic gate writes `runs/retrieval-metrics.json` and compares against
+`runs/retrieval-baseline.json`.
+
 ## Report structure (`report.md`)
 
 1. **Experiment** — run id, dates, status, run mode, model, model revision,

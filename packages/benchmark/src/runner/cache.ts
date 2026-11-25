@@ -21,7 +21,7 @@ export class CacheCorruptionError extends Error {
 }
 
 export interface CacheKeyInput {
-  mode: "raw" | "oracle";
+  mode: "raw" | "oracle" | "rag";
   model_id: string;
   prompt_version: string;
   system_prompt: string;

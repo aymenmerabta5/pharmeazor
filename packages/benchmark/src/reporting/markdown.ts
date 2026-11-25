@@ -70,6 +70,12 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
     ...(metadata.run_mode === "oracle"
       ? ([["Evidence hash", metadata.evidence_hash ?? "(not recorded)"]] as [string, string][])
       : []),
+    ...(metadata.run_mode === "rag"
+      ? ([
+          ["Retrieval config hash", metadata.retrieval_config_hash ?? "(not recorded)"],
+          ["Retrieval trace hash", metadata.evidence_hash ?? "(not recorded)"],
+        ] as [string, string][])
+      : []),
     ["Reasoning effort", metadata.reasoning_effort],
     ["Temperature", String(metadata.provenance?.temperature ?? "unset")],
     ["Seed", String(metadata.provenance?.seed ?? "unset")],

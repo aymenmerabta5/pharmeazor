@@ -59,7 +59,7 @@ export function readGitSha(): string | null {
   return null;
 }
 
-export function generateRunId(prefix: "raw" | "oracle"): string {
+export function generateRunId(prefix: "raw" | "oracle" | "rag"): string {
   const now = new Date();
   const ymd = now.toISOString().slice(0, 10).replace(/-/g, "");
   const hms = now.toISOString().slice(11, 19).replace(/:/g, "");
@@ -76,6 +76,9 @@ export function printUsage(): void {
   benchmark raw status       [--run-id <ID>]
   benchmark oracle run       [--category <CAT>] [--limit <N>] [--allow-draft]
   benchmark oracle resume    --run-id <ID>
+  benchmark rag run          [--category <CAT>] [--limit <N>] [--allow-draft]
+  benchmark rag resume       --run-id <ID>
+  benchmark retrieval evaluate [--write-baseline]
   benchmark evaluate run     --run-id <ID> [--force]
   benchmark review prepare   --run-id <ID>
   benchmark review submit    --run-id <ID> --reviewer <ID> --file <path>
