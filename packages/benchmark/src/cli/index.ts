@@ -4,6 +4,7 @@ import { parseArgs, printUsage } from "./common";
 import { runDatasetStats, runDatasetValidate } from "./dataset";
 import { runRawResume, runRawRun, runRawStatus } from "./raw";
 import { runOracleResume, runOracleRun } from "./oracle";
+import { runRagResume, runRagRun } from "./rag";
 import {
   runEvaluateRun,
   runReport,
@@ -13,6 +14,7 @@ import {
 } from "./evaluate";
 import { runCompare } from "./compare";
 import { runReproduce } from "./reproduce";
+import { runRetrievalEvaluate } from "./retrieval";
 
 async function main(argv: string[]): Promise<number> {
   const { command, subcommand, flags } = parseArgs(argv);
@@ -33,9 +35,14 @@ async function main(argv: string[]): Promise<number> {
   if (command === "oracle" && subcommand === "resume") return runOracleResume(flags);
   if (command === "oracle" && subcommand === "status") return runRawStatus(flags);
 
+  if (command === "rag" && subcommand === "run") return runRagRun(flags);
+  if (command === "rag" && subcommand === "resume") return runRagResume(flags);
+
   if (command === "evaluate" && subcommand === "run") return runEvaluateRun(flags);
   if (command === "review" && subcommand === "prepare") return runReviewPrepare(flags);
   if (command === "review" && subcommand === "submit") return runReviewSubmit(flags);
+
+  if (command === "retrieval" && subcommand === "evaluate") return runRetrievalEvaluate(flags);
 
   if (command === "summary") return runSummary(flags);
   if (command === "report") return runReport(flags);

@@ -195,11 +195,12 @@ maintainer-run transfer and always uses the S3-compatible endpoint above.
 
 Two details matter:
 
-- **The endpoint must be account-level.** The repository currently sets
-  `S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com/pharmeazor`. The
-  trailing `/pharmeazor` is the bucket, not part of the S3 endpoint; boto3
-  addresses the bucket separately. The script removes exactly that suffix and
-  rejects any other path instead of producing wrong keys.
+- **The endpoint must be account-level.** Set
+  `S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`; the bucket is
+  configured separately through `STORAGE_BUCKET`. The application's S3 client
+  uses the value verbatim, so a trailing `/pharmeazor` would make it address the
+  bucket twice and fail. The transfer tool still tolerates exactly that suffix
+  and removes it, but rejects any other path instead of producing wrong keys.
 - **R2 uses region `auto` and path-style addressing.** Those are set explicitly;
   the library is `boto3` (with `botocore`), not a Cloudflare-specific SDK.
 

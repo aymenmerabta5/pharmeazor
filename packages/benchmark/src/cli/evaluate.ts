@@ -17,6 +17,8 @@ import { generateMarkdownReport } from "../reporting/markdown";
 import { readErrors, readResponses, readRunMetadata, writeRunMetadata } from "../storage/fs";
 import type { RunMetadata } from "../storage/fs";
 import { dataV1Path, runsDir } from "./common";
+import { createTraceGateway, loadRetrievalTrace } from "../retrieval/trace";
+import { passagesToEvidence } from "../runner/rag";
 
 /**
  * Refuses to score or report a run against data that no longer matches what
@@ -93,6 +95,11 @@ export async function runEvaluateRun(flags: Record<string, string>): Promise<num
     }
   }
 
+  const ragGateway =
+    meta.run_mode === "rag"
+      ? createTraceGateway(await loadRetrievalTrace(dataV1Path("retrieval-trace.jsonl")))
+      : null;
+
   const qById = new Map(questions.map((q) => [q.question_id, q] as const));
   const aById = new Map(annotations.map((a) => [a.question_id, a] as const));
   const records = [];
@@ -104,10 +111,14 @@ export async function runEvaluateRun(flags: Record<string, string>): Promise<num
       logger.warn(`missing question or annotation for ${r.question_id}; skipping`);
       continue;
     }
+    const evidenceBundle = ragGateway
+      ? passagesToEvidence(ragGateway.search(r.question_id))
+      : undefined;
     const deterministic = computeDeterministicSignals({
       question: q,
       annotation: a,
       modelResponse: r.content,
+      ...(evidenceBundle && evidenceBundle.length > 0 ? { evidenceBundle } : {}),
     });
     records.push({
       question_id: r.question_id,

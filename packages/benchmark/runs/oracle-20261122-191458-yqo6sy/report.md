@@ -163,7 +163,7 @@ Deterministic signals only. A human reviewer still owns the authoritative citati
 
 **Model response:**
 
-> Le « Doliprane » contient comme principe actif le **paracétamol** [ E1 ].  
+> Le « Doliprane » contient comme principe actif le **paracétamol** [ E1 ].
 > Ce principe actif appartient à la classe pharmacologique des **analgésiques‑antipyrétiques** (ATC N02BE01) [ E2 ].
 
 #### `Q-MID-002` — partially_correct, unsupported_claim

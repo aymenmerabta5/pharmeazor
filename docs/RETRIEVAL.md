@@ -378,8 +378,10 @@ SDK, a vector client, or an embedding API.
 
 ## Implemented pipeline
 
-The current slice owns stages 1 to 3 and exposes them to the agent. It does not
-yet own the golden set gate or model-written contextualization.
+The current slice owns stages 1 to 3 and exposes them to the agent. The
+50-question golden set and its deterministic retrieval gate live in
+`packages/benchmark`; model-written contextualization is still generated outside
+this repository.
 
 ```text
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
@@ -429,6 +431,8 @@ bun run retrieval:ensure-schema   # create tables, GIN/HNSW indexes, extension
 bun run retrieval:ingest:dry      # chunk and report; no database, no embedding server
 bun run retrieval:ingest:vectors:dry # validate the precomputed BGE-M3 artifact against the chunker
 bun run retrieval:ingest:vectors  # load vectors.npy + chunks.jsonl; no embedding server
+bun run retrieval:ingest:artifact:dry # dry-run using the artifact as the corpus snapshot
+bun run retrieval:ingest:artifact # index the artifact snapshot, including chunks absent from the local manifest
 bun run retrieval:fetch:vectors   # pull embedding-output from R2 and validate it
 bun run retrieval:fetch:vectors:check # validate the local artifact only
 bun run retrieval:import:r2       # pull, validate, schema, import, postflight
@@ -453,6 +457,14 @@ The artifact manifest pins the BGE-M3 revision and the SHA-256 of both files;
 the revision is stored on every chunk so two revisions cannot be mixed
 silently. This path needs no embedding server. The HTTP path is still required
 for query embedding at runtime.
+
+`retrieval:ingest:artifact` uses the artifact as the corpus snapshot instead of
+re-chunking the local cleaning output. It is for the benchmark index when the
+cleaning corpus has drifted from the artifact: chunk ids, section codes and
+content hashes come from `chunks.jsonl`, and manifest metadata is joined where
+the artifact id still exists. Documents without a manifest row are indexed with
+`partial_provenance: true` in their metadata; the dry run reports their count.
+This mode is not for rebuilding the production index from current sources.
 
 `retrieval:import:r2` is the end-to-end path. It pulls the `embedding-output`
 dataset from R2 through the shared storage module, validates the artifact with
@@ -628,7 +640,9 @@ name and revision come from the artifact manifest.
 
 ### What is deliberately deferred
 
-- The golden set and the recall/precision/MRR/nDCG@10 gate from the sections
-  above. No tuning change should be trusted before that exists.
+- The golden set and the recall/precision/MRR/nDCG@10 gate are implemented in
+  `packages/benchmark` (`benchmark retrieval evaluate`). The first measured
+  baseline has recall@20 well below the 90% target, so retrieval quality is the
+  next tuning workstream, not a model upgrade.
 - Query reformulation. The agent gets one tool call budget, not a retrieval
   loop; add a second round only when the golden set shows multi-hop misses.

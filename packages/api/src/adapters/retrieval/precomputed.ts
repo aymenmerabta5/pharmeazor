@@ -45,6 +45,8 @@ export interface PrecomputedVectorSource {
   /** Validate and materialize the vector for a chunk. */
   vectorFor(chunk: ChunkDraft): number[];
   chunkIds(): string[];
+  /** Artifact rows, for an indexer that treats the artifact itself as the corpus snapshot. */
+  artifactChunks(): readonly ArtifactChunk[];
   describe(): PrecomputedVectorSummary;
 }
 
@@ -71,12 +73,16 @@ interface EmbeddingManifest {
   };
 }
 
-interface ArtifactChunk {
+export interface ArtifactChunk {
   readonly row: number;
   readonly chunkId: string;
   readonly artifactId: string;
   readonly sectionCode: string;
+  readonly contextKey: string;
+  readonly language: string;
   readonly textSha256: string;
+  /** Final contextualized text as embedded by the artifact. */
+  readonly text: string;
 }
 
 interface ValidatedManifest {
@@ -180,6 +186,9 @@ export async function openPrecomputedVectors(directory: string): Promise<Precomp
     },
     chunkIds(): string[] {
       return [...byChunkId.keys()];
+    },
+    artifactChunks(): readonly ArtifactChunk[] {
+      return artifactChunks;
     },
     describe(): PrecomputedVectorSummary {
       return {
@@ -339,12 +348,20 @@ async function readChunkRows(path: string, manifest: ValidatedManifest): Promise
         `chunks.jsonl line ${index + 1} is ${embeddingDtype}, expected ${manifest.dtype}`,
       );
     }
+    const text = requireString(row.text, `chunks.jsonl line ${index + 1} text`);
+    const textSha256 = requireSha256(row.text_sha256, `chunks.jsonl line ${index + 1} text_sha256`);
+    if (createHash("sha256").update(text, "utf8").digest("hex") !== textSha256) {
+      throw new Error(`chunks.jsonl line ${index + 1} text does not match its text_sha256`);
+    }
     rows.push({
       row: position,
       chunkId: requireString(row.chunk_id, `chunks.jsonl line ${index + 1} chunk_id`),
       artifactId: requireString(row.artifact_id, `chunks.jsonl line ${index + 1} artifact_id`),
       sectionCode: requireString(row.section_code, `chunks.jsonl line ${index + 1} section_code`),
-      textSha256: requireSha256(row.text_sha256, `chunks.jsonl line ${index + 1} text_sha256`),
+      contextKey: requireSha256(row.context_key, `chunks.jsonl line ${index + 1} context_key`),
+      language: requireString(row.language, `chunks.jsonl line ${index + 1} language`),
+      textSha256,
+      text,
     });
   }
   if (rows.length !== manifest.rows) {

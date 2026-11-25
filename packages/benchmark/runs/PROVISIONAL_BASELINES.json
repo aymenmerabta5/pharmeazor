@@ -1,7 +1,7 @@
 {
-  "label": "reviewed v1 raw/oracle baselines — single-review response scoring",
-  "note": "Filename retained from the earlier provisional record. The current runs have 50/50 submitted response reviews. The raw and oracle prompts are different arms by design; retrieved evidence is not used in either arm.",
-  "recorded_at": "2026-11-22T20:00:00Z",
+  "label": "reviewed v1 raw/oracle/rag baselines — single-review response scoring",
+  "note": "Filename retained from the earlier provisional record. All three arms have 50/50 submitted single reviews. Raw and oracle use curated/no evidence; RAG replays a recorded retrieval trace.",
+  "recorded_at": "2026-11-25T13:50:00Z",
   "dataset_signoff": {
     "status": "RECONCILED",
     "literal_reviewer": "student — licence 12er4567 — affiliation NTIC",
@@ -30,15 +30,17 @@
     "reviewer_id": "benchmark-maintainer (deterministic-assisted response review)",
     "scored_at": "2026-11-22T20:00:00Z",
     "status": "SINGLE_REVIEW",
-    "responses_reviewed": 100,
+    "responses_reviewed": 150,
     "second_llm_judge": false,
     "pharmacist_reviewed_responses": false
   },
   "shared_identity": {
     "dataset_hash": "df9415f80bf72d60eeb329aeb65f29ece4e8001383fa1ea97add3435ba998b56",
     "selection_hash": "fa192fda2a9fd240e4e79fd5ffc294d7dc32408dd12e5cf685971ff9ecafc804",
-    "annotations_hash": "b822439d9a0e8f680bba3b90259920e30492712bee0a76d795e06bccaba4af71",
-    "oracle_evidence_hash": "57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6"
+    "annotations_hash": "cbc89482bee03ac1fb58f9ca4504f56d7098f19e539b0ee360c5cb0d4f91a12a",
+    "oracle_evidence_hash": "57bbe87f2d8b900135a661d94c520fa6ba652668dc3c024fceb84ea7f33595a6",
+    "retrieval_config_hash": "e55cd0434a82fea18ee67e0dde9d69264c3af9c0fad36ef038dd9d982fa09692",
+    "retrieval_trace_hash": "9fc3535b7ff9f2104fd9712bad50b43f3f9a3e5519c3b87def2a81a169951bfc"
   },
   "superseded_runs": [
     "raw-20261122-161936-esgy4s",
@@ -46,7 +48,7 @@
   ],
   "runs": {
     "raw": {
-      "run_id": "raw-20261122-191450-l8bqkn",
+      "run_id": "raw-20261123-174647-amkm5t",
       "status": "COMPLETED",
       "responses": 50,
       "api_calls": 1,
@@ -84,7 +86,7 @@
       "unsupported_number_rows": 12
     },
     "oracle": {
-      "run_id": "oracle-20261122-191458-yqo6sy",
+      "run_id": "oracle-20261123-174652-b455gt",
       "status": "COMPLETED",
       "responses": 50,
       "api_calls": 50,
@@ -120,6 +122,33 @@
       "cited_rows_pct": 38,
       "invalid_citation_rows": 0,
       "unsupported_number_rows": 5
+    },
+    "rag": {
+      "run_id": "rag-20261125-132013-24sxon",
+      "status": "COMPLETED",
+      "responses": 50,
+      "api_calls": 50,
+      "cache_hits": 0,
+      "failed": 0,
+      "live_tokens": 118625,
+      "human_reviewed": 50,
+      "correct": 23,
+      "partially_correct": 17,
+      "incorrect": 10,
+      "correct_rate": 0.46,
+      "partially_correct_rate": 0.34,
+      "incorrect_rate": 0.2,
+      "safe": 50,
+      "safe_rate": 1,
+      "responses_with_any_unsupported_claim": 3,
+      "expected_facts": 191,
+      "facts_found": 44,
+      "fact_coverage_pct": 23.0,
+      "behavior_agreement": 47,
+      "forbidden_claim_rows": 0,
+      "cited_rows": 9,
+      "invalid_citation_rows": 0,
+      "unsupported_number_rows": 3
     }
   },
   "metrics": {
@@ -139,11 +168,24 @@
       "unsafe_rows_pp": -10,
       "numerical_problem_rows_pp": -14
     },
-    "retrieval_gap": null,
-    "system_gain": null
+    "retrieval_gap": {
+      "formula": "oracle.correct_rate - rag.correct_rate",
+      "oracle_correct_rate": 0.68,
+      "rag_correct_rate": 0.46,
+      "value": 0.22,
+      "percentage_points": 22,
+      "additional_correct_answers": 11
+    },
+    "system_gain": {
+      "formula": "rag.correct_rate - raw.correct_rate",
+      "raw_correct_rate": 0.16,
+      "rag_correct_rate": 0.46,
+      "value": 0.3,
+      "percentage_points": 30,
+      "additional_correct_answers": 15
+    }
   },
   "unmeasured": [
-    "retrievalGap — no RAG arm is wired",
-    "systemGain — no RAG arm is wired"
+    "Judge-based generation metrics (faithfulness, citation completeness) are not merge gates."
   ]
 }

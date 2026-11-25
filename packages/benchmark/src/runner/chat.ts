@@ -17,7 +17,7 @@ import {
 import { RATE_LIMITS_FREE_TIER, type GenerationConfig } from "../config/generation";
 import { buildProvenance } from "../config/provenance";
 
-export type BenchmarkArm = "raw" | "oracle";
+export type BenchmarkArm = "raw" | "oracle" | "rag";
 
 export interface ChatBenchmarkInput {
   runId: string;
@@ -44,6 +44,8 @@ export interface ChatBenchmarkInput {
   /** Oracle only: curated passages keyed by question id. */
   evidenceByQuestionId?: ReadonlyMap<string, readonly EvidencePassage[]>;
   evidenceHash?: string | null;
+  /** RAG only: hash of the recorded retrieval configuration. */
+  retrievalConfigHash?: string | null;
   /** Builds the single user message for a question. */
   buildUserMessage: (question: Question) => string;
   temperature?: number | null;
@@ -154,9 +156,11 @@ export async function runChatBenchmark(input: ChatBenchmarkInput): Promise<ChatR
     throw new Error(
       input.mode === "oracle"
         ? "no question has oracle evidence; curate evidence_bundle entries before an oracle run"
-        : input.allowDraft
-          ? "no questions available in the dataset"
-          : "no APPROVED questions are available; a pharmacist must approve at least one question before a scored run. Use --allow-draft to run on draft questions for pipeline testing only.",
+        : input.mode === "rag"
+          ? "no question has retrieved passages; regenerate the retrieval trace before a RAG run"
+          : input.allowDraft
+            ? "no questions available in the dataset"
+            : "no APPROVED questions are available; a pharmacist must approve at least one question before a scored run. Use --allow-draft to run on draft questions for pipeline testing only.",
     );
   }
 
@@ -210,6 +214,7 @@ export async function runChatBenchmark(input: ChatBenchmarkInput): Promise<ChatR
     skipped_question_ids: skipped,
     provenance,
     evidence_hash: input.evidenceHash ?? null,
+    retrieval_config_hash: input.mode === "rag" ? (input.retrievalConfigHash ?? null) : null,
     cumulative_usage: cumulative,
   };
 

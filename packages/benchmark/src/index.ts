@@ -89,7 +89,16 @@ export {
 } from "./runner/chat";
 export { runRawBenchmark, type RawRunInput, type RawRunResult } from "./runner/raw";
 export { runOracleBenchmark, type OracleRunInput, type OracleRunResult } from "./runner/oracle";
+export { runRagBenchmark, type RagRunInput, type RagRunResult } from "./runner/rag";
 export { loadEvidenceBundle, hashEvidenceBundle } from "./oracle/evidence";
+export { createTraceGateway, loadRetrievalTrace } from "./retrieval/trace";
+export { computeRetrievalMetrics } from "./retrieval/metrics";
+export type {
+  RetrievalGateway,
+  RetrievalTraceRow,
+  RetrievedPassage,
+  TraceChunk,
+} from "./retrieval/types";
 
 export type {
   DeterministicSignals,

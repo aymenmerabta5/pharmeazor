@@ -7,7 +7,7 @@ human-reviewed questions under three evidence conditions:
 | -------- | ---------------------------------------- | ------------------------------------- |
 | `raw`    | the question only                        | implemented, reviewed (single review) |
 | `oracle` | the question + a curated evidence bundle | implemented, reviewed (single review) |
-| `rag`    | the question + PHARMEAZOR retrieval      | deferred                              |
+| `rag`    | the question + recorded retrieval trace  | implemented, reviewed (single review) |
 
 The deltas are the point, not any single score:
 
@@ -22,8 +22,9 @@ retrieval is doing its job; the gap is the headroom left on the table.
 
 The package is **independent** of the production app, `@repo/api`, and the
 retrieval code under `packages/modules`. It is a workspace member that can run
-standalone. The future `rag` arm will call the retrieval adapter through a
-recorded interface; it will not import app internals into the benchmark core.
+standalone. The `rag` arm reads a recorded retrieval trace produced by the
+offline indexer; it does not import app internals into the benchmark core and
+does not need a live TEI or Postgres at scoring time.
 
 ## Status
 
@@ -80,6 +81,9 @@ clinical recommendation, and the RAG arm is still deferred.
 
     bun run benchmark oracle run   [--category <CAT>] [--limit <N>] [--allow-draft]
     bun run benchmark oracle resume --run-id <ID>
+    bun run benchmark rag run      [--category <CAT>] [--limit <N>] [--allow-draft]
+    bun run benchmark rag resume   --run-id <ID>
+    bun run benchmark retrieval evaluate [--write-baseline]
 
     bun run benchmark evaluate run --run-id <ID> [--force]
     bun run benchmark review prepare --run-id <ID>
@@ -186,16 +190,19 @@ the existing strict fields. The literal signature is
 `student — licence 12er4567 — affiliation NTIC`, preserved as supplied; the
 project owner confirmed that reviewer is a licensed pharmacist.
 
-| Arm      | Run ID                          | Correct     | Partially correct | Incorrect  | Reviewed |
-| -------- | ------------------------------- | ----------- | ----------------- | ---------- | -------- |
-| `raw`    | `raw-20261123-174647-amkm5t`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%) | 50/50    |
-| `oracle` | `oracle-20261123-174652-b455gt` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)  | 50/50    |
+| Arm      | Run ID                          | Correct     | Partially correct | Incorrect   | Reviewed |
+| -------- | ------------------------------- | ----------- | ----------------- | ----------- | -------- |
+| `raw`    | `raw-20261123-174647-amkm5t`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%)  | 50/50    |
+| `oracle` | `oracle-20261123-174652-b455gt` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)   | 50/50    |
+| `rag`    | `rag-20261125-132013-24sxon`    | 23/50 (46%) | 17/50 (34%)       | 10/50 (20%) | 50/50    |
 
 Response review is single review by the benchmark maintainer, not the pharmacist
-sheet and not a second LLM judge. The re-run responses were cache replays with
-content identical to the 2026-11-22 baseline, so the scores were carried forward
-by question id with only `scored_at` refreshed. `evidenceGain = 0.68 − 0.16 = +0.52`.
-`retrievalGap` and `systemGain` remain unmeasured because RAG is deferred.
+sheet and not a second LLM judge. The raw/oracle re-run responses were cache
+replays with content identical to the 2026-11-22 baseline, so those scores were
+carried forward by question id with only `scored_at` refreshed. The RAG arm
+generated fresh responses from the recorded retrieval trace. `evidenceGain =
+0.68 − 0.16 = +0.52`, `retrievalGap = 0.68 − 0.46 = +0.22`, and `systemGain =
+0.46 − 0.16 = +0.30`.
 
 ## Environment
 
@@ -208,15 +215,17 @@ From the repository root:
 
 ## Known limitations
 
-- **Single response review.** The 100 responses were scored once by the
-  benchmark maintainer. The pharmacist sheet signs off the dataset, not the
-  model answers. `dataset validate` passes with zero errors; six intentional
-  `TRAP_EXPECTS_ANSWER` warnings remain because the curated evidence directly
-  answers those rows. They are documented, not suppressed.
-- **No RAG arm yet.** `run_mode` already distinguishes `raw | oracle | rag`, and
-  the retrieval contracts exist upstream, but no live retrieval run is wired.
-  The oracle arm and annotation schema are now stable, so RAG is the next
-  workstream; `retrievalGap` and `systemGain` are still null.
+- **Single response review.** The 150 responses were scored once by the
+  benchmark maintainer. The RAG review is deterministic-assisted and calibrated
+  against the reviewed oracle arm (68% agreement on oracle). The pharmacist
+  sheet signs off the dataset, not the model answers. `dataset validate` passes
+  with zero errors; six intentional `TRAP_EXPECTS_ANSWER` warnings remain because
+  the curated evidence directly answers those rows. They are documented, not
+  suppressed.
+- **Recorded retrieval.** The RAG arm does not call a live retriever at scoring
+  time; it reads `data/v1/retrieval-trace.jsonl`. Regenerate that trace with
+  `bun run retrieval:trace:benchmark` after changing the index, embedding model,
+  or retrieval configuration, then re-run the gate and the arm.
 - **No LLM judge.** Correctness is deterministic signals plus human review. The
   deterministic layer is advisory and conservative by design.
 - **Provider outages are reported, never worked around.** No silent model or
