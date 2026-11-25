@@ -78,6 +78,46 @@ Uploads create or overwrite objects under `embedding-lab/`. The lab has no
 legacy prefix: `organize` finds nothing and `reset` only touches the canonical
 prefix.
 
+## Pull and import into PostgreSQL
+
+`fetch_artifact.py` is the guarded pull. It reuses the shared storage module and
+the lab's own `pipeline/validate.py`, so the checksums, row alignment, chunk
+ids, text hashes, model revision and dimensions are checked before a single row
+is written. It refuses to import when the remote tree has no
+`embeddings/manifest.json` marker.
+
+From the repository root:
+
+```powershell
+# Pull embedding-lab/ into tooling/embedding-lab/output/ and validate it.
+python tooling/embedding-lab/fetch_artifact.py
+
+# Validate an existing local artifact without touching R2.
+python tooling/embedding-lab/fetch_artifact.py --validate-only
+
+# Full pipeline: pull, validate, chunk dry run, schema, import, postflight.
+bun run retrieval:import:r2
+
+# Offline or scratch-database variants.
+bun run retrieval:import:r2 --artifact ./tooling/embedding-lab/output/embeddings
+bun run retrieval:import:r2 --no-pull --dry-run
+$env:POSTGRES_DB = "pharmeazor_retrieval_test"; bun run retrieval:import:r2
+```
+
+`--prefix` and `--dest` on `fetch_artifact.py` are test hooks; production always
+uses `embedding-lab/` and `tooling/embedding-lab/output/`. When PyYAML is
+missing, the script re-execs inside `tooling/embedding-lab/.venv` or
+`tooling/cleaning-lab/.venv` instead of failing after the download.
+
+`retrieval:import:r2` is idempotent: the second run of an unchanged artifact
+reports `embeddedChunks=0`, `retokenizedChunks=0`, and `reusedChunks` equal to
+the chunk count. It fails before writing if the artifact predates the current
+corpus (the production chunker's `contentHash` no longer matches
+`text_sha256`) or if the database would mix embedding models or revisions.
+`--dry-run` stops before the DDL. `--force` re-embeds and retokenizes
+everything; `--prune` deletes documents that disappeared from the cleaning
+manifest.
+
 To delete the remote artifact and re-upload the local tree, run the guarded
 reset. It refuses to delete unless `output/embeddings/manifest.json` exists,
 and it lists every object first when `--yes` is omitted:
@@ -96,7 +136,8 @@ and it lists every object first when `--yes` is omitted:
   mirrored like any other file, so omit `--profile` when preparing an upload.
 - `.venv/`, `__pycache__/`, `.cache/` and `.env*` files are skipped by the
   shared module.
-- The lab never writes to PostgreSQL; this transfer only mirrors files.
+- The lab never writes to PostgreSQL; this transfer only mirrors files. The
+  separate `retrieval:import:r2` worker owns the database write.
 
 See the shared [R2_UPLOAD.md](../retrieval-lab/R2_UPLOAD.md#organizing-a-legacy-bucket)
 for the conflict and verification rules, and

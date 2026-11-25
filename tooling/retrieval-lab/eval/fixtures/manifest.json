@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-24",
+  "description": "Frozen test set and corpus identity for the first offline RAG retrieval baseline. In-corpus rows are copied from the signed-off benchmark v1; out-of-corpus rows use ingredients with zero occurrences in the indexed corpus.",
+  "corpus": {
+    "path": "tooling/cleaning-lab/output/context/embed-input.jsonl",
+    "sha256": "4d7f61dbaea651c28dd18f00045bbb2e41c55f3d1efd6d20346c169a957ebccf",
+    "byte_size": 29127952,
+    "chunks": 7245,
+    "artifacts": 528,
+    "contextualized_chunks": 7245,
+    "source": "Cloudflare R2 cleaning-output/context/embed-input.jsonl, pulled 2026-11-24"
+  },
+  "benchmark": {
+    "questions_path": "packages/benchmark/data/v1/questions.jsonl",
+    "questions_sha256": "417c026ba5d5aaa8913042b478addb28791bef470ac36bc632b8e8203769ceec",
+    "annotations_path": "packages/benchmark/data/v1/gold_annotations.jsonl",
+    "annotations_sha256": "9bd4fdbcbed0bfa6d1d969247dbeea3c7f558e80f756d0746df6ddd49cb641f7"
+  },
+  "selection": {
+    "in_corpus": 15,
+    "out_of_corpus": 5,
+    "languages": {
+      "fr": 8,
+      "en": 6,
+      "ar": 6
+    },
+    "in_corpus_source_questions": [
+      "Q-GMK-001",
+      "Q-GMK-006",
+      "Q-GMK-007",
+      "Q-MID-001",
+      "Q-MID-007",
+      "Q-MID-009",
+      "Q-DNK-001",
+      "Q-DNK-006",
+      "Q-DNK-008",
+      "Q-CAW-001",
+      "Q-CAW-006",
+      "Q-DRI-003",
+      "Q-DRI-008",
+      "Q-TOS-001",
+      "Q-TOS-009"
+    ],
+    "out_of_corpus_ingredients": [
+      "semaglutide",
+      "pembrolizumab",
+      "insulin glargine",
+      "goserelin",
+      "rosuvastatin"
+    ]
+  },
+  "measurement": {
+    "retriever": "BM25 over the exported contextualized chunks",
+    "tokenizer": "lexical-fold-v1 port",
+    "bm25_k1": 1.2,
+    "bm25_b": 0.75,
+    "search_depth": 50,
+    "excluded": [
+      "dense arm (no embeddings artifact)",
+      "reranker (no RETRIEVAL_RERANKER_URL / BGE weights)",
+      "LLM generation (GROQ_API_KEY placeholder)"
+    ]
+  }
+}

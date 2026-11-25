@@ -429,6 +429,10 @@ bun run retrieval:ensure-schema   # create tables, GIN/HNSW indexes, extension
 bun run retrieval:ingest:dry      # chunk and report; no database, no embedding server
 bun run retrieval:ingest:vectors:dry # validate the precomputed BGE-M3 artifact against the chunker
 bun run retrieval:ingest:vectors  # load vectors.npy + chunks.jsonl; no embedding server
+bun run retrieval:fetch:vectors   # pull embedding-output from R2 and validate it
+bun run retrieval:fetch:vectors:check # validate the local artifact only
+bun run retrieval:import:r2       # pull, validate, schema, import, postflight
+bun run retrieval:import:r2:dry   # pull, validate, chunk dry run; no database write
 bun run retrieval:ingest          # embed changed chunks through RETRIEVAL_EMBEDDING_URL
 bun run retrieval:ingest --force  # re-embed every selected chunk
 bun run retrieval:ingest --prune  # delete documents absent from the manifest
@@ -449,6 +453,25 @@ The artifact manifest pins the BGE-M3 revision and the SHA-256 of both files;
 the revision is stored on every chunk so two revisions cannot be mixed
 silently. This path needs no embedding server. The HTTP path is still required
 for query embedding at runtime.
+
+`retrieval:import:r2` is the end-to-end path. It pulls the `embedding-output`
+dataset from R2 through the shared storage module, validates the artifact with
+the lab's own `pipeline/validate.py` (manifest checksums, row alignment, chunk
+ids, text hashes, model revision and dimensions), runs the production chunker
+as a dry run, applies `retrieval:ensure-schema`, delegates the write to
+`ingest.ts --vectors`, and reads the database back. It fails before writing if
+the remote tree has no `embeddings/manifest.json` marker, if the artifact
+predates the current corpus, or if the database would mix models or revisions.
+The write itself is idempotent: an unchanged artifact reports
+`embeddedChunks=0` and `reusedChunks` equal to the chunk count on the second
+run.
+
+Use `--artifact <dir>` or `--no-pull` to import an offline directory without
+touching R2; both still validate. `--dry-run` stops after the chunker dry run
+and never creates the schema. `--force` re-embeds and retokenizes every
+selected chunk, and `--prune` deletes documents absent from the manifest.
+Set `POSTGRES_DB` to import into a scratch database without changing the
+default one.
 
 The indexer is incremental: a chunk is re-embedded only when its content hash,
 embedding model or embedding revision changed, and its postings are rebuilt
