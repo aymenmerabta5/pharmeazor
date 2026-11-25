@@ -18,6 +18,8 @@ export interface RetrievalTraceRow {
   readonly config: string;
   readonly authority_policy: string;
   readonly diagnostics: Record<string, unknown>;
+  /** Fused candidates before the result limit, for candidate-recall diagnosis. */
+  readonly candidate_chunk_ids: readonly string[];
   readonly chunks: readonly TraceChunk[];
 }
 

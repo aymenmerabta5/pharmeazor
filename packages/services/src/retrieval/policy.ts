@@ -60,6 +60,7 @@ export function normalizeRetrievalRequest(request: RetrievalRequest): {
   query: string;
   limit: number;
   filter: RetrievalFilter;
+  includeCandidateIds: boolean;
 } {
   if (!request || typeof request.query !== "string") {
     throw new RetrievalError("RETRIEVAL_INVALID_REQUEST", "A retrieval query is required");
@@ -87,6 +88,7 @@ export function normalizeRetrievalRequest(request: RetrievalRequest): {
   return {
     query,
     limit,
+    includeCandidateIds: request.includeCandidateIds === true,
     filter: {
       medicineIds: normalizeList(request.medicineIds, MEDICINE_ID, "medicineIds"),
       sectionCodes: normalizeList(request.sectionCodes, SECTION_CODE, "sectionCodes"),

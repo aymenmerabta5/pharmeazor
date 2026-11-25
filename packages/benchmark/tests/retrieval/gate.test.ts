@@ -31,6 +31,7 @@ function traceRow(questionId: string, chunkIds: string[], injectedIndex = -1): R
     config: "config",
     authority_policy: "policy",
     diagnostics: {},
+    candidate_chunk_ids: chunkIds,
     chunks: chunkIds.map((chunk_id, index) => ({
       rank: index + 1,
       chunk_id,

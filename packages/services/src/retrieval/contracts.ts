@@ -22,6 +22,11 @@ export interface RetrievalRequest {
   readonly sectionCodes?: readonly string[];
   readonly languages?: readonly string[];
   readonly sourceIds?: readonly string[];
+  /**
+   * Offline evaluation only: include the fused candidate ids before the result
+   * limit is applied. Never set this from a request path that reaches a model.
+   */
+  readonly includeCandidateIds?: boolean;
 }
 
 export interface RetrievalFilter {
@@ -193,4 +198,6 @@ export interface RetrievalResult {
   /** Prompt-ready precedence rule, so the model never has to infer it. */
   readonly authorityPolicy: string;
   readonly diagnostics: RetrievalDiagnostics;
+  /** Present only when `includeCandidateIds` was requested, for offline evaluation. */
+  readonly candidateChunkIds?: readonly string[];
 }

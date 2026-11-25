@@ -213,7 +213,7 @@ Measured with the reviewed RAG arm:
 | `bun run --cwd packages/benchmark test`                         | pass — 155 pass, 1 skip, 0 fail, 327 expect() calls                                                |
 | `bun run --cwd packages/benchmark lint`                         | pass                                                                                               |
 | `bun run --cwd packages/benchmark format:check`                 | pass                                                                                               |
-| `bun run --cwd packages/benchmark benchmark retrieval evaluate` | pass — 50 questions, gate against committed baseline                                               |
+| `bun run --cwd packages/benchmark benchmark retrieval evaluate` | pass — 50 questions; candidate recall@50 0.763 vs presented recall@20 0.49                         |
 | `bun run typecheck` (root)                                      | pass — 23/23 tasks                                                                                 |
 | `bun run test` (root)                                           | pass — 11/11 tasks                                                                                 |
 | `bun run format:check` (root)                                   | pass — 25/25 tasks                                                                                 |

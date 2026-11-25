@@ -14,6 +14,8 @@ export interface RetrievalMetrics {
     readonly "precision@10": number;
     readonly mrr: number;
     readonly "ndcg@10": number;
+    readonly "candidate_recall@20": number;
+    readonly "candidate_recall@50": number;
   };
   readonly per_question: readonly {
     readonly question_id: string;
@@ -78,6 +80,8 @@ export function computeRetrievalMetrics(
   const precision10: number[] = [];
   const reciprocalRanks: number[] = [];
   const ndcg10: number[] = [];
+  const candidateRecall20: number[] = [];
+  const candidateRecall50: number[] = [];
 
   for (const row of rows) {
     const annotation = goldById.get(row.question_id);
@@ -92,6 +96,9 @@ export function computeRetrievalMetrics(
     precision10.push(precision(retrieved, relevant, 10));
     reciprocalRanks.push(reciprocalRank(retrieved, relevant));
     ndcg10.push(ndcgAt10(retrieved, relevant));
+    const candidates = unique(row.candidate_chunk_ids ?? []);
+    candidateRecall20.push(recall(candidates, relevant, 20));
+    candidateRecall50.push(recall(candidates, relevant, 50));
     perQuestion.push({
       question_id: row.question_id,
       relevant_chunk_ids: [...relevant],
@@ -113,6 +120,8 @@ export function computeRetrievalMetrics(
       "precision@10": average(precision10),
       mrr: average(reciprocalRanks),
       "ndcg@10": average(ndcg10),
+      "candidate_recall@20": average(candidateRecall20),
+      "candidate_recall@50": average(candidateRecall50),
     },
     per_question: perQuestion,
   };

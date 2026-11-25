@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-25T13:13:56.108Z",
+  "generated_at": "2026-11-25T14:49:13.699Z",
   "questions": 50,
-  "configHash": "e55cd0434a82fea18ee67e0dde9d69264c3af9c0fad36ef038dd9d982fa09692",
-  "traceHash": "e3ec4f30bfdf4d21c718cec38cab0589cd596a4f6f36f830ad2230c3d1f7424e",
+  "configHash": "53e217f47b7f26460b5bc72282b65ceee797a0133d4c7e325c156e6b10038ef7",
+  "traceHash": "c1d2c5d3ac7adb849773eab99d2f380bdd081be8e817738c13cf890d942d033a",
   "averages": {
     "recall@1": 0.17,
     "recall@5": 0.35,
@@ -11,7 +11,9 @@
     "precision@5": 0.08000000000000002,
     "precision@10": 0.05000000000000002,
     "mrr": 0.28911111111111115,
-    "ndcg@10": 0.4613147192765459
+    "ndcg@10": 0.4613147192765459,
+    "candidate_recall@20": 0.6866666666666665,
+    "candidate_recall@50": 0.7633333333333334
   },
   "per_question": [
     {
@@ -24,8 +26,8 @@
         "MED027__SRC_BDPM_FR__DOC004__notice#patient_information-1#0",
         "MED027__SRC_BDPM_FR__DOC003__notice#patient_information-1#0",
         "MED033__SRC_BDPM_FR__DOC002__rcp#pharmacodynamics-0#0",
-        "MED027__SRC_BDPM_FR__DOC001__notice#patient_information-1#0",
         "MED027__SRC_BDPM_FR__DOC002__notice#patient_information-1#0",
+        "MED027__SRC_BDPM_FR__DOC001__notice#patient_information-1#0",
         "MED033__SRC_BDPM_FR__DOC001__rcp#pharmacodynamics-0#0",
         "MED033__SRC_BDPM_FR__DOC003__rcp#pharmacodynamics-0#0",
         "MED033__SRC_BDPM_FR__DOC004__rcp#pharmacodynamics-0#0",
@@ -448,15 +450,15 @@
       "retrieved_chunk_ids": [
         "MED014__SRC_BDPM_FR__DOC002__rcp#indications-0#1",
         "MED013__SRC_BDPM_FR__DOC002__rcp#indications-0#1",
-        "MED013__SRC_BDPM_FR__DOC002__notice#patient_information-1#0",
         "MED014__SRC_BDPM_FR__DOC002__notice#patient_information-1#0",
         "MED014__SRC_BDPM_FR__DOC001__rcp#indications-0#1",
+        "MED013__SRC_BDPM_FR__DOC002__notice#patient_information-1#0",
         "MED013__SRC_BDPM_FR__DOC001__rcp#indications-0#1",
-        "MED013__SRC_BDPM_FR__DOC004__notice#patient_information-1#0",
         "MED014__SRC_BDPM_FR__DOC004__notice#patient_information-1#0",
-        "MED014__SRC_BDPM_FR__DOC003__rcp#indications-0#2",
+        "MED013__SRC_BDPM_FR__DOC004__notice#patient_information-1#0",
         "MED013__SRC_BDPM_FR__DOC003__rcp#indications-0#2",
         "MED014__SRC_BDPM_FR__DOC004__rcp#indications-0#2",
+        "MED014__SRC_BDPM_FR__DOC003__rcp#indications-0#2",
         "MED013__SRC_BDPM_FR__DOC004__rcp#indications-0#2"
       ],
       "relevant_in_top10": []
@@ -652,14 +654,14 @@
         "MED013__SRC_PHARMNET_CATALOG__NOMENCLATURE#nomenclature_non_renewed-0#0",
         "MED014__SRC_PHARMNET_CATALOG__NOMENCLATURE#nomenclature_registered-0#0",
         "MED022__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED008__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED014__SRC_PHARMNET_CATALOG__NOMENCLATURE#nomenclature_non_renewed-0#0",
-        "MED013__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED003__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED030__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED020__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED034__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED040__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0"
+        "MED013__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED027__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED003__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED008__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED030__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED004__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0"
       ],
       "relevant_in_top10": [
         "MED014__SRC_PHARMNET_CATALOG__NOMENCLATURE#nomenclature_registered-0#0"
@@ -681,8 +683,8 @@
         "MED010__SRC_DAILYMED__DOC002__label#warnings-2#0",
         "MED010__SRC_BDPM_FR__DOC001__rcp#indications-0#0",
         "MED010__SRC_DAILYMED__DOC001__label#pregnancy-1#2",
-        "MED013__SRC_BDPM_FR__DOC004__notice#patient_information-1#2",
-        "MED014__SRC_BDPM_FR__DOC004__notice#patient_information-1#2"
+        "MED014__SRC_BDPM_FR__DOC004__notice#patient_information-1#2",
+        "MED013__SRC_BDPM_FR__DOC004__notice#patient_information-1#2"
       ],
       "relevant_in_top10": [
         "MED010__SRC_DAILYMED__DOC001__label#warnings-0#0"
@@ -894,18 +896,18 @@
         "MED014__SRC_PHARMNET_CATALOG__NOMENCLATURE#nomenclature_registered-0#0"
       ],
       "retrieved_chunk_ids": [
-        "MED001__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED003__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED004__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED038__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED020__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED030__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED022__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED034__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED040__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED038__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED001__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED026__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED028__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED027__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED005__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED010__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED033__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0"
+        "MED034__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED015__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED004__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED010__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0"
       ],
       "relevant_in_top10": []
     },
@@ -1116,12 +1118,12 @@
         "MED027__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED026__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED015__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED040__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED024__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED019__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED008__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
+        "MED034__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
         "MED032__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0",
-        "MED017__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0"
+        "MED033__SRC_PHARMNET_CATALOG__NOMENCLATURE#other-0#0"
       ],
       "relevant_in_top10": []
     }

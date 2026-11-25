@@ -39,8 +39,8 @@ async function main(): Promise<void> {
   const descriptor = [
     artifact.model?.repo_id ?? "BAAI/bge-m3",
     artifact.model?.revision ?? "unknown",
-    process.env.RETRIEVAL_RERANKER_URL?.trim() ? "rerank=on" : "rerank=off",
-    process.env.RETRIEVAL_REQUIRE_RERANK === "true" ? "require-rerank" : "optional-rerank",
+    `reranker=${process.env.RETRIEVAL_RERANKER_MODEL?.trim() || "none"}`,
+    `requireRerank=${process.env.RETRIEVAL_REQUIRE_RERANK === "true"}`,
     `limit=${LIMIT}`,
     "fusion=k60",
   ].join("|");
@@ -50,7 +50,7 @@ async function main(): Promise<void> {
   for (const question of questions) {
     const result = await service.search(
       { actorId: "benchmark-maintainer" },
-      { query: question.question, limit: LIMIT },
+      { query: question.question, limit: LIMIT, includeCandidateIds: true },
     );
     lines.push(
       JSON.stringify({
@@ -60,6 +60,7 @@ async function main(): Promise<void> {
         config: descriptor,
         authority_policy: result.authorityPolicy,
         diagnostics: result.diagnostics,
+        candidate_chunk_ids: result.candidateChunkIds ?? [],
         chunks: result.chunks.map((chunk, index) => ({
           rank: index + 1,
           chunk_id: chunk.chunkId,

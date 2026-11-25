@@ -57,7 +57,7 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
       if (!principal || typeof principal.actorId !== "string" || !principal.actorId.trim()) {
         throw new RetrievalError("RETRIEVAL_UNAUTHENTICATED", "Authentication required");
       }
-      const { query, limit, filter } = normalizeRetrievalRequest(request);
+      const { query, limit, filter, includeCandidateIds } = normalizeRetrievalRequest(request);
       const startedAt = now();
       const terms = queryTerms(query, RETRIEVAL_LIMITS.maxQueryTerms);
 
@@ -138,6 +138,7 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
             expandedTerms: expansion.expandedTerms,
             ambiguousAliases: expansion.ambiguousAliases,
           },
+          ...(includeCandidateIds ? { candidateChunkIds: [] as string[] } : {}),
         };
       }
 
@@ -247,6 +248,9 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
           expandedTerms: expansion.expandedTerms,
           ambiguousAliases: expansion.ambiguousAliases,
         },
+        ...(includeCandidateIds
+          ? { candidateChunkIds: fused.map((candidate) => candidate.chunkId) }
+          : {}),
       };
     },
   };
