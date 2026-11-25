@@ -1,4 +1,4 @@
-import { useAppForm } from "@/components/ui/form";
+import { useForm } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 
 /**
@@ -17,7 +17,7 @@ export function useHomePrompt() {
     router.push({ pathname: "/assistant", params: { prompt } });
   }
 
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { message: "" },
     onSubmit: ({ value }) => {
       ask(value.message);

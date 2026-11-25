@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAppForm } from "@/components/ui/form";
+import { useForm } from "@tanstack/react-form";
 import { createSignUpSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { signUpWithEmail } from "./mutations";
@@ -16,7 +16,7 @@ export function useSignUpForm() {
   const captcha = useAuthCaptcha();
   const [error, setError] = useState<string | null>(null);
   const methods = useAuthMethods(intent, navigation.dashboard, "signUp", () => setError(null));
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { name: "", email: "", password: "" },
     validators: {
       onSubmit: createSignUpSchema({

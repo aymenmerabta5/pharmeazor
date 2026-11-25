@@ -1,5 +1,5 @@
 "use client";
-import { useAppForm, useStore } from "@/components/ui/form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useAuthOwnedMutation } from "@/hooks/use-auth-owned-mutation";
 import { downloadObjectBase64 } from "./queries";
 import { removeStoredObject, uploadTextObject } from "./mutations";
@@ -15,13 +15,13 @@ function textFromBase64(value: string): string {
 }
 export function useStorageWorkspace() {
   const t = useTranslations("storage");
-  const uploadForm = useAppForm({
+  const uploadForm = useForm({
     defaultValues: { name: "note.txt", text: t("defaultText") },
     onSubmit: async ({ value }): Promise<void> => {
       await mutation.run({ kind: "upload", ...value });
     },
   });
-  const objectForm = useAppForm({
+  const objectForm = useForm({
     defaultValues: { objectId: "" },
     onSubmit: async ({ value }): Promise<void> => {
       await mutation.run({ kind: "download", id: value.objectId });

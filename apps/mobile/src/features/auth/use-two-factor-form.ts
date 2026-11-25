@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAppForm } from "@/components/ui/form";
+import { useForm } from "@tanstack/react-form";
 import { createTwoFactorChallengeSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { verifyAuthChallenge } from "./mutations";
@@ -13,7 +13,7 @@ export function useTwoFactorForm() {
   const navigation = useAuthNavigation();
   const [error, setError] = useState<string | null>(null);
   const [useBackupCode, setUseBackupCode] = useState(false);
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { code: "", trustDevice: false },
     validators: {
       onSubmit: createTwoFactorChallengeSchema(

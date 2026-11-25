@@ -1,5 +1,5 @@
 "use client";
-import { useAppForm } from "@/components/ui/form";
+import { useForm as useAppForm } from "@tanstack/react-form";
 import { createChangePasswordSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 

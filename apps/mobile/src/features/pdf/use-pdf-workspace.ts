@@ -1,6 +1,6 @@
 "use client";
 import { useRef } from "react";
-import { useAppForm, useStore } from "@/components/ui/form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { usePdfGenerator } from "./mutations";
 
 import { samplePdfData, type PdfTemplate } from "./sample-data";
@@ -10,7 +10,7 @@ import { usePlatformI18n } from "@/lib/i18n";
 export function usePdfWorkspace() {
   const t = useTranslations("pdf");
   const { locale } = usePlatformI18n();
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { template: "invoice" as PdfTemplate },
     onSubmit: async ({ value }): Promise<void> => {
       await download(value.template);

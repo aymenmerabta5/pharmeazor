@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAppForm } from "@/components/ui/form";
+import { useForm } from "@tanstack/react-form";
 import { createEmailSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { requestPasswordReset } from "./mutations";
@@ -14,7 +14,7 @@ export function useForgotPasswordForm() {
   const captcha = useAuthCaptcha();
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { email: "" },
     validators: { onSubmit: createEmailSchema(authT("validation.invalidEmail")) },
     onSubmit: async ({ value }) => {

@@ -1,5 +1,5 @@
 "use client";
-import { useAppForm } from "@/components/ui/form";
+import { useForm } from "@tanstack/react-form";
 import { organizationSchema } from "./schema";
 import { useActivateOrganizationMutation, useCreateOrganizationMutation } from "./mutations";
 import type { WorkspaceSelection } from "./use-workspace-selection";
@@ -9,7 +9,7 @@ export function useWorkspaceOrganizations(selection: WorkspaceSelection) {
   const activate = useActivateOrganizationMutation();
   const organizations = selection.queries.organizations;
   const mutationError = create.error ?? activate.error;
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { name: "", slug: "" },
     validators: { onSubmit: organizationSchema },
     onSubmit: async ({ value }) => {

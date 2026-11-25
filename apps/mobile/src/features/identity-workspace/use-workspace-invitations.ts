@@ -1,5 +1,5 @@
 "use client";
-import { useAppForm } from "@/components/ui/form";
+import { useForm } from "@tanstack/react-form";
 import { invitationSchema } from "./schema";
 import {
   useAcceptInvitationMutation,
@@ -14,7 +14,7 @@ export function useWorkspaceInvitations(selection: WorkspaceSelection) {
   const accept = useAcceptInvitationMutation();
   const cancel = useCancelInvitationMutation();
   const { organizationId, invitations, permissions } = selection.queries;
-  const form = useAppForm({
+  const form = useForm({
     defaultValues: { email: "", role: "member" as OrganizationRole },
     validators: { onSubmit: invitationSchema },
     onSubmit: async ({ value }) => {
