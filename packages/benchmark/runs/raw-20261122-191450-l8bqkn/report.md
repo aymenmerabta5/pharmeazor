@@ -124,12 +124,12 @@ _Generated 2026-11-22T19:26:38.430Z_
 **Model response:**
 
 > Selon la notice DailyMed de l’ibuprofène, un anti‑inflamatoire non stéroïdien (AINS) ne peut pas remplacer un corticoïde pour plusieurs raisons :
-> 
-> 1. **Mécanisme d’action différent**  
->    * L’ibuprofène inhibe de façon réversible les enzymes cyclo‑oxygénases (COX‑1 et COX‑2), ce qui diminue uniquement la synthèse des prostaglandines responsables de la douleur, de la fièvre et d’une partie de l’inflammation.  
->    * Les corticoïdes agissent en se liant aux récepteurs glucocorticoïdes, ce qui modifie l’expression de nombreux gènes. Ils inhibent la phospholipase A2, réduisent la production de prostaglandines **et** de leucotriènes, et suppriment la transcription de cytokines pro‑inflammatoires (IL‑1, TNF‑α, etc.).  
-> 
-> 2. **Puissance anti‑inflammatoire**  
+>
+> 1. **Mécanisme d’action différent**
+>    * L’ibuprofène inhibe de façon réversible les enzymes cyclo‑oxygénases (COX‑1 et COX‑2), ce qui diminue uniquement la synthèse des prostaglandines responsables de la douleur, de la fièvre et d’une partie de l’inflammation.
+>    * Les corticoïdes agissent en se liant aux récepteurs glucocorticoïdes, ce qui modifie l’expression de nombreux gènes. Ils inhibent la phospholipase A2, réduisent la production de prostaglandines **et** de leucotriènes, et suppriment la transcription de cytokines pro‑inflammatoires (IL‑1, TNF‑α, etc.).
+>
+> 2. **Puissance anti‑inflammatoire**
 >    * La capacité d’un corticoïde à supp
 
 #### `Q-GMK-004` — partially_correct, unsupported_claim
@@ -142,13 +142,13 @@ _Generated 2026-11-22T19:26:38.430Z_
 
 **Model response:**
 
-> Les inhibiteurs de l’enzyme de conversion (IEC ou IEC A) bloquent l’enzyme de conversion de l’angiotensine (ACE). Cette enzyme catalyse normalement la transformation de l’angiotensine I (Ang I) en angiotensine II (Ang II), un puissant vasoconstricteur qui stimule également la sécrétion d’aldostérone.  
-> 
+> Les inhibiteurs de l’enzyme de conversion (IEC ou IEC A) bloquent l’enzyme de conversion de l’angiotensine (ACE). Cette enzyme catalyse normalement la transformation de l’angiotensine I (Ang I) en angiotensine II (Ang II), un puissant vasoconstricteur qui stimule également la sécrétion d’aldostérone.
+>
 > En inhibant l’ACE  :
-> 
-> 1. **Diminution de l’Ang II** → réduction de la vasoconstriction, de la réabsorption sodée et de la sécrétion d’aldostérone → baisse de la post‑charge et de la pré‑charge, donc diminution de la pression artérielle et de la charge de travail cardiaque.  
+>
+> 1. **Diminution de l’Ang II** → réduction de la vasoconstriction, de la réabsorption sodée et de la sécrétion d’aldostérone → baisse de la post‑charge et de la pré‑charge, donc diminution de la pression artérielle et de la charge de travail cardiaque.
 > 2. **Augmentation du bradykinine** (peptide vasodilatateur normalement dégradé par l’ACE) → effets supplémentaires de vasodilatation et de protection endothéliale, mais aussi risque de toux sèche.
-> 
+>
 > Ainsi, le principal m
 
 #### `Q-MID-001` — partially_correct, unsupported_claim
@@ -161,7 +161,7 @@ _Generated 2026-11-22T19:26:38.430Z_
 
 **Model response:**
 
-> Le « Doliprane » contient comme principe actif **le paracétamol** (acetaminophène).  
+> Le « Doliprane » contient comme principe actif **le paracétamol** (acetaminophène).
 > Il appartient à la classe pharmacologique des **analgésiques/antipyrétiques non‑opioïdes** (anilides), souvent décrite comme « analgésiques et antipyrétiques à action centrale ».
 
 #### `Q-MID-002` — partially_correct, unsupported_claim
@@ -175,7 +175,7 @@ _Generated 2026-11-22T19:26:38.430Z_
 **Model response:**
 
 > **Substance active** : acide acétylsalicylique (aspirine) – 100 mg.
-> 
+>
 > **Indication principale** : prévention secondaire des événements thrombo-emboliques cardiovasculaires (ex. : infarctus du myocarde, accident vasculaire cérébral ischémique, maladie artérielle périphérique) grâce à son effet antiplaquettaire.
 
 #### `Q-MID-003` — incorrect_answer, unsupported_claim, behavior_mismatch

@@ -236,4 +236,33 @@ describe("generateMarkdownReport", () => {
     expect(report.markdown).not.toMatch(/gsk_[A-Za-z0-9_-]{10,}/);
     expect(report.markdown).not.toMatch(/GROQ_API_KEY=/);
   });
+
+  it("does not emit trailing whitespace when quoting a failing response", () => {
+    const failingEvaluation = evaluation(true);
+    if (failingEvaluation.human === null) throw new Error("expected a human score");
+    failingEvaluation.human.correctness = "INCORRECT";
+    const noisyResponse = response();
+    noisyResponse.content = "First line  \r\n\r\nSecond line \t";
+
+    const report = generateMarkdownReport({
+      metadata: meta(),
+      responses: [noisyResponse],
+      errors: [],
+      evaluation: [failingEvaluation],
+      summary: emptySummary(),
+      questionsById: new Map([
+        [
+          "Q-1",
+          {
+            category: "DOSAGE_AND_NUMERICAL_KNOWLEDGE",
+            therapeutic_class: "Paracétamol",
+            question: "Q?",
+          },
+        ],
+      ]),
+    });
+
+    expect(report.markdown).toContain("Representative answer failures");
+    expect(report.markdown).not.toMatch(/[ \t]+$/m);
+  });
 });

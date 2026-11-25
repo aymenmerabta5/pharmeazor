@@ -194,7 +194,13 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
         }
         L.push("**Model response:**");
         L.push("");
-        L.push("> " + s.response.slice(0, MAX_RESPONSE_PREVIEW).replace(/\n/g, "\n> "));
+        const quoted = s.response
+          .slice(0, MAX_RESPONSE_PREVIEW)
+          .split(/\r?\n/)
+          .map((line) => line.trimEnd())
+          .map((line) => (line.length === 0 ? ">" : `> ${line}`))
+          .join("\n");
+        L.push(quoted);
         L.push("");
       }
     }
