@@ -1,7 +1,7 @@
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/components/ui/form";
 import type { AgentSend } from "./use-agent-conversation";
 export function useAgentPrompt(send: AgentSend, invalidMessage: string) {
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: { message: "" },
     validators: {
       onSubmit: ({ value }) =>

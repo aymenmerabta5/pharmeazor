@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/components/ui/form";
 import { createResetPasswordSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { resetPassword } from "./mutations";
@@ -20,7 +20,7 @@ export function useResetPasswordForm(token: string, queryError: string | null) {
       ? null
       : t("resetPassword.missingToken");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: { newPassword: "", confirmPassword: "" },
     validators: {
       onSubmit: createResetPasswordSchema({

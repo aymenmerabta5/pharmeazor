@@ -1,5 +1,5 @@
 "use client";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/components/ui/form";
 import { teamSchema, teamMemberSchema } from "./schema";
 import {
   useActivateTeamMutation,
@@ -15,7 +15,7 @@ export function useWorkspaceTeams(selection: WorkspaceSelection) {
   const add = useAddTeamMemberMutation();
   const remove = useRemoveTeamMemberMutation();
   const { organizationId, teamId, teams, teamMembers, members, permissions } = selection.queries;
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: { name: "" },
     validators: { onSubmit: teamSchema },
     onSubmit: async ({ value }) => {
@@ -27,7 +27,7 @@ export function useWorkspaceTeams(selection: WorkspaceSelection) {
       selection.selectTeam(outcome.data.team.id);
     },
   });
-  const memberForm = useForm({
+  const memberForm = useAppForm({
     defaultValues: { userId: "" },
     validators: { onSubmit: teamMemberSchema },
     onSubmit: async ({ value }) => {

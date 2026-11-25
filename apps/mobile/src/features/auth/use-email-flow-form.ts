@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/components/ui/form";
 import { createEmailSchema } from "@/lib/auth-validation";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { requestMagicLink, requestEmailVerification } from "./mutations";
@@ -13,7 +13,7 @@ export function useEmailFlowForm(kind: "magic-link" | "verify-email") {
   const captcha = useAuthCaptcha();
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: { email: "" },
     validators: { onSubmit: createEmailSchema(t("validation.invalidEmail")) },
     onSubmit: async ({ value }) => {

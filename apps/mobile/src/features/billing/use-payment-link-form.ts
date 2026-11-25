@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/components/ui/form";
 import type { BillingAction } from "./mutations";
 export function usePaymentLinkForm(
   provider: "chargily",
@@ -11,7 +11,7 @@ export function usePaymentLinkForm(
     planId: string;
   },
 ) {
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: { name: copy.defaultName, planId: copy.planId },
     validators: {
       onSubmit: ({ value }) =>
