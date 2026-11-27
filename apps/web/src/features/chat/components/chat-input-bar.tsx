@@ -1,8 +1,9 @@
 "use client";
-import * as React from "react";
-import { ArrowUp, Paperclip, Plus, X } from "lucide-react";
+import type * as React from "react";
+import { ArrowUp } from "lucide-react";
 import type { AttachmentStore } from "../use-attachment-store";
 import { AttachmentPreviewStrip } from "./attachment-preview-strip";
+import { ChatAttachButton } from "./chat-attach-button";
 
 /** Composer for the chat surface. */
 export function ChatInputBar({
@@ -26,28 +27,6 @@ export function ChatInputBar({
   canAttach: boolean;
   onRequireAuth(): void;
 }): React.JSX.Element {
-  const [popupOpen, setPopupOpen] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const popupRef = React.useRef<HTMLDivElement>(null);
-  const addBtnRef = React.useRef<HTMLButtonElement>(null);
-
-  /* Close popup when clicking outside */
-  React.useEffect(() => {
-    if (!popupOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (
-        popupRef.current &&
-        !popupRef.current.contains(e.target as Node) &&
-        addBtnRef.current &&
-        !addBtnRef.current.contains(e.target as Node)
-      ) {
-        setPopupOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [popupOpen]);
-
   const hasContent = value.trim().length > 0 || attachmentStore.attachments.length > 0;
   const canSend = hasContent && !busy && !attachmentStore.uploading;
 
@@ -68,76 +47,11 @@ export function ChatInputBar({
       )}
 
       <div className="ph-chat-input-inner">
-        {/* + / × attachment button */}
-        <div className="ph-attach-wrap">
-          {popupOpen && (
-            <div className="ph-attach-popup" ref={popupRef} role="menu">
-              <button
-                type="button"
-                className="ph-attach-option"
-                role="menuitem"
-                onClick={() => {
-                  setPopupOpen(false);
-                  fileInputRef.current?.click();
-                }}
-              >
-                <span className="ph-attach-icon">
-                  <Paperclip className="size-4" aria-hidden />
-                </span>
-                <span className="ph-attach-label">
-                  <span className="ph-attach-title">Add photos and files</span>
-                  <span className="ph-attach-sub">From your computer</span>
-                </span>
-              </button>
-            </div>
-          )}
-
-          <button
-            ref={addBtnRef}
-            type="button"
-            className={`ph-attach-btn${popupOpen ? " ph-attach-btn--open" : ""}`}
-            aria-label={
-              canAttach
-                ? popupOpen
-                  ? "Close attachment menu"
-                  : "Add attachment"
-                : "Sign in to add attachments"
-            }
-            aria-expanded={popupOpen}
-            onClick={() => {
-              if (!canAttach) {
-                onRequireAuth();
-                return;
-              }
-              setPopupOpen((v) => !v);
-            }}
-          >
-            {popupOpen ? (
-              <X className="size-4" aria-hidden />
-            ) : (
-              <Plus className="size-4" aria-hidden />
-            )}
-          </button>
-
-          {/* Hidden native file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.txt,.csv,.md"
-            className="sr-only"
-            aria-hidden
-            tabIndex={-1}
-            onChange={(event) => {
-              const files = event.target.files;
-              if (files && files.length > 0) {
-                attachmentStore.addFiles(files);
-              }
-              // Reset so the same file can be re-selected
-              event.target.value = "";
-            }}
-          />
-        </div>
+        <ChatAttachButton
+          attachmentStore={attachmentStore}
+          canAttach={canAttach}
+          onRequireAuth={onRequireAuth}
+        />
 
         <label htmlFor="chat-input" className="sr-only">
           {placeholder}
