@@ -4,7 +4,15 @@ import { parseArgs, printUsage } from "./common";
 import { runDatasetStats, runDatasetValidate } from "./dataset";
 import { runRawResume, runRawRun, runRawStatus } from "./raw";
 import { runOracleResume, runOracleRun } from "./oracle";
-import { runRagResume, runRagRun } from "./rag";
+import {
+  runRagGraphResume,
+  runRagGraphRun,
+  runRagRerankResume,
+  runRagRerankRun,
+  runRagResume,
+  runRagRun,
+} from "./rag";
+import { runArmsReport } from "./arms";
 import {
   runEvaluateRun,
   runReport,
@@ -37,6 +45,14 @@ async function main(argv: string[]): Promise<number> {
 
   if (command === "rag" && subcommand === "run") return runRagRun(flags);
   if (command === "rag" && subcommand === "resume") return runRagResume(flags);
+
+  if (command === "rag-rerank" && subcommand === "run") return runRagRerankRun(flags);
+  if (command === "rag-rerank" && subcommand === "resume") return runRagRerankResume(flags);
+
+  if (command === "rag-graph" && subcommand === "run") return runRagGraphRun(flags);
+  if (command === "rag-graph" && subcommand === "resume") return runRagGraphResume(flags);
+
+  if (command === "arms" && subcommand === "report") return runArmsReport(flags);
 
   if (command === "evaluate" && subcommand === "run") return runEvaluateRun(flags);
   if (command === "review" && subcommand === "prepare") return runReviewPrepare(flags);

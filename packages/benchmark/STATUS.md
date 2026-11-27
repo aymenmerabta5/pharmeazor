@@ -1,13 +1,21 @@
 # Implementation Status — @repo/benchmark
 
-_Last updated: 2026-11-25_
+_Last updated: 2026-11-27_
 
 ## Current state
 
-The package implements all three arms of the benchmark and the evaluation,
-review, reporting, and reproducibility tooling around them. The RAG arm reads a
-recorded retrieval trace produced by the offline indexer; the deterministic
-retrieval gate has a committed baseline.
+The package registers five arms and implements the evaluation, review,
+reporting, and reproducibility tooling around them. `rag` and `rag-rerank` read
+a recorded retrieval trace produced by the offline indexer in fusion and
+cross-encoder order respectively. `rag-graph` is scaffolded and refuses to run
+until its own trace exists; it never falls back to the base trace. The
+deterministic retrieval gate has a committed baseline and was left unchanged.
+
+The old per-run artifacts (`raw-*`, `oracle-*`, `rag-*`, `compare-*.md`, and the
+generated `retrieval-metrics.json`) were cleared when the arm registry changed.
+`retrieval-baseline.json` is retained as the CI gate reference. Historical
+single-review numbers remain in `PROVISIONAL_BASELINES.*`; the old `rag` figure
+now corresponds to `rag-rerank`, not the fusion-order `rag` arm.
 
 | Area                          | State                                                                             |
 | ----------------------------- | --------------------------------------------------------------------------------- |
@@ -15,12 +23,14 @@ retrieval gate has a committed baseline.
 | Gold annotations              | 50 `VERIFIED` corpus-derived annotations with reconciled sign-off fields          |
 | Raw arm (`raw`)               | implemented, tested, live run reviewed (single review)                            |
 | Oracle arm (`oracle`)         | implemented, tested, curated bundles populated, live run reviewed (single review) |
-| RAG arm (`rag`)               | implemented, reviewed (single review); `retrievalGap` and `systemGain` measured   |
-| Retrieval gate                | implemented; recall/precision/MRR/nDCG baseline committed                         |
+| RAG arm (`rag`)               | implemented; recorded trace in fusion order                                       |
+| RAG + reranker (`rag-rerank`) | implemented; recorded trace in cross-encoder order                                |
+| RAG + graph (`rag-graph`)     | scaffolded, not ready; requires `retrieval-trace-graph.jsonl`, fails loudly       |
+| Retrieval gate                | unchanged; recall/precision/MRR/nDCG baseline committed                           |
 | Deterministic evaluation      | implemented, advisory only                                                        |
-| Human review + reconciliation | implemented; 150/150 current responses scored once                                |
-| Reporting / comparison        | implemented with identity guards; raw/oracle `compare` refusal is expected        |
-| Live runs                     | all three baselines completed, reviewed, and recorded with 0 failures per arm     |
+| Human review + reconciliation | implemented; historical 150/150 responses scored once                             |
+| Reporting / comparison        | per-run reports with retrieval block; cross-arm `arms report`; identity guards    |
+| Live runs                     | old run artifacts cleared; fresh five-arm runs required                           |
 
 `dataset stats` reports `scorable_questions: 50`. Every question, fact, retrieval
 label, and oracle passage is derived from
@@ -52,6 +62,26 @@ evidenceGain        = 0.68 − 0.16 = +0.52
 `Q-TOS-009`. They are documented and were not suppressed. Upstream
 `section_code`/metadata mismatches were likewise documented rather than patched
 in benchmark JSONL alone.
+
+## Five-arm registry
+
+`src/arms.ts` is the single source of truth for the arm names, labels and
+retrieval orderings. `benchmark arms report` selects the latest run per arm
+from recorded `run_mode` (not directory prefix, because `rag-` prefixes
+`rag-rerank-` and `rag-graph-`) and writes `runs/arms-report.md`. An arm with no
+run is listed as missing; an arm with no human review shows `N/A`, never `0%`.
+
+| Delta          | From         | To           | Meaning                       |
+| -------------- | ------------ | ------------ | ----------------------------- |
+| `evidenceGain` | `raw`        | `oracle`     | value of perfect evidence     |
+| `systemGain`   | `raw`        | `rag`        | value of the retrieval system |
+| `retrievalGap` | `oracle`     | `rag`        | retrieval headroom            |
+| `rerankGain`   | `rag`        | `rag-rerank` | value of the cross-encoder    |
+| `graphGain`    | `rag-rerank` | `rag-graph`  | value of graph expansion      |
+
+The graph arm is the only arm that cannot run today. It fails with
+`RAG + graph is not ready` rather than measuring the base trace, so `graphGain`
+stays `N/A` until the graph pipeline emits a trace.
 
 ## Design decisions
 
@@ -163,7 +193,9 @@ under `b822439d...`; their human scores were carried forward by question id into
 the new runs with only `scored_at` refreshed. No `--force` re-evaluation was
 needed for the new runs, and no live Groq quota was consumed.
 
-Current live runs:
+The live runs listed below are historical: their directories were cleared in
+the five-arm cleanup, but the recorded identity and accounting remain useful
+provenance for the scores above.
 
 | Arm      | Run ID                          | Responses | API calls | Cache hits | Failed | Live tokens | Replayed tokens |
 | -------- | ------------------------------- | --------- | --------- | ---------- | ------ | ----------- | --------------- |
@@ -184,7 +216,10 @@ The per-run artifacts, including submitted `review_primary.jsonl`, were
 force-added because `packages/benchmark/runs/` is gitignored. No API key or
 secret appears in either run directory.
 
-## Reviewed results
+## Reviewed results (historical)
+
+The run directories behind these numbers were cleared. They remain the record
+of the earlier three-arm review, not a current five-arm result.
 
 | Arm      | Correct     | Partially correct | Incorrect  | Safety (safe) | Responses with any unsupported claim |
 | -------- | ----------- | ----------------- | ---------- | ------------- | ------------------------------------ |
@@ -197,12 +232,18 @@ numerical and abstention denominators. Advisory deterministic signals and their
 deltas are tabulated in
 [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md).
 
-Measured with the reviewed RAG arm:
+Measured with the old reviewed RAG arm (recorded/reranked order):
 
-- `retrievalGap = oracle − rag = 0.68 − 0.46 = +0.22`
-- `systemGain = rag − raw = 0.46 − 0.16 = +0.30`
+- `retrievalGap = oracle - rag = 0.68 - 0.46 = +0.22`
+- `systemGain = rag - raw = 0.46 - 0.16 = +0.30`
 
-## Final gates
+These two deltas now belong to `rag-rerank`. The fusion-order `rag` arm has no
+reviewed run yet.
+
+## Final gates (historical baseline)
+
+This table records the gates run on the reviewed three-arm state. It is not a
+claim that the current five-arm tree passed those repository-wide gates.
 
 | Gate                                                            | Result                                                                                             |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -228,11 +269,31 @@ All gates ran from a clean checkout where needed so local ignored artifacts
 (such as `apps/eve/`) could not distort repository-wide checks. No detector,
 exception, or safeguard was suppressed or weakened to obtain these results.
 
+## Local verification after the five-arm cleanup
+
+The benchmark was not executed; no live Groq call was made and no retrieval
+gate baseline was rewritten. The checks actually run on the current tree:
+
+| Check                                                                | Result                                        |
+| -------------------------------------------------------------------- | --------------------------------------------- |
+| `bun run --cwd packages/benchmark typecheck`                         | pass - 81 files, no type errors               |
+| `bun run --cwd packages/benchmark test`                              | pass - 175 pass, 1 skip, 0 fail               |
+| `bun run --cwd packages/benchmark lint`                              | pass                                          |
+| `bun run --cwd packages/benchmark format:check`                      | pass                                          |
+| `bun run --cwd packages/benchmark benchmark help`                    | pass - all five arms and `arms report` listed |
+| `bun run --cwd packages/benchmark benchmark rag-graph run --limit 1` | expected failure - `RAG + graph is not ready` |
+
+`bun install --frozen-lockfile` was run first because the existing workspace
+junctions pointed at a deleted directory; no lockfile or dependency version
+changed.
+
 ## Remaining work
 
 1. Raise retrieval quality: measured recall@20 is 0.49 against the 0.90 target;
    tune one stage at a time and re-run the golden set.
 2. Add judge-based generation metrics as a nightly trend, not a merge gate.
-3. Restore the generator-owned seven-day dependency release-age delay when a
+3. Produce `data/v1/retrieval-trace-graph.jsonl` from the graph pipeline before
+   the `rag-graph` arm can run; it must never fall back to the base trace.
+4. Restore the generator-owned seven-day dependency release-age delay when a
    GhostInit release supports Bun 1.4.5 (repository follow-up, not benchmark
    scope).

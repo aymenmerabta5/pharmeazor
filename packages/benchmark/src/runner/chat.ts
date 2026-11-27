@@ -16,8 +16,9 @@ import {
 } from "../storage/fs";
 import { RATE_LIMITS_FREE_TIER, type GenerationConfig } from "../config/generation";
 import { buildProvenance } from "../config/provenance";
+import { ARM_LABELS, isRetrievalArm, type BenchmarkArm } from "../arms";
 
-export type BenchmarkArm = "raw" | "oracle" | "rag";
+export type { BenchmarkArm };
 
 export interface ChatBenchmarkInput {
   runId: string;
@@ -41,10 +42,10 @@ export interface ChatBenchmarkInput {
    */
   rateLimiter?: RateLimiter;
   annotationsHash?: string | null;
-  /** Oracle only: curated passages keyed by question id. */
+  /** Evidence arm: passages keyed by question id (oracle or a retrieval arm). */
   evidenceByQuestionId?: ReadonlyMap<string, readonly EvidencePassage[]>;
   evidenceHash?: string | null;
-  /** RAG only: hash of the recorded retrieval configuration. */
+  /** Retrieval arms only: hash of the recorded retrieval configuration. */
   retrievalConfigHash?: string | null;
   /** Builds the single user message for a question. */
   buildUserMessage: (question: Question) => string;
@@ -156,8 +157,8 @@ export async function runChatBenchmark(input: ChatBenchmarkInput): Promise<ChatR
     throw new Error(
       input.mode === "oracle"
         ? "no question has oracle evidence; curate evidence_bundle entries before an oracle run"
-        : input.mode === "rag"
-          ? "no question has retrieved passages; regenerate the retrieval trace before a RAG run"
+        : isRetrievalArm(input.mode)
+          ? `no question has retrieved passages for the ${ARM_LABELS[input.mode]} arm; regenerate its retrieval trace before running it`
           : input.allowDraft
             ? "no questions available in the dataset"
             : "no APPROVED questions are available; a pharmacist must approve at least one question before a scored run. Use --allow-draft to run on draft questions for pipeline testing only.",
@@ -214,7 +215,7 @@ export async function runChatBenchmark(input: ChatBenchmarkInput): Promise<ChatR
     skipped_question_ids: skipped,
     provenance,
     evidence_hash: input.evidenceHash ?? null,
-    retrieval_config_hash: input.mode === "rag" ? (input.retrievalConfigHash ?? null) : null,
+    retrieval_config_hash: isRetrievalArm(input.mode) ? (input.retrievalConfigHash ?? null) : null,
     cumulative_usage: cumulative,
   };
 

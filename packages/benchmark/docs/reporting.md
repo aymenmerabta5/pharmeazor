@@ -6,9 +6,9 @@ Every run directory (`packages/benchmark/runs/<run_id>/`) contains:
 
 | File                            | Producer                        | Purpose                                                        |
 | ------------------------------- | ------------------------------- | -------------------------------------------------------------- |
-| `run_metadata.json`             | `raw`/`oracle` run and resume   | experiment config, identity, provenance, cumulative usage      |
-| `responses.jsonl`               | `raw`/`oracle` run              | one line per answered question, with cache_key, usage, latency |
-| `errors.jsonl`                  | `raw`/`oracle` run              | one line per failed question (bounded retry) with error class  |
+| `run_metadata.json`             | any arm's run and resume        | experiment config, identity, provenance, cumulative usage      |
+| `responses.jsonl`               | any arm's run                   | one line per answered question, with cache_key, usage, latency |
+| `errors.jsonl`                  | any arm's run                   | one line per failed question (bounded retry) with error class  |
 | `evaluation.jsonl`              | `evaluate run`, `review submit` | deterministic signals + human score                            |
 | `summary.json`                  | `summary`, `report`             | aggregated metrics with explicit denominators                  |
 | `report.md`                     | `summary`, `report`             | human-readable experiment report                               |
@@ -20,18 +20,27 @@ The oracle arm writes the same artifacts in the same layout, with
 `run_mode: "oracle"` and `evidence_hash` in the metadata. Only questions with a
 non-empty bundle are sent; the rest are listed in `skipped_question_ids`.
 
-The RAG arm writes the same layout with `run_mode: "rag"`,
-`retrieval_config_hash`, and `evidence_hash` set to the retrieval trace hash. The
-trace itself is a dataset artifact at `data/v1/retrieval-trace.jsonl`; the
-deterministic gate writes `runs/retrieval-metrics.json` and compares against
-`runs/retrieval-baseline.json`.
+The three retrieval arms write the same layout with `run_mode` set to `rag`,
+`rag-rerank` or `rag-graph`, plus `retrieval_config_hash` and an `evidence_hash`
+derived from the trace hash. `rag` reads `data/v1/retrieval-trace.jsonl` in
+fusion order, `rag-rerank` reads the same trace in cross-encoder order, and
+`rag-graph` reads `data/v1/retrieval-trace-graph.jsonl` in recorded order. The
+graph trace does not exist yet, so that arm fails before any run directory is
+created and never falls back to the base trace.
+
+The deterministic gate writes `runs/retrieval-metrics.json` and compares against
+the committed `runs/retrieval-baseline.json`. It scores the trace's recorded
+order and is deliberately unchanged by the arm split; changing it invalidates
+the baseline. `runs/arms-report.md` is the cross-arm report and is regenerated
+by `benchmark arms report`.
 
 ## Report structure (`report.md`)
 
 1. **Experiment** — run id, dates, status, run mode, model, model revision,
    provider, provider SDK versions, prompt version, system prompt hash, dataset
    version + hash, selection hash, selected/skipped counts, annotations hash,
-   evidence hash (oracle only), reasoning effort, temperature, seed, git sha,
+   evidence hash (oracle bundle or retrieval trace), retrieval config hash and
+   ordering (retrieval arms), reasoning effort, temperature, seed, git sha,
    question and request counts, API calls, failed attempts, cache hits, live and
    replayed token totals, average latency.
 2. **Generation settings** — the exact `generation` block used.
@@ -39,15 +48,19 @@ deterministic gate writes `runs/retrieval-metrics.json` and compares against
    percentage is written as `n/d (pct)`. When the denominator is zero the
    cell shows `N/A (0)`, never `0%`. When `human_reviewed = 0` a prominent
    banner appears stating that no review has been submitted.
-4. **Grounding** — evidence arms only: responses with a bundle, responses
+4. **Retrieval** - retrieval arms only: ordering, config and trace hashes,
+   questions with passages, average returned chunks, and recall@k, MRR, nDCG@10
+   and candidate recall@50 against gold chunk ids. Retrieval is reported
+   separately from generation so a regression names the layer that moved.
+5. **Grounding** - evidence arms only: responses with a bundle, responses
    citing at least one passage, uncited answers, parsed citations, invalid
    citations, citation validity rate, and unsupported numbers. Deterministic
    only; the human verdict still governs.
-5. **Error analysis** — failed requests (bounded to 5) and representative
+6. **Error analysis** - failed requests (bounded to 5) and representative
    answer-quality failures (bounded to 5), each listing the question, the
    model response, expected vs detected behavior, and the human score if
    available.
-6. **Notes** — denominators, NOT_APPLICABLE handling, and arm-specific
+7. **Notes** - denominators, NOT_APPLICABLE handling, and arm-specific
    limitations.
 
 **Secrets are never written to the report.** `reporting/markdown.ts`
@@ -67,7 +80,7 @@ runs:
 - `dataset_version`
 - `dataset_hash`
 - `total_questions`
-- `run_mode` (`raw | oracle | rag`)
+- `run_mode` (`raw | oracle | rag | rag-rerank | rag-graph`)
 - `generation` (whole object)
 - `selection_hash` when both runs recorded one
 - `system_prompt_hash` when both runs recorded one
@@ -94,6 +107,28 @@ SDK versions so the difference is visible.
 
 **The model or provider is never switched on the user's behalf.** A 429 or
 outage is reported, not worked around by swapping to another provider.
+
+## Cross-arm report (`benchmark arms report`)
+
+`benchmark compare` refuses to compare different arms because they are not the
+same experiment. `benchmark arms report` is the complementary view: it finds
+the latest run for each of the five arms by recorded `run_mode`, verifies that
+the requested run really belongs to that arm, and writes
+`runs/arms-report.md` with:
+
+- an arms table with correct / incorrect / safe / unsupported-claim rates using
+  explicit `n/d (pct)` denominators;
+- a retrieval-quality table for the three retrieval arms, using each arm's
+  ordering;
+- the five deltas - `evidenceGain`, `systemGain`, `retrievalGap`, `rerankGain`,
+  and `graphGain` - between the correct rates of human-reviewed responses;
+- a missing-arm list and a note that `rag-graph` is not ready.
+
+An arm with no run is absent from the table rather than zero-filled. An arm with
+no human review shows `N/A (0)`, never `0%`; a delta that cannot be computed
+shows `N/A` with the reason. `--raw`, `--oracle`, `--rag`, `--rag-rerank` and
+`--rag-graph` pin explicit run ids; a pinned run with the wrong `run_mode` is
+rejected.
 
 ## Reproducibility (`benchmark reproduce`)
 
@@ -155,17 +190,17 @@ the unanswered questions remain resumable.
 
 `run_metadata.json` also stores exactly what made the experiment:
 
-| Field                             | Meaning                                                    |
-| --------------------------------- | ---------------------------------------------------------- |
-| `selection_hash`                  | SHA-256 over the selected question ids, in run order       |
-| `selected_question_ids`           | the exact ids, so a resume can rebuild the slice           |
-| `skipped_question_ids`            | questions excluded because no oracle evidence was supplied |
-| `evidence_hash`                   | SHA-256 over the oracle bundle (oracle runs only)          |
-| `provenance.system_prompt_hash`   | SHA-256 of the exact system prompt text                    |
-| `provenance.temperature` / `seed` | `null` means deliberately unset, not unknown               |
-| `provenance.model_revision`       | provider-reported revision, when the provider reports one  |
-| `provenance.sdk`                  | `ai` and `@ai-sdk/groq` versions                           |
-| `provenance.runtime`              | Bun, Node, and platform versions                           |
+| Field                             | Meaning                                                     |
+| --------------------------------- | ----------------------------------------------------------- |
+| `selection_hash`                  | SHA-256 over the selected question ids, in run order        |
+| `selected_question_ids`           | the exact ids, so a resume can rebuild the slice            |
+| `skipped_question_ids`            | questions excluded because the arm had no evidence for them |
+| `evidence_hash`                   | oracle bundle hash or retrieval trace hash (evidence arms)  |
+| `provenance.system_prompt_hash`   | SHA-256 of the exact system prompt text                     |
+| `provenance.temperature` / `seed` | `null` means deliberately unset, not unknown                |
+| `provenance.model_revision`       | provider-reported revision, when the provider reports one   |
+| `provenance.sdk`                  | `ai` and `@ai-sdk/groq` versions                            |
+| `provenance.runtime`              | Bun, Node, and platform versions                            |
 
 A run id is also guarded at resume time: reusing a run id with a different
 selection of the same size throws `SelectionMismatchError` instead of merging

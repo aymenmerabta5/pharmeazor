@@ -2,7 +2,7 @@
 
 ## Philosophy
 
-The benchmark measures three evidence conditions, not three models. Correctness
+The benchmark measures five evidence conditions, not five models. Correctness
 is a medical judgment and cannot be scored reliably by another LLM, so:
 
 - A **deterministic layer** computes suggested signals from rules (fact
@@ -13,18 +13,21 @@ is a medical judgment and cannot be scored reliably by another LLM, so:
   `gold_annotations.jsonl` and are only used to compare against the response.
 - No second generative model is used as a judge.
 
-The three arms share the same questions, the same model, and the same safety
+The five arms share the same questions, the same model, and the same safety
 rules. The only intended difference is the evidence supplied.
 
 ```text
-evidenceGain = oracle − raw
-retrievalGap = oracle − rag
-systemGain   = rag − raw
+evidenceGain = oracle     - raw
+systemGain   = rag        - raw
+retrievalGap = oracle     - rag
+rerankGain   = rag-rerank - rag
+graphGain    = rag-graph  - rag-rerank
 ```
 
-`oracle` is a ceiling, not a product claim. The `rag` arm reads the recorded
-retrieval trace and is scored with the same rubric; `retrievalGap` and
-`systemGain` are reported in the baseline once its human review is submitted.
+`oracle` is a ceiling, not a product claim. `rag` and `rag-rerank` read the same
+recorded trace in fusion and cross-encoder order respectively and are scored
+with the same rubric. `rag-graph` is scaffolded and has no reviewed run; its
+delta stays `N/A` until the graph pipeline emits a trace.
 
 ## Deterministic signals (computed, never final)
 
@@ -124,10 +127,12 @@ review file with `--reviewer reconciler`.
 
 - **Does** evaluate: answer accuracy, factual completeness, unsupported
   claims, numerical correctness against the reference, abstention behavior,
-  safety-language signals, and (oracle/rag arms) citation mechanics.
+  safety-language signals, and (oracle and retrieval arms) citation mechanics.
 - **Retrieval quality** is measured separately by `benchmark retrieval evaluate`
   over the recorded trace, using `relevant_chunk_ids` for `recall@k`,
-  `precision@k`, `MRR` and `nDCG@10`. It is a deterministic PR gate.
+  `precision@k`, `MRR` and `nDCG@10`. It is a deterministic PR gate whose
+  baseline is unchanged by the five-arm split. Per-run reports also include an
+  arm-ordering-specific retrieval table.
 - **Does not** score correctness with an LLM. Ever.
 
 ## Adding a new metric

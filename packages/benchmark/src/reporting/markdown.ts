@@ -2,6 +2,8 @@ import type { RunMetadata, ResponseLine, ErrorLine } from "../storage/fs";
 import type { EvaluationRecord } from "../evaluation/schema";
 import type { SummaryMetrics, SliceMetrics } from "../evaluation/metrics";
 import { computeGroundingSummary } from "../evaluation/grounding";
+import { ARM_RETRIEVAL_ORDERING, armLabel, isRetrievalArm } from "../arms";
+import type { RetrievalReportInput } from "./retrieval";
 
 const MAX_FAILURE_SAMPLES = 5;
 const MAX_RESPONSE_PREVIEW = 800;
@@ -19,6 +21,8 @@ export interface ReportInput {
   evaluation: readonly EvaluationRecord[];
   summary: SummaryMetrics;
   questionsById: Map<string, QuestionLookup>;
+  /** Present for the three retrieval arms; absent for raw and oracle. */
+  retrieval?: RetrievalReportInput;
 }
 
 export interface GeneratedReport {
@@ -46,6 +50,7 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
     ["Started", metadata.started_at],
     ["Updated", metadata.updated_at],
     ["Status", metadata.status],
+    ["Arm", armLabel(metadata.run_mode)],
     ["Run mode", metadata.run_mode ?? "raw"],
     ["Model", metadata.model_id],
     ["Model revision", metadata.provenance?.model_revision ?? "(not reported)"],
@@ -70,8 +75,9 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
     ...(metadata.run_mode === "oracle"
       ? ([["Evidence hash", metadata.evidence_hash ?? "(not recorded)"]] as [string, string][])
       : []),
-    ...(metadata.run_mode === "rag"
+    ...(isRetrievalArm(metadata.run_mode)
       ? ([
+          ["Retrieval ordering", ARM_RETRIEVAL_ORDERING[metadata.run_mode]],
           ["Retrieval config hash", metadata.retrieval_config_hash ?? "(not recorded)"],
           ["Retrieval trace hash", metadata.evidence_hash ?? "(not recorded)"],
         ] as [string, string][])
@@ -133,6 +139,40 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
       : formatSliceTable(summary.by_therapeutic_class),
   );
   L.push("");
+
+  // --- Retrieval (retrieval arms only) ---
+  if (input.retrieval) {
+    const r = input.retrieval;
+    L.push("## Retrieval");
+    L.push("");
+    L.push(
+      `Ordering: **${orderingLabel(r.ordering)}**. Retrieval quality is measured against the gold chunk ids, ` +
+        "separately from answer quality, so a regression names the layer that moved.",
+    );
+    L.push("");
+    L.push("| Signal | Value |");
+    L.push("|---|---|");
+    L.push(`| Retrieval arm | ${armLabel(r.arm)} |`);
+    L.push(`| Ordering | ${orderingLabel(r.ordering)} |`);
+    L.push(`| Retrieval config hash | ${r.config_hash} |`);
+    L.push(`| Trace hash | ${r.trace_hash} |`);
+    L.push(`| Questions in run | ${r.questions_in_run} |`);
+    L.push(`| Questions with at least one passage | ${r.questions_with_passages} |`);
+    L.push(`| Average returned chunks | ${r.average_returned_chunks.toFixed(1)} |`);
+    L.push(`| Gold-annotated questions | ${r.questions_with_annotations} |`);
+    L.push(`| Recall@5 | ${pct(r.recall_at_5)} |`);
+    L.push(`| Recall@10 | ${pct(r.recall_at_10)} |`);
+    L.push(`| MRR | ${r.mrr === null ? "N/A" : r.mrr.toFixed(4)} |`);
+    L.push(`| nDCG@10 | ${r.ndcg_at_10 === null ? "N/A" : r.ndcg_at_10.toFixed(4)} |`);
+    L.push(`| Candidate recall@50 | ${pct(r.candidate_recall_at_50)} |`);
+    L.push("");
+    if (r.questions_with_annotations === 0) {
+      L.push(
+        "> No gold annotation covers this run's question selection, so retrieval metrics are N/A.",
+      );
+      L.push("");
+    }
+  }
 
   // --- Grounding (evidence arms only) ---
   if ((metadata.run_mode ?? "raw") !== "raw") {
@@ -220,9 +260,31 @@ export function generateMarkdownReport(input: ReportInput): GeneratedReport {
     L.push(
       "- This is the closed-book raw arm. Citation accuracy and evidence faithfulness are NOT_APPLICABLE because no evidence was supplied.",
     );
-  } else {
+  } else if (metadata.run_mode === "oracle") {
     L.push(
-      "- This is an evidence arm. The grounding table is deterministic and advisory; the human review is authoritative.",
+      "- This is the oracle arm: curated evidence, not retrieval. It is the ceiling, not a product claim.",
+    );
+    L.push(
+      "- The grounding table is deterministic and advisory; the human review is authoritative.",
+    );
+  } else if (metadata.run_mode === "rag-rerank") {
+    L.push(
+      "- This is the RAG + reranker arm. It differs from `rag` only in passage ordering: the cross-encoder order instead of the fusion order.",
+    );
+    L.push(
+      "- The grounding table is deterministic and advisory; the human review is authoritative.",
+    );
+  } else if (metadata.run_mode === "rag-graph") {
+    L.push(
+      "- This is the RAG + graph arm. It reads a graph trace and never falls back to the base retrieval trace.",
+    );
+    L.push(
+      "- The grounding table is deterministic and advisory; the human review is authoritative.",
+    );
+  } else {
+    L.push("- This is the RAG arm: hybrid retrieval in fusion order, with no reranker.");
+    L.push(
+      "- The grounding table is deterministic and advisory; the human review is authoritative.",
     );
   }
   L.push("");
@@ -286,6 +348,16 @@ function formatSliceTable(slices: SliceMetrics[]): string {
 function rateStr(n: number, d: number): string {
   if (d === 0) return "N/A (0)";
   return `${n}/${d} (${((n / d) * 100).toFixed(1)}%)`;
+}
+
+function pct(value: number | null): string {
+  return value === null ? "N/A" : `${(value * 100).toFixed(1)}%`;
+}
+
+function orderingLabel(ordering: "fusion" | "rerank" | "recorded"): string {
+  if (ordering === "fusion") return "reciprocal-rank fusion (no reranker)";
+  if (ordering === "rerank") return "cross-encoder rerank";
+  return "recorded trace order";
 }
 
 interface FailureSample {

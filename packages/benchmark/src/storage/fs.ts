@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { RunProvenance } from "../config/provenance";
+import type { BenchmarkArm } from "../arms";
 
 export interface CumulativeUsage {
   api_calls: number;
@@ -35,7 +36,7 @@ export interface RunMetadata {
   generation: Record<string, unknown>;
   total_questions: number;
   allow_draft: boolean;
-  run_mode?: "raw" | "oracle" | "rag";
+  run_mode?: BenchmarkArm;
   annotations_hash?: string | null;
   /** Exact question selection of the run; guards `--category`/`--limit` drift. */
   selection_hash?: string;

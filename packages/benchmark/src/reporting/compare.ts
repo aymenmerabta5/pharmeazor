@@ -1,6 +1,7 @@
 import type { RunMetadata } from "../storage/fs";
 import type { EvaluationRecord } from "../evaluation/schema";
 import type { SummaryMetrics } from "../evaluation/metrics";
+import { isRetrievalArm } from "../arms";
 
 export interface ComparableRun {
   metadata: RunMetadata;
@@ -107,14 +108,15 @@ export function compareRuns(a: ComparableRun, b: ComparableRun): ComparisonResul
     }
   }
 
-  // Retrieval identity for the RAG arm.
-  if (aMode === "rag" || bMode === "rag") {
+  // Retrieval identity for the retrieval arms.
+  if (isRetrievalArm(aMode) || isRetrievalArm(bMode)) {
     const aConfig = a.metadata.retrieval_config_hash ?? null;
     const bConfig = b.metadata.retrieval_config_hash ?? null;
-    const missing = (aMode === "rag" && aConfig === null) || (bMode === "rag" && bConfig === null);
+    const missing =
+      (isRetrievalArm(aMode) && aConfig === null) || (isRetrievalArm(bMode) && bConfig === null);
     if (missing) {
       warnings.push(
-        "At least one RAG run is missing retrieval_config_hash; retrieval compatibility cannot be verified.",
+        "At least one retrieval run is missing retrieval_config_hash; retrieval compatibility cannot be verified.",
       );
     } else if (aConfig !== null && bConfig !== null) {
       checks.push(checkField("retrieval_config_hash", aConfig, bConfig));

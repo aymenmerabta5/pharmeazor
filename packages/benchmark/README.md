@@ -1,30 +1,42 @@
 # @repo/benchmark
 
-Three-arm LLM benchmark for PHARMEAZOR. It measures the same model on the same
-human-reviewed questions under three evidence conditions:
+Five-arm LLM benchmark for PHARMEAZOR. It measures the same model on the same
+human-reviewed questions under five evidence conditions. Only the evidence
+condition changes, which is what makes the deltas interpretable:
 
-| Arm      | Input to the model                       | Status                                |
-| -------- | ---------------------------------------- | ------------------------------------- |
-| `raw`    | the question only                        | implemented, reviewed (single review) |
-| `oracle` | the question + a curated evidence bundle | implemented, reviewed (single review) |
-| `rag`    | the question + recorded retrieval trace  | implemented, reviewed (single review) |
+| Arm          | Input to the model                               | Status                                     |
+| ------------ | ------------------------------------------------ | ------------------------------------------ |
+| `raw`        | the question only                                | implemented                                |
+| `oracle`     | the question + a curated evidence bundle         | implemented; ceiling, not a product claim  |
+| `rag`        | question + recorded passages in **fusion** order | implemented                                |
+| `rag-rerank` | question + recorded passages in **rerank** order | implemented                                |
+| `rag-graph`  | question + passages from a graph retrieval trace | scaffolded, **not ready** (no graph trace) |
+
+`rag` and `rag-rerank` read the same recorded trace and differ _only_ in passage
+ordering: `rag` sorts by the recorded reciprocal-rank-fusion score, while
+`rag-rerank` keeps the cross-encoder order. The graph arm reads
+`data/v1/retrieval-trace-graph.jsonl` and exits with a clear error if it is
+absent; it never falls back to the base trace and cannot silently report a graph
+number measured without a graph.
 
 The deltas are the point, not any single score:
 
 ```text
-evidenceGain = oracle − raw   how much perfect evidence is worth
-retrievalGap = oracle − rag   how much retrieval loses versus perfect evidence
-systemGain   = rag − raw      how much the full system adds over the model alone
+evidenceGain = oracle     - raw        how much perfect evidence is worth
+systemGain   = rag        - raw        how much retrieval adds over the model alone
+retrievalGap = oracle     - rag        headroom retrieval leaves on the table
+rerankGain   = rag-rerank - rag        value of the cross-encoder ordering
+graphGain    = rag-graph  - rag-rerank value of graph-expanded retrieval
 ```
 
-`oracle` is the ceiling, not a product claim. If `rag` is close to `oracle`,
-retrieval is doing its job; the gap is the headroom left on the table.
+`benchmark arms report` renders all five arms side by side with explicit `N/A`
+handling; an unrun or unreviewed arm is never printed as `0%`.
 
 The package is **independent** of the production app, `@repo/api`, and the
 retrieval code under `packages/modules`. It is a workspace member that can run
-standalone. The `rag` arm reads a recorded retrieval trace produced by the
-offline indexer; it does not import app internals into the benchmark core and
-does not need a live TEI or Postgres at scoring time.
+standalone. The retrieval arms read a recorded retrieval trace produced by the
+offline indexer; they do not import app internals into the benchmark core and do
+not need a live TEI or Postgres at scoring time.
 
 ## Status
 
@@ -34,12 +46,15 @@ are `VERIFIED`, so `dataset stats` reports `scorable_questions: 50`. Every answe
 fact, retrieval label, and oracle passage is derived from
 `tooling/embedding-lab/output/embeddings/chunks.jsonl` using real chunk ids and
 verbatim text. Dataset sign-off has been reconciled into the strict JSONL fields
-and documented in `data/v1/PHARMACIST_SIGNOFF_README.md`. Live `raw` and `oracle`
-baselines each have 50/50 submitted response reviews. The measured
-`evidenceGain` is **+52 percentage points** (raw 16% correct, oracle 68%
-correct); see [`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md).
-The filename is historical. These are single-review benchmark scores, not a
-clinical recommendation, and the RAG arm is still deferred.
+and documented in `data/v1/PHARMACIST_SIGNOFF_README.md`. The historical single
+review scores are preserved in
+[`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md); the measured
+`evidenceGain` was **+52 percentage points** (raw 16% correct, oracle 68%
+correct). The filename is historical. Those are single-review benchmark scores,
+not a clinical recommendation. The per-run artifacts they were computed from
+were cleared when the benchmark moved to five arms, so fresh runs are required
+to reproduce the new deltas. `runs/retrieval-baseline.json` is the CI gate
+reference and is deliberately retained.
 
 ## Requirements
 
@@ -55,12 +70,14 @@ clinical recommendation, and the RAG arm is still deferred.
     docs/evaluation.md           deterministic rubric, human review, metrics
     docs/reporting.md            run artifacts, comparison, reproducibility
     src/dataset/                 schemas, loaders, validators, hashing
-    src/prompts/                 versioned system prompts (raw-v1, oracle-v1)
+    src/prompts/                 versioned system prompts (raw-v1, oracle-v1, rag-v1)
     src/providers/groq/          SDK adapter and error classification
-    src/runner/                  shared runner, raw arm, oracle arm, cache, limits
+    src/runner/                  shared runner, raw/oracle/retrieval arms, cache, limits
     src/oracle/                  evidence-bundle loading and hashing
+    src/retrieval/               trace loading, arm orderings, gateway, gate metrics
+    src/arms.ts                  five-arm registry, labels and ordering map
     src/evaluation/              deterministic signals, grounding, review, metrics
-    src/reporting/               markdown report, comparison, reproducibility
+    src/reporting/               per-run report, comparison, arms report, provenance
     src/config/                  generation settings, env, provenance
     src/cli/                     command modules and dispatcher
     tests/                       unit tests, including isolation tests
@@ -81,8 +98,13 @@ clinical recommendation, and the RAG arm is still deferred.
 
     bun run benchmark oracle run   [--category <CAT>] [--limit <N>] [--allow-draft]
     bun run benchmark oracle resume --run-id <ID>
+
     bun run benchmark rag run      [--category <CAT>] [--limit <N>] [--allow-draft]
     bun run benchmark rag resume   --run-id <ID>
+    bun run benchmark rag-rerank run  [--category <CAT>] [--limit <N>] [--allow-draft]
+    bun run benchmark rag-rerank resume --run-id <ID>
+    bun run benchmark rag-graph run   [--category <CAT>] [--limit <N>] [--allow-draft]
+    bun run benchmark rag-graph resume --run-id <ID>
     bun run benchmark retrieval evaluate [--write-baseline]
 
     bun run benchmark evaluate run --run-id <ID> [--force]
@@ -91,6 +113,8 @@ clinical recommendation, and the RAG arm is still deferred.
     bun run benchmark summary --run-id <ID>
     bun run benchmark report --run-id <ID>
     bun run benchmark compare --run-a <ID> --run-b <ID>
+    bun run benchmark arms report  [--raw <ID>] [--oracle <ID>] [--rag <ID>]
+                                    [--rag-rerank <ID>] [--rag-graph <ID>]
     bun run benchmark reproduce --run-id <ID>
 
 Live smoke test (consumes Groq quota, only when explicitly authorized):
@@ -133,6 +157,27 @@ sign-off reconciliation. See [`docs/oracle.md`](./docs/oracle.md).
   in the bundle, and numbers in the answer appear in the bundle. A human still
   owns the citation and faithfulness verdict.
 
+## Retrieval arms
+
+All three retrieval arms use the same `rag-v1` prompt and the same
+`[E#]` citation contract, and all replay a recorded trace rather than calling a
+live retriever. The trace records both orderings, so no live reranker is needed
+to measure `rerankGain`:
+
+- `rag` sorts the recorded chunks by `scores.rrf` (fusion, no reranker).
+- `rag-rerank` keeps the trace's recorded cross-encoder order and refuses to run
+  if the trace has no rerank scores.
+- `rag-graph` reads a separate graph trace with the recorded order. Until that
+  trace is produced by the pipeline it exits with `RAG + graph is not ready`.
+
+`evaluate run` rebuilds the evidence bundle with the arm's ordering, so the
+grounding signals match what the model actually saw. `summary`/`report` add a
+retrieval-quality table (recall, MRR, nDCG, candidate recall) measured against
+gold chunk ids, separately from answer quality. The CI gate
+(`retrieval evaluate`) still scores the trace's recorded order against the
+committed `runs/retrieval-baseline.json`; changing the gate is a separate,
+baseline-invalidating change.
+
 ## Dataset model
 
 Two files, both versioned under `data/v1/`:
@@ -163,7 +208,7 @@ Every run records enough identity to make a comparison honest:
   order. Two different `--category`/`--limit` slices of equal size are not the
   same experiment.
 - `system_prompt_hash` — the prompt text, not just its version label
-- `evidence_hash` — the exact oracle bundle (oracle runs only)
+- `evidence_hash` - the exact oracle bundle (oracle) or trace hash (retrieval arms)
 - `annotations_hash` — written by `evaluate run` from the gold file actually used
 - `sdk` + `runtime` + `model_revision` — the moving parts outside the prompt
 
@@ -190,19 +235,15 @@ the existing strict fields. The literal signature is
 `student — licence 12er4567 — affiliation NTIC`, preserved as supplied; the
 project owner confirmed that reviewer is a licensed pharmacist.
 
-| Arm      | Run ID                          | Correct     | Partially correct | Incorrect   | Reviewed |
-| -------- | ------------------------------- | ----------- | ----------------- | ----------- | -------- |
-| `raw`    | `raw-20261123-174647-amkm5t`    | 8/50 (16%)  | 33/50 (66%)       | 9/50 (18%)  | 50/50    |
-| `oracle` | `oracle-20261123-174652-b455gt` | 34/50 (68%) | 15/50 (30%)       | 1/50 (2%)   | 50/50    |
-| `rag`    | `rag-20261125-132013-24sxon`    | 23/50 (46%) | 17/50 (34%)       | 10/50 (20%) | 50/50    |
-
-Response review is single review by the benchmark maintainer, not the pharmacist
-sheet and not a second LLM judge. The raw/oracle re-run responses were cache
-replays with content identical to the 2026-11-22 baseline, so those scores were
-carried forward by question id with only `scored_at` refreshed. The RAG arm
-generated fresh responses from the recorded retrieval trace. `evidenceGain =
-0.68 − 0.16 = +0.52`, `retrievalGap = 0.68 − 0.46 = +0.22`, and `systemGain =
-0.46 − 0.16 = +0.30`.
+The old per-run artifacts were cleared when the package moved to five arms. The
+single-review scores they produced are preserved as a historical record in
+[`runs/PROVISIONAL_BASELINES.md`](./runs/PROVISIONAL_BASELINES.md): raw 8/50
+(16%), oracle 34/50 (68%), and the old RAG arm 23/50 (46%). That RAG number was
+measured with the recorded (reranked) order, which is now the `rag-rerank` arm;
+it must not be quoted as the new fusion-order `rag` result. Response review was
+single review by the benchmark maintainer, not the pharmacist sheet and not a
+second LLM judge. Fresh runs are needed for the five-arm deltas; `benchmark arms
+report` prints `N/A` for arms that have not run.
 
 ## Environment
 
@@ -215,17 +256,18 @@ From the repository root:
 
 ## Known limitations
 
-- **Single response review.** The 150 responses were scored once by the
-  benchmark maintainer. The RAG review is deterministic-assisted and calibrated
-  against the reviewed oracle arm (68% agreement on oracle). The pharmacist
-  sheet signs off the dataset, not the model answers. `dataset validate` passes
-  with zero errors; six intentional `TRAP_EXPECTS_ANSWER` warnings remain because
-  the curated evidence directly answers those rows. They are documented, not
-  suppressed.
-- **Recorded retrieval.** The RAG arm does not call a live retriever at scoring
-  time; it reads `data/v1/retrieval-trace.jsonl`. Regenerate that trace with
-  `bun run retrieval:trace:benchmark` after changing the index, embedding model,
-  or retrieval configuration, then re-run the gate and the arm.
+- **Single response review.** The historical 150 responses were scored once by
+  the benchmark maintainer. The old RAG review was deterministic-assisted and
+  calibrated against the reviewed oracle arm (68% agreement on oracle). The
+  pharmacist sheet signs off the dataset, not the model answers. `dataset
+  validate` passes with zero errors; six intentional `TRAP_EXPECTS_ANSWER`
+  warnings remain because the curated evidence directly answers those rows.
+  They are documented, not suppressed.
+- **Recorded retrieval.** `rag` and `rag-rerank` do not call a live retriever at
+  scoring time; they read `data/v1/retrieval-trace.jsonl` in different orders.
+  Regenerate that trace with `bun run retrieval:trace:benchmark` after changing
+  the index, embedding model, or retrieval configuration, then re-run the gate
+  and the arms. `rag-graph` needs its own trace and is not ready yet.
 - **No LLM judge.** Correctness is deterministic signals plus human review. The
   deterministic layer is advisory and conservative by design.
 - **Provider outages are reported, never worked around.** No silent model or

@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { sha256, FIELD_SEP } from "../shared/hash";
 import type { GenerationConfig } from "../config/generation";
 import type { ChatResult } from "../providers/groq/client";
+import type { BenchmarkArm } from "../arms";
 
 /**
  * A cache file exists but cannot be trusted.
@@ -21,7 +22,7 @@ export class CacheCorruptionError extends Error {
 }
 
 export interface CacheKeyInput {
-  mode: "raw" | "oracle" | "rag";
+  mode: BenchmarkArm;
   model_id: string;
   prompt_version: string;
   system_prompt: string;

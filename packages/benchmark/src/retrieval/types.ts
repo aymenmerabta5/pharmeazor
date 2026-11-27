@@ -31,9 +31,20 @@ export interface RetrievedPassage {
   readonly text: string;
 }
 
+/**
+ * How a retrieval arm orders the recorded chunks.
+ *
+ * - `fusion`   uses the recorded reciprocal-rank-fusion score (no reranker)
+ * - `rerank`   uses the recorded cross-encoder order
+ * - `recorded` trusts the trace's own rank column
+ */
+export type RetrievalOrdering = "fusion" | "rerank" | "recorded";
+
 export interface RetrievalGateway {
   /** Retrieved passages for a question, already filtered for injection risk. */
   search(questionId: string): readonly RetrievedPassage[];
   /** Hash of the retrieval configuration that produced the trace. */
   configHash(): string;
+  /** Ordering this gateway applies to the recorded chunks. */
+  ordering(): RetrievalOrdering;
 }

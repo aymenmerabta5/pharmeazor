@@ -16,8 +16,11 @@ import {
 import { generateMarkdownReport } from "../reporting/markdown";
 import { readErrors, readResponses, readRunMetadata, writeRunMetadata } from "../storage/fs";
 import type { RunMetadata } from "../storage/fs";
-import { dataV1Path, runsDir } from "./common";
-import { createTraceGateway, loadRetrievalTrace } from "../retrieval/trace";
+import { dataV1Path, runsDir, armTracePaths } from "./common";
+import { createTraceGateway } from "../retrieval/trace";
+import { loadArmTrace } from "../retrieval/arm-trace";
+import { ARM_RETRIEVAL_ORDERING, isRetrievalArm } from "../arms";
+import { summarizeRetrieval, type RetrievalReportInput } from "../reporting/retrieval";
 import { passagesToEvidence } from "../runner/rag";
 
 /**
@@ -95,10 +98,19 @@ export async function runEvaluateRun(flags: Record<string, string>): Promise<num
     }
   }
 
-  const ragGateway =
-    meta.run_mode === "rag"
-      ? createTraceGateway(await loadRetrievalTrace(dataV1Path("retrieval-trace.jsonl")))
-      : null;
+  const retrievalArm = isRetrievalArm(meta.run_mode) ? meta.run_mode : null;
+  let ragGateway: ReturnType<typeof createTraceGateway> | null = null;
+  if (retrievalArm) {
+    try {
+      const trace = await loadArmTrace(retrievalArm, armTracePaths());
+      ragGateway = createTraceGateway(trace, {
+        ordering: ARM_RETRIEVAL_ORDERING[retrievalArm],
+      });
+    } catch (error) {
+      logger.error((error as Error).message);
+      return 1;
+    }
+  }
 
   const qById = new Map(questions.map((q) => [q.question_id, q] as const));
   const aById = new Map(annotations.map((a) => [a.question_id, a] as const));
@@ -254,7 +266,25 @@ async function loadSummaryContext(runId: string, flags: Record<string, string>) 
         ] as const,
     ),
   );
-  return { meta, evaluation, summary, questionsById };
+
+  let retrieval: RetrievalReportInput | undefined;
+  if (isRetrievalArm(meta.run_mode)) {
+    try {
+      const trace = await loadArmTrace(meta.run_mode, armTracePaths());
+      const annotations = await loadGoldAnnotationsFromFile(dataV1Path("gold_annotations.jsonl"));
+      retrieval = summarizeRetrieval({
+        arm: meta.run_mode,
+        trace,
+        questionIds: evaluation.map((record) => record.question_id),
+        annotations,
+      });
+    } catch (error) {
+      logger.error((error as Error).message);
+      return null;
+    }
+  }
+
+  return { meta, evaluation, summary, questionsById, retrieval };
 }
 
 export async function runSummary(flags: Record<string, string>): Promise<number> {
@@ -276,6 +306,7 @@ export async function runSummary(flags: Record<string, string>): Promise<number>
     evaluation: context.evaluation,
     summary: context.summary,
     questionsById: context.questionsById,
+    retrieval: context.retrieval,
   });
   const reportPath = join(runsDir(), runId, "report.md");
   await Bun.write(reportPath, report.markdown);
@@ -311,6 +342,7 @@ export async function runReport(flags: Record<string, string>): Promise<number> 
     evaluation: context.evaluation,
     summary: context.summary,
     questionsById: context.questionsById,
+    retrieval: context.retrieval,
   });
   const path = join(runsDir(), runId, "report.md");
   await Bun.write(path, report.markdown);

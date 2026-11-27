@@ -1,8 +1,15 @@
-# Reviewed v1 baselines — raw, oracle and RAG
+# Reviewed v1 baselines - raw, oracle and RAG
 
 _Recorded 2026-11-22; re-run 2026-11-23; RAG arm added 2026-11-25. The filename
 is retained from the earlier provisional record; this document reports the
 current single-reviewed runs._
+
+> **Historical record (2026-11-27).** The per-run directories referenced below
+> were cleared when the benchmark moved to five arms. No figures here were
+> recomputed. The arm named `rag` in this document used the recorded
+> (cross-encoder) passage order, which is now the `rag-rerank` arm; the current
+> `rag` arm uses fusion order and has no reviewed run. `runs/retrieval-baseline.json`
+> is the retained CI gate reference and is likewise unchanged.
 
 ## Scope and review status
 

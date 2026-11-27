@@ -90,11 +90,40 @@ export {
 export { runRawBenchmark, type RawRunInput, type RawRunResult } from "./runner/raw";
 export { runOracleBenchmark, type OracleRunInput, type OracleRunResult } from "./runner/oracle";
 export { runRagBenchmark, type RagRunInput, type RagRunResult } from "./runner/rag";
+export {
+  ARM_LABELS,
+  ARM_RETRIEVAL_ORDERING,
+  ARM_SHORT_LABELS,
+  BENCHMARK_ARMS,
+  RETRIEVAL_ARMS,
+  armLabel,
+  isBenchmarkArm,
+  isRetrievalArm,
+  type RetrievalArm,
+} from "./arms";
 export { loadEvidenceBundle, hashEvidenceBundle } from "./oracle/evidence";
-export { createTraceGateway, loadRetrievalTrace } from "./retrieval/trace";
+export {
+  GRAPH_TRACE_NAME,
+  GraphArmNotReadyError,
+  createTraceGateway,
+  hasRerankScores,
+  loadGraphTrace,
+  loadRetrievalTrace,
+  orderTraceChunks,
+} from "./retrieval/trace";
+export { loadArmTrace, type ArmTracePaths } from "./retrieval/arm-trace";
 export { computeRetrievalMetrics } from "./retrieval/metrics";
+export { summarizeRetrieval, type RetrievalReportInput } from "./reporting/retrieval";
+export {
+  computeArmDeltas,
+  formatArmsReport,
+  type ArmReportRow,
+  type ArmsReportInput,
+  type ArmDelta,
+} from "./reporting/arms";
 export type {
   RetrievalGateway,
+  RetrievalOrdering,
   RetrievalTraceRow,
   RetrievedPassage,
   TraceChunk,

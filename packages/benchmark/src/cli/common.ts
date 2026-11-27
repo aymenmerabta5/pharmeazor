@@ -4,6 +4,9 @@ import { hashQuestions } from "../dataset/hash";
 import { CATEGORY_VALUES, type Category, type Question } from "../dataset/schema";
 import { logger } from "../shared/logger";
 import type { ChatRunProgress } from "../runner/chat";
+import type { BenchmarkArm } from "../arms";
+import { GRAPH_TRACE_NAME } from "../retrieval/trace";
+import type { ArmTracePaths } from "../retrieval/arm-trace";
 
 export interface ParsedArgs {
   command?: string;
@@ -49,6 +52,14 @@ export function dataV1Path(name: string): string {
   return join(packageRoot(), "data", "v1", name);
 }
 
+/** Trace files the retrieval arms read from the versioned dataset directory. */
+export function armTracePaths(): ArmTracePaths {
+  return {
+    base: dataV1Path("retrieval-trace.jsonl"),
+    graph: dataV1Path(GRAPH_TRACE_NAME),
+  };
+}
+
 export function readGitSha(): string | null {
   try {
     const result = Bun.spawnSync(["git", "rev-parse", "HEAD"]);
@@ -59,7 +70,7 @@ export function readGitSha(): string | null {
   return null;
 }
 
-export function generateRunId(prefix: "raw" | "oracle" | "rag"): string {
+export function generateRunId(prefix: BenchmarkArm): string {
   const now = new Date();
   const ymd = now.toISOString().slice(0, 10).replace(/-/g, "");
   const hms = now.toISOString().slice(11, 19).replace(/:/g, "");
@@ -78,6 +89,10 @@ export function printUsage(): void {
   benchmark oracle resume    --run-id <ID>
   benchmark rag run          [--category <CAT>] [--limit <N>] [--allow-draft]
   benchmark rag resume       --run-id <ID>
+  benchmark rag-rerank run   [--category <CAT>] [--limit <N>] [--allow-draft]
+  benchmark rag-rerank resume --run-id <ID>
+  benchmark rag-graph run    [--category <CAT>] [--limit <N>] [--allow-draft]
+  benchmark rag-graph resume --run-id <ID>
   benchmark retrieval evaluate [--write-baseline]
   benchmark evaluate run     --run-id <ID> [--force]
   benchmark review prepare   --run-id <ID>
@@ -85,6 +100,8 @@ export function printUsage(): void {
   benchmark summary          --run-id <ID>
   benchmark report           --run-id <ID>
   benchmark compare          --run-a <ID> --run-b <ID>
+  benchmark arms report      [--raw <ID>] [--oracle <ID>] [--rag <ID>]
+                             [--rag-rerank <ID>] [--rag-graph <ID>]
   benchmark reproduce        --run-id <ID>
 `);
 }

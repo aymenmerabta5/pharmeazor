@@ -2,8 +2,9 @@
 
 ## Why it exists
 
-The raw arm measures the model from memory. The RAG arm measures the model plus
-PHARMEAZOR retrieval. Between them sits a question that must be answered first:
+The raw arm measures the model from memory. The retrieval arms measure the model
+plus PHARMEAZOR retrieval in different passage orderings. Between them sits a
+question that must be answered first:
 
 > If the model had exactly the right evidence, would it answer correctly?
 
@@ -20,14 +21,15 @@ The difference between `oracle` and `raw` is the value of evidence itself:
 evidenceGain = oracle − raw
 ```
 
-`oracle` is the ceiling for the RAG arm:
+`oracle` is the ceiling for every retrieval arm:
 
 ```text
-retrievalGap = oracle − rag
+retrievalGap = oracle - rag
 ```
 
-Without a trustworthy ceiling, a weak RAG score is ambiguous: it could mean
-retrieval is bad, or the generator is bad, or the evidence was never sufficient.
+Without a trustworthy ceiling, a weak retrieval score is ambiguous: it could
+mean retrieval is bad, or the generator is bad, or the evidence was never
+sufficient.
 
 ## What the model receives
 

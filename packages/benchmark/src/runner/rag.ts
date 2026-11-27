@@ -1,5 +1,6 @@
 import type { EvidencePassage, Question } from "../dataset/schema";
 import type { RetrievalGateway } from "../retrieval/types";
+import type { RetrievalArm } from "../arms";
 import type { GroqClient } from "../providers/groq/client";
 import type { RateLimiter } from "./rate-limit";
 import type { GenerationConfig } from "../config/generation";
@@ -8,6 +9,8 @@ import { buildRagUserMessage } from "../prompts/rag/v1";
 
 export interface RagRunInput {
   runId: string;
+  /** Which retrieval arm this run belongs to: rag, rag-rerank or rag-graph. */
+  arm: RetrievalArm;
   questions: readonly Question[];
   client: GroqClient;
   cacheDir: string;
@@ -82,7 +85,7 @@ export async function runRagBenchmark(input: RagRunInput): Promise<RagRunResult>
 
   const result = await runChatBenchmark({
     ...input,
-    mode: "rag",
+    mode: input.arm,
     evidenceByQuestionId,
     retrievalConfigHash: input.gateway.configHash(),
     buildUserMessage: (question) =>
