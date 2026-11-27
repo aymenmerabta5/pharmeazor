@@ -14,7 +14,7 @@ function LeafLogoLarge(): React.JSX.Element {
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
         <path
           d="M20 7C20 7 10 11 10 21C10 27 14.5 32 20 32C25.5 32 30 27 30 21C30 15 25 9 20 7Z"
-          fill="white"
+          fill="currentColor"
           fillOpacity="0.95"
         />
         <line
@@ -22,7 +22,7 @@ function LeafLogoLarge(): React.JSX.Element {
           y1="32"
           x2="20"
           y2="22"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="2.2"
           strokeLinecap="round"
         />

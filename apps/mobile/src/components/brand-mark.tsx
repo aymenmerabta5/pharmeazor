@@ -60,12 +60,12 @@ export function BrandMark({
     <View
       accessible={false}
       className={cn(
-        "shrink-0 items-center justify-center bg-primary",
+        "shrink-0 items-center justify-center bg-mark",
         large ? "size-14 rounded-2xl" : "size-9 rounded-xl",
         className,
       )}
     >
-      <LeafGlyph size={large ? 26 : 15} />
+      <LeafGlyph size={large ? 26 : 15} toneClassName="bg-mark-foreground" />
     </View>
   );
 }

@@ -1,3 +1,5 @@
+@import "./brand-dark.css";
+
 :root,
 .light {
   --background: oklch(0.967 0.008 92);
@@ -8,6 +10,13 @@
   --popover-foreground: oklch(0.272 0.018 166);
   --primary: oklch(0.355 0.052 168);
   --primary-foreground: oklch(0.975 0.012 95);
+  --mark: oklch(0.355 0.052 168);
+  --mark-foreground: oklch(0.975 0.012 95);
+  --hero-cta: oklch(0.994 0.008 95);
+  --hero-cta-foreground: oklch(0.355 0.052 168);
+  --hero-muted: rgb(255 253 247 / 0.75);
+  --hero-outline: rgb(255 253 247 / 0.1);
+  --hero-outline-active: rgb(255 253 247 / 0.2);
   --secondary: oklch(0.928 0.015 135);
   --secondary-foreground: oklch(0.36 0.04 168);
   --muted: oklch(0.93 0.014 92);
@@ -52,48 +61,54 @@
 }
 
 .dark {
-  --background: oklch(0.21 0.012 165);
-  --foreground: oklch(0.955 0.01 130);
-  --card: oklch(0.235 0.014 165);
-  --card-foreground: oklch(0.955 0.01 130);
-  --popover: oklch(0.27 0.018 165);
-  --popover-foreground: oklch(0.955 0.01 130);
-  --primary: oklch(0.83 0.06 160);
-  --primary-foreground: oklch(0.2 0.015 165);
-  --secondary: oklch(0.29 0.018 165);
-  --secondary-foreground: oklch(0.94 0.012 130);
-  --muted: oklch(0.29 0.018 165);
-  --muted-foreground: oklch(0.74 0.015 145);
-  --accent: oklch(0.33 0.022 160);
-  --accent-foreground: oklch(0.9 0.03 145);
-  --destructive: oklch(0.78 0.11 35);
-  --destructive-foreground: oklch(0.2 0.02 30);
-  --border: oklch(0.35 0.018 165);
-  --input: oklch(0.47 0.02 160);
-  --ring: oklch(0.83 0.06 160);
-  --success: oklch(0.8 0.08 160);
-  --warning: oklch(0.83 0.09 80);
-  --code: oklch(0.245 0.014 165);
-  --code-foreground: oklch(0.79 0.02 145);
-  --chart-1: oklch(0.83 0.06 160);
-  --chart-2: oklch(0.71 0.07 170);
-  --chart-3: oklch(0.62 0.07 150);
-  --chart-4: oklch(0.72 0.1 55);
-  --chart-5: oklch(0.85 0.045 90);
-  --sidebar: oklch(0.19 0.012 165);
-  --sidebar-foreground: oklch(0.955 0.01 130);
-  --sidebar-primary: oklch(0.83 0.06 160);
-  --sidebar-primary-foreground: oklch(0.2 0.015 165);
-  --sidebar-accent: oklch(0.29 0.018 165);
-  --sidebar-accent-foreground: oklch(0.9 0.03 145);
-  --sidebar-border: oklch(0.35 0.018 165);
-  --sidebar-ring: oklch(0.83 0.06 160);
-  --scrim: oklch(0.12 0.015 165 / 0.72);
-  --elevation-control: 0 1px 2px oklch(0.12 0.015 165 / 0.2);
-  --elevation-surface:
-    0 1px 2px oklch(0.12 0.015 165 / 0.18), 0 16px 36px -24px oklch(0.12 0.015 165 / 0.5);
-  --elevation-popover: 0 10px 28px -8px oklch(0.12 0.015 165 / 0.5);
-  --elevation-modal: 0 28px 70px -20px oklch(0.12 0.015 165 / 0.65);
+  --background: var(--brand-dark-bg);
+  --foreground: var(--brand-dark-ink);
+  --card: var(--brand-dark-surface);
+  --card-foreground: var(--brand-dark-ink);
+  --popover: var(--brand-dark-elevated);
+  --popover-foreground: var(--brand-dark-ink);
+  --primary: var(--brand-dark-accent);
+  --primary-foreground: var(--brand-dark-on-accent);
+  --mark: var(--brand-dark-mark);
+  --mark-foreground: var(--brand-dark-mark-ink);
+  --hero-cta: var(--brand-dark-accent);
+  --hero-cta-foreground: var(--brand-dark-on-accent);
+  --hero-muted: rgb(255 255 255 / 0.9);
+  --hero-outline: rgb(0 0 0 / 0.1);
+  --hero-outline-active: rgb(0 0 0 / 0.15);
+  --secondary: var(--brand-dark-secondary);
+  --secondary-foreground: var(--brand-dark-secondary-ink);
+  --muted: var(--brand-dark-muted-surface);
+  --muted-foreground: var(--brand-dark-muted);
+  --accent: var(--brand-dark-accent-surface);
+  --accent-foreground: var(--brand-dark-accent-ink);
+  --destructive: var(--brand-dark-destructive);
+  --destructive-foreground: var(--brand-dark-destructive-ink);
+  --border: var(--brand-dark-border);
+  --input: var(--brand-dark-input);
+  --ring: var(--brand-dark-accent);
+  --success: var(--brand-dark-accent);
+  --warning: var(--brand-dark-warning);
+  --code: var(--brand-dark-code);
+  --code-foreground: var(--brand-dark-code-ink);
+  --chart-1: var(--brand-dark-accent);
+  --chart-2: #4f9fbf;
+  --chart-3: #b8d48a;
+  --chart-4: var(--brand-dark-warning);
+  --chart-5: #d8d3c2;
+  --sidebar: var(--brand-dark-sidebar);
+  --sidebar-foreground: var(--brand-dark-ink);
+  --sidebar-primary: var(--brand-dark-accent);
+  --sidebar-primary-foreground: var(--brand-dark-on-accent);
+  --sidebar-accent: var(--brand-dark-sidebar-hover);
+  --sidebar-accent-foreground: var(--brand-dark-accent-ink);
+  --sidebar-border: var(--brand-dark-border-card);
+  --sidebar-ring: var(--brand-dark-accent);
+  --scrim: var(--brand-dark-scrim);
+  --elevation-control: 0 1px 2px rgb(0 0 0 / 0.35);
+  --elevation-surface: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 40px -28px rgb(0 0 0 / 0.65);
+  --elevation-popover: 0 12px 30px -10px rgb(0 0 0 / 0.55);
+  --elevation-modal: 0 28px 70px -20px rgb(0 0 0 / 0.7);
 }
 
 @theme inline {
@@ -105,6 +120,13 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-mark: var(--mark);
+  --color-mark-foreground: var(--mark-foreground);
+  --color-hero-cta: var(--hero-cta);
+  --color-hero-cta-foreground: var(--hero-cta-foreground);
+  --color-hero-muted: var(--hero-muted);
+  --color-hero-outline: var(--hero-outline);
+  --color-hero-outline-active: var(--hero-outline-active);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -158,6 +180,13 @@
       --color-popover-foreground: var(--popover-foreground);
       --color-primary: var(--primary);
       --color-primary-foreground: var(--primary-foreground);
+      --color-mark: var(--mark);
+      --color-mark-foreground: var(--mark-foreground);
+      --color-hero-cta: var(--hero-cta);
+      --color-hero-cta-foreground: var(--hero-cta-foreground);
+      --color-hero-muted: var(--hero-muted);
+      --color-hero-outline: var(--hero-outline);
+      --color-hero-outline-active: var(--hero-outline-active);
       --color-secondary: var(--secondary);
       --color-secondary-foreground: var(--secondary-foreground);
       --color-muted: var(--muted);
@@ -197,6 +226,13 @@
       --color-popover-foreground: var(--popover-foreground);
       --color-primary: var(--primary);
       --color-primary-foreground: var(--primary-foreground);
+      --color-mark: var(--mark);
+      --color-mark-foreground: var(--mark-foreground);
+      --color-hero-cta: var(--hero-cta);
+      --color-hero-cta-foreground: var(--hero-cta-foreground);
+      --color-hero-muted: var(--hero-muted);
+      --color-hero-outline: var(--hero-outline);
+      --color-hero-outline-active: var(--hero-outline-active);
       --color-secondary: var(--secondary);
       --color-secondary-foreground: var(--secondary-foreground);
       --color-muted: var(--muted);

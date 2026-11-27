@@ -1,4 +1,4 @@
-# storage-lab
+# storage_lab
 
 The offline mirror between the PHARMEAZOR corpus and Cloudflare R2. It is a
 maintainer batch tool: the application never imports it, and it never writes to
@@ -25,9 +25,9 @@ python tooling/bucket_operations.py push --group embedding
 | `reporting.py` | Console summaries and JSONL transfer reports.                        |
 | `cli.py`       | Argument parser and the `main` entry point.                          |
 
-`storage_lab` is the importable package; the `storage-lab` directory follows
-the `cleaning-lab` / `retrieval-lab` / `embedding-lab` naming used by the other
-offline labs.
+`storage_lab` is both the importable package and its directory name. The
+underscore keeps it a valid Python identifier and distinguishes it from the
+hyphenated `cleaning-lab`, `retrieval-lab` and `embedding-lab` labs.
 
 ## Datasets
 
@@ -42,7 +42,7 @@ reference.
 
 ```powershell
 python -m unittest discover -s tooling/tests -v
-python -m compileall -q tooling/storage-lab tooling/bucket_operations.py tooling/run_pipeline.py
+python -m compileall -q tooling/storage_lab tooling/bucket_operations.py tooling/run_pipeline.py
 ```
 
 ## Relationship to `packages/storage`

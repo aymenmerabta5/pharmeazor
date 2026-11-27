@@ -29,9 +29,9 @@ from typing import Any
 
 LAB_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = LAB_ROOT.parents[1]
-STORAGE_LAB = REPO_ROOT / "tooling" / "storage-lab"
-if str(STORAGE_LAB) not in sys.path:
-    sys.path.insert(0, str(STORAGE_LAB))
+TOOL_ROOT = LAB_ROOT.parent
+if str(TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(TOOL_ROOT))
 if str(LAB_ROOT) not in sys.path:
     sys.path.insert(0, str(LAB_ROOT))
 

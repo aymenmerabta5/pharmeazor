@@ -22,29 +22,29 @@ export function HomeHero({
   prompt: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <View className="overflow-hidden rounded-[28px] bg-primary p-5">
+    <View className="overflow-hidden rounded-[28px] bg-mark p-5">
       <View
         pointerEvents="none"
-        className="absolute -end-12 -top-16 size-48 rounded-full bg-primary-foreground/10"
+        className="absolute -end-12 -top-16 size-48 rounded-full bg-mark-foreground/10"
       />
       <View
         pointerEvents="none"
-        className="absolute -bottom-20 -start-14 size-44 rounded-full bg-primary-foreground/5"
+        className="absolute -bottom-20 -start-14 size-44 rounded-full bg-mark-foreground/5"
       />
       <View className="gap-3">
         <View className="flex-row items-center gap-2">
-          <View className="size-11 items-center justify-center rounded-2xl bg-primary-foreground/15">
-            <LeafGlyph size={20} />
+          <View className="size-11 items-center justify-center rounded-2xl bg-mark-foreground/15">
+            <LeafGlyph size={20} toneClassName="bg-mark-foreground" />
           </View>
-          <Text className="text-sm font-medium text-primary-foreground/75">{greeting}</Text>
+          <Text className="text-sm font-medium text-hero-muted">{greeting}</Text>
         </View>
         <Text
           accessibilityRole="header"
-          className="text-[26px] font-semibold leading-8 tracking-tight text-primary-foreground"
+          className="text-[26px] font-semibold leading-8 tracking-tight text-mark-foreground"
         >
           {title}
         </Text>
-        <Text className="text-sm leading-6 text-primary-foreground/75">{description}</Text>
+        <Text className="text-sm leading-6 text-hero-muted">{description}</Text>
         {prompt}
       </View>
     </View>

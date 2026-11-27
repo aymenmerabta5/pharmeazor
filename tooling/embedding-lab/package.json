@@ -17,7 +17,7 @@
     "r2:organize": "python ../bucket_operations.py organize --group embedding",
     "r2:reset": "python ../bucket_operations.py reset --group embedding",
     "r2:sync": "python ../bucket_operations.py sync --group embedding",
-    "check:python": "python -m compileall -q settings.py pipeline run.py ../bucket_operations.py ../storage-lab",
+    "check:python": "python -m compileall -q settings.py pipeline run.py ../bucket_operations.py ../storage_lab",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check ."
   }

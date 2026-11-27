@@ -32,45 +32,45 @@ export function MarketingScreen(): React.JSX.Element {
         <AppMenu />
       </View>
 
-      <View className="overflow-hidden rounded-[32px] bg-primary p-6">
+      <View className="overflow-hidden rounded-[32px] bg-mark p-6">
         <View
           pointerEvents="none"
-          className="absolute -end-16 -top-20 size-56 rounded-full bg-primary-foreground/10"
+          className="absolute -end-16 -top-20 size-56 rounded-full bg-mark-foreground/10"
         />
         <View
           pointerEvents="none"
-          className="absolute -bottom-24 -start-14 size-48 rounded-full bg-primary-foreground/5"
+          className="absolute -bottom-24 -start-14 size-48 rounded-full bg-mark-foreground/5"
         />
         <View className="gap-4">
-          <View className="size-14 items-center justify-center rounded-2xl bg-primary-foreground/15">
-            <LeafGlyph size={26} />
+          <View className="size-14 items-center justify-center rounded-2xl bg-mark-foreground/15">
+            <LeafGlyph size={26} toneClassName="bg-mark-foreground" />
           </View>
-          <Text className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/70">
+          <Text className="text-xs font-semibold uppercase tracking-[0.16em] text-hero-muted">
             {t("eyebrow")}
           </Text>
           <Text
             accessibilityRole="header"
-            className="text-[32px] font-semibold leading-9 tracking-tight text-primary-foreground"
+            className="text-[32px] font-semibold leading-9 tracking-tight text-mark-foreground"
           >
             {t("title")}
             {"\n"}
-            <Text className="text-[32px] font-semibold leading-9 tracking-tight text-primary-foreground/80">
+            <Text className="text-[32px] font-semibold leading-9 tracking-tight text-hero-muted">
               {t("titleAccent")}
             </Text>
           </Text>
-          <Text className="text-sm leading-6 text-primary-foreground/75">{t("subtitle")}</Text>
+          <Text className="text-sm leading-6 text-hero-muted">{t("subtitle")}</Text>
           <View className="gap-2 pt-1">
             <Link href="/auth/sign-up" asChild>
-              <Button className="w-full bg-primary-foreground active:bg-primary-foreground/90">
-                <Text className="text-primary">{t("signUp")}</Text>
+              <Button className="w-full bg-hero-cta active:bg-hero-cta/90">
+                <Text className="text-hero-cta-foreground">{t("signUp")}</Text>
               </Button>
             </Link>
             <Link href="/auth/sign-in" asChild>
               <Button
                 variant="outline"
-                className="w-full border-primary-foreground/30 bg-primary-foreground/10 active:bg-primary-foreground/20"
+                className="w-full border-mark-foreground/30 bg-hero-outline active:bg-hero-outline-active"
               >
-                <Text className="text-primary-foreground">{t("signIn")}</Text>
+                <Text className="text-mark-foreground">{t("signIn")}</Text>
               </Button>
             </Link>
           </View>

@@ -1,0 +1,63 @@
+/*
+ * Pharmeazor dark brand palette.
+ *
+ * One source for the web surface, the shared semantic theme, and the native
+ * application. The light grade stays on the warm cream and olive palette; this
+ * evening grade keeps the same brand family but moves it to a cool pine ground
+ * with a warm bone ink and a single luminous jade accent.
+ *
+ * Rules this file follows:
+ * - the interface is almost entirely neutral: the accent is reserved for the
+ *   one filled action, focus, active state and the leaf mark;
+ * - the ground is never pure black, and every elevation step is visible;
+ * - no violet; the hue stays between 160 and 172 degrees.
+ *
+ * Do not hard-code these colours in a surface. Reference the variables.
+ */
+:root {
+  /* Ground and elevation */
+  --brand-dark-bg: #0d1613;
+  --brand-dark-surface: #14231d;
+  --brand-dark-elevated: #192b24;
+  --brand-dark-sidebar: #0a1210;
+  --brand-dark-sidebar-hover: #16261f;
+  --brand-dark-sidebar-active: #1b3027;
+
+  /* Ink */
+  --brand-dark-ink: #f2efe5;
+  --brand-dark-ink-sidebar: #c9d3cb;
+  --brand-dark-muted: #a3b5aa;
+
+  /* The one accent */
+  --brand-dark-accent: #6bcfa4;
+  --brand-dark-accent-hover: #83dcb6;
+  --brand-dark-accent-ink: #b6f2d4;
+  --brand-dark-accent-soft: #112a20;
+  --brand-dark-accent-pill: #173a2b;
+  --brand-dark-on-accent: #04150d;
+
+  /* Structure */
+  --brand-dark-border: #223830;
+  --brand-dark-border-card: #1e332b;
+  --brand-dark-input: #527764;
+  --brand-dark-secondary: #1b2c25;
+  --brand-dark-secondary-ink: #d7e3d9;
+  --brand-dark-muted-surface: #1a2620;
+  --brand-dark-accent-surface: #1b3027;
+
+  /* Brand mark: a deeper green than the action accent, so the leaf stays a
+     brand anchor instead of competing with the one filled button. */
+  --brand-dark-mark: #1f7a54;
+  --brand-dark-mark-ink: #ffffff;
+
+  /* State */
+  --brand-dark-warning: #e8b27a;
+  --brand-dark-warning-surface: #33261a;
+  --brand-dark-destructive: #f08a72;
+  --brand-dark-destructive-ink: #2a0e08;
+
+  /* Code and scrim */
+  --brand-dark-code: #101c17;
+  --brand-dark-code-ink: #c7d6cc;
+  --brand-dark-scrim: rgb(4 10 8 / 0.72);
+}

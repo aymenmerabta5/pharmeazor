@@ -7,7 +7,7 @@ export function BrandMark({ className }: { className?: string }): React.JSX.Elem
     <span
       aria-hidden
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-control",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-mark text-mark-foreground shadow-control",
         className,
       )}
     >

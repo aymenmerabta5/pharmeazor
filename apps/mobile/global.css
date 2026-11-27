@@ -25,6 +25,8 @@
       --color-popover-foreground: #1a1a14;
       --color-primary: #3d5a27;
       --color-primary-foreground: #fbfcf7;
+      --color-mark: #3d5a27;
+      --color-mark-foreground: #ffffff;
       --color-secondary: #e8eddf;
       --color-secondary-foreground: #2f4620;
       --color-muted: #efebe2;
@@ -44,30 +46,34 @@
     }
 
     @variant dark {
-      --color-background: #14150f;
-      --color-foreground: #f2efe6;
-      --color-card: #1d1f17;
-      --color-card-foreground: #f2efe6;
-      --color-popover: #22251b;
-      --color-popover-foreground: #f2efe6;
-      --color-primary: #b6c99a;
-      --color-primary-foreground: #1a2410;
-      --color-secondary: #2a2e20;
-      --color-secondary-foreground: #dfe8cf;
-      --color-muted: #26281e;
-      --color-muted-foreground: #a7a594;
-      --color-accent: #31361f;
-      --color-accent-foreground: #dfe8cf;
-      --color-destructive: #d98b72;
-      --color-destructive-foreground: #2a130d;
-      --color-border: #34372a;
-      --color-input: #4a4e3c;
-      --color-ring: #b6c99a;
-      --color-success: #b6c99a;
-      --color-warning: #d6a079;
-      --color-code: #26281e;
-      --color-code-foreground: #c9c7b7;
-      --color-scrim: rgba(8, 9, 5, 0.72);
+      /* The evening grade of the brand palette. The values come from the
+         shared brand-dark.css so web and native cannot drift. */
+      --color-background: var(--brand-dark-bg);
+      --color-foreground: var(--brand-dark-ink);
+      --color-card: var(--brand-dark-surface);
+      --color-card-foreground: var(--brand-dark-ink);
+      --color-popover: var(--brand-dark-elevated);
+      --color-popover-foreground: var(--brand-dark-ink);
+      --color-primary: var(--brand-dark-accent);
+      --color-primary-foreground: var(--brand-dark-on-accent);
+      --color-mark: var(--brand-dark-mark);
+      --color-mark-foreground: var(--brand-dark-mark-ink);
+      --color-secondary: var(--brand-dark-secondary);
+      --color-secondary-foreground: var(--brand-dark-secondary-ink);
+      --color-muted: var(--brand-dark-muted-surface);
+      --color-muted-foreground: var(--brand-dark-muted);
+      --color-accent: var(--brand-dark-accent-surface);
+      --color-accent-foreground: var(--brand-dark-accent-ink);
+      --color-destructive: var(--brand-dark-destructive);
+      --color-destructive-foreground: var(--brand-dark-destructive-ink);
+      --color-border: var(--brand-dark-border);
+      --color-input: var(--brand-dark-input);
+      --color-ring: var(--brand-dark-accent);
+      --color-success: var(--brand-dark-accent);
+      --color-warning: var(--brand-dark-warning);
+      --color-code: var(--brand-dark-code);
+      --color-code-foreground: var(--brand-dark-code-ink);
+      --color-scrim: var(--brand-dark-scrim);
     }
   }
 }

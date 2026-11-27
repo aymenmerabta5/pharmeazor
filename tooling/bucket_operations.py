@@ -21,9 +21,9 @@ Single-tree commands (compatibility and ad-hoc transfers):
 * ``verify`` - read one remote prefix back and compare hashes;
 * ``download`` - restore one remote prefix under ``--dest``.
 
-The implementation lives in ``tooling/storage-lab/storage_lab/``. This module
-keeps the historical path and public names so ``run_pipeline.py`` and the tests
-load it unchanged.
+The implementation lives in ``tooling/storage_lab/``. This module keeps the
+historical path and public names so ``run_pipeline.py`` and the tests load it
+unchanged.
 
 Design notes
 ------------
@@ -53,11 +53,11 @@ import sys
 from pathlib import Path
 
 # This module is executed directly (`python tooling/bucket_operations.py`) and
-# loaded by path from `run_pipeline.py`; make the storage-lab package importable
-# in both cases.
-_STORAGE_LAB = Path(__file__).resolve().parent / "storage-lab"
-if str(_STORAGE_LAB) not in sys.path:
-    sys.path.insert(0, str(_STORAGE_LAB))
+# loaded by path from `run_pipeline.py`; make the `storage_lab` package
+# importable in both cases. The package sits next to this file under tooling/.
+_TOOL_ROOT = Path(__file__).resolve().parent
+if str(_TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_TOOL_ROOT))
 
 from storage_lab import *  # noqa: E402,F401,F403
 from storage_lab.cli import main  # noqa: E402

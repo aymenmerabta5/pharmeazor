@@ -16,6 +16,8 @@
   --popover-foreground: oklch(0.309 0.013 120.1);
   --primary: oklch(0.527 0.073 119.1);
   --primary-foreground: oklch(0.982 0.009 93.6);
+  --mark: oklch(0.527 0.073 119.1);
+  --mark-foreground: oklch(0.982 0.009 93.6);
   --secondary: oklch(0.933 0.026 121.2);
   --secondary-foreground: oklch(0.417 0.056 121.8);
   --muted: oklch(0.948 0.019 93.7);
@@ -39,34 +41,35 @@
 }
 
 .dark .agent-shell {
-  --background: oklch(0.22 0.014 119);
-  --foreground: oklch(0.954 0.014 102);
-  --card: oklch(0.255 0.017 119);
-  --card-foreground: oklch(0.954 0.014 102);
-  --popover: oklch(0.275 0.019 119);
-  --popover-foreground: oklch(0.954 0.014 102);
-  --primary: oklch(0.83 0.06 118);
-  --primary-foreground: oklch(0.235 0.018 120);
-  --secondary: oklch(0.31 0.024 118);
-  --secondary-foreground: oklch(0.93 0.023 116);
-  --muted: oklch(0.285 0.018 119);
-  --muted-foreground: oklch(0.735 0.018 105);
-  --accent: oklch(0.33 0.028 118);
-  --accent-foreground: oklch(0.93 0.023 116);
-  --border: oklch(0.355 0.022 118);
-  --input: oklch(0.47 0.026 118);
-  --ring: oklch(0.83 0.06 118);
-  --sidebar: oklch(0.205 0.014 119);
-  --sidebar-foreground: oklch(0.954 0.014 102);
-  --sidebar-accent: oklch(0.31 0.024 118);
-  --sidebar-accent-foreground: oklch(0.93 0.023 116);
-  --sidebar-border: oklch(0.325 0.02 118);
-  --sidebar-ring: oklch(0.83 0.06 118);
-  --elevation-control: 0 1px 2px oklch(0.1 0.02 120 / 0.35);
-  --elevation-surface:
-    0 1px 2px oklch(0.1 0.02 120 / 0.3), 0 18px 40px -28px oklch(0.1 0.02 120 / 0.55);
-  --elevation-popover: 0 12px 30px -10px oklch(0.1 0.02 120 / 0.5);
-  --elevation-modal: 0 28px 70px -20px oklch(0.1 0.02 120 / 0.6);
+  --background: var(--brand-dark-bg);
+  --foreground: var(--brand-dark-ink);
+  --card: var(--brand-dark-surface);
+  --card-foreground: var(--brand-dark-ink);
+  --popover: var(--brand-dark-elevated);
+  --popover-foreground: var(--brand-dark-ink);
+  --primary: var(--brand-dark-accent);
+  --primary-foreground: var(--brand-dark-on-accent);
+  --mark: var(--brand-dark-mark);
+  --mark-foreground: var(--brand-dark-mark-ink);
+  --secondary: var(--brand-dark-secondary);
+  --secondary-foreground: var(--brand-dark-secondary-ink);
+  --muted: var(--brand-dark-muted-surface);
+  --muted-foreground: var(--brand-dark-muted);
+  --accent: var(--brand-dark-accent-surface);
+  --accent-foreground: var(--brand-dark-accent-ink);
+  --border: var(--brand-dark-border);
+  --input: var(--brand-dark-input);
+  --ring: var(--brand-dark-accent);
+  --sidebar: var(--brand-dark-sidebar);
+  --sidebar-foreground: var(--brand-dark-ink);
+  --sidebar-accent: var(--brand-dark-sidebar-hover);
+  --sidebar-accent-foreground: var(--brand-dark-accent-ink);
+  --sidebar-border: var(--brand-dark-border-card);
+  --sidebar-ring: var(--brand-dark-accent);
+  --elevation-control: 0 1px 2px rgb(0 0 0 / 0.35);
+  --elevation-surface: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 40px -28px rgb(0 0 0 / 0.65);
+  --elevation-popover: 0 12px 30px -10px rgb(0 0 0 / 0.55);
+  --elevation-modal: 0 28px 70px -20px rgb(0 0 0 / 0.7);
 }
 
 .agent-brand-mark {
@@ -82,15 +85,10 @@
 }
 
 .dark .agent-brand-mark {
-  background-image: linear-gradient(
-    148deg,
-    oklch(0.78 0.075 116.5) 0%,
-    oklch(0.69 0.075 118) 55%,
-    oklch(0.6 0.068 120) 100%
-  );
+  background-image: linear-gradient(148deg, #2a8f66 0%, var(--brand-dark-mark) 55%, #175f42 100%);
   box-shadow:
-    0 10px 24px -10px oklch(0.12 0.03 120 / 0.65),
-    inset 0 1px 0 oklch(1 0 0 / 0.25);
+    0 10px 24px -10px rgb(0 0 0 / 0.65),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
 }
 
 .agent-composer {
@@ -101,8 +99,8 @@
 
 .dark .agent-composer {
   box-shadow:
-    0 1px 2px oklch(0.1 0.02 120 / 0.3),
-    0 22px 45px -30px oklch(0.1 0.02 120 / 0.65);
+    0 1px 2px rgb(0 0 0 / 0.3),
+    0 22px 45px -30px rgb(0 0 0 / 0.65);
 }
 /* ─── Pharmeazor immersive-surface design tokens ─────────────────────────── */
 /* Used by the chat and pricing surfaces only. Scoped to .ph-surface        */
@@ -130,10 +128,43 @@
   --ph-badge-differs: #a0603a;
   --ph-tag-neutral-bg: #e8e8e0;
   --ph-tag-warn-bg: #f3e8e0;
+  --ph-destructive: #a0452f;
+  --ph-on-destructive: #fdf7f4;
+  --ph-mark: #3d5a27;
+  --ph-on-mark: #ffffff;
+  --ph-input: #b9b3a3;
+  --ph-shadow-control: 0 1px 4px rgb(0 0 0 / 0.05);
+  --ph-shadow-popover: 0 4px 20px rgb(0 0 0 / 0.12);
   --ph-radius-card: 14px;
   --ph-radius-pill: 999px;
   --ph-rail-width: 56px;
   --ph-panel-width: 232px;
+
+  /* The surface's own primitives read the semantic tokens. Map them onto the
+     brand palette so a control inside the surface cannot fall back to the
+     neutral application theme. Portaled layers carry .ph-menu-sheet. */
+  --background: var(--ph-bg);
+  --foreground: var(--ph-text);
+  --card: var(--ph-bg-card);
+  --card-foreground: var(--ph-text);
+  --popover: var(--ph-bg-card);
+  --popover-foreground: var(--ph-text);
+  --primary: var(--ph-green);
+  --primary-foreground: var(--ph-on-green);
+  --mark: var(--ph-mark);
+  --mark-foreground: var(--ph-on-mark);
+  --secondary: var(--ph-green-pill);
+  --secondary-foreground: var(--ph-green-dark);
+  --muted: var(--ph-bg-sidebar);
+  --muted-foreground: var(--ph-text-muted);
+  --accent: var(--ph-green-pill);
+  --accent-foreground: var(--ph-green-dark);
+  --destructive: var(--ph-destructive);
+  --destructive-foreground: var(--ph-on-destructive);
+  --border: var(--ph-border);
+  --input: var(--ph-input);
+  --ring: var(--ph-green);
+
   background-color: var(--ph-bg);
   color: var(--ph-text);
   font-family: "Inter", system-ui, -apple-system, sans-serif;
@@ -141,30 +172,39 @@
 }
 
 /* The cream pages have their own palette, so the shared dark tokens never
-   reached them. These values mirror the mobile dark theme: olive ink, paper
-   text, and a light primary that carries dark text on filled controls. */
+   reached them. These values are the evening grade of the same brand: a cool
+   pine ground, warm bone ink, and one luminous jade accent that carries dark
+   text on filled controls. The values come from the shared brand-dark.css so
+   the web surface and the native application cannot drift. */
 .dark .ph-surface {
-  --ph-bg: #14150f;
-  --ph-bg-card: #1d1f17;
-  --ph-bg-sidebar: #191b13;
-  --ph-bg-sidebar-hover: #24271b;
-  --ph-bg-sidebar-active: #2d3122;
-  --ph-green: #b6c99a;
-  --ph-green-dark: #dfe8cf;
-  --ph-green-hover: #c6d8ab;
-  --ph-green-light: #2a2e20;
-  --ph-green-pill: #31361f;
-  --ph-on-green: #1a2410;
-  --ph-text: #f2efe6;
-  --ph-text-muted: #a7a594;
-  --ph-text-sidebar: #d7d5c6;
-  --ph-border: #34372a;
-  --ph-border-card: #2c2f24;
-  --ph-badge-official: #b6c99a;
-  --ph-badge-foreign: #a7a594;
-  --ph-badge-differs: #d6a079;
-  --ph-tag-neutral-bg: #2a2d22;
-  --ph-tag-warn-bg: #3a2c24;
+  --ph-bg: var(--brand-dark-bg);
+  --ph-bg-card: var(--brand-dark-surface);
+  --ph-bg-sidebar: var(--brand-dark-sidebar);
+  --ph-bg-sidebar-hover: var(--brand-dark-sidebar-hover);
+  --ph-bg-sidebar-active: var(--brand-dark-sidebar-active);
+  --ph-green: var(--brand-dark-accent);
+  --ph-green-dark: var(--brand-dark-accent-ink);
+  --ph-green-hover: var(--brand-dark-accent-hover);
+  --ph-green-light: var(--brand-dark-accent-soft);
+  --ph-green-pill: var(--brand-dark-accent-pill);
+  --ph-on-green: var(--brand-dark-on-accent);
+  --ph-text: var(--brand-dark-ink);
+  --ph-text-muted: var(--brand-dark-muted);
+  --ph-text-sidebar: var(--brand-dark-ink-sidebar);
+  --ph-border: var(--brand-dark-border);
+  --ph-border-card: var(--brand-dark-border-card);
+  --ph-badge-official: var(--brand-dark-accent);
+  --ph-badge-foreign: var(--brand-dark-muted);
+  --ph-badge-differs: var(--brand-dark-warning);
+  --ph-tag-neutral-bg: var(--brand-dark-muted-surface);
+  --ph-tag-warn-bg: var(--brand-dark-warning-surface);
+  --ph-destructive: var(--brand-dark-destructive);
+  --ph-on-destructive: var(--brand-dark-destructive-ink);
+  --ph-mark: var(--brand-dark-mark);
+  --ph-on-mark: var(--brand-dark-mark-ink);
+  --ph-input: var(--brand-dark-input);
+  --ph-shadow-control: 0 1px 4px rgb(0 0 0 / 0.35);
+  --ph-shadow-popover: 0 8px 28px rgb(0 0 0 / 0.5);
 }
 
 /* The full-screen menu renders in a portal, outside the page's `.ph-surface`,
@@ -180,6 +220,8 @@
   --popover-foreground: var(--ph-text);
   --primary: var(--ph-green);
   --primary-foreground: var(--ph-on-green);
+  --mark: var(--ph-mark);
+  --mark-foreground: var(--ph-on-mark);
   --secondary: var(--ph-bg-sidebar-hover);
   --secondary-foreground: var(--ph-text);
   --muted: var(--ph-bg-sidebar-hover);
@@ -193,8 +235,9 @@
   --ring: var(--ph-green);
 }
 .dark .ph-menu-sheet {
-  --destructive: #d98b72;
-  --destructive-foreground: #2a130d;
+  --destructive: var(--brand-dark-destructive);
+  --destructive-foreground: var(--brand-dark-destructive-ink);
+  --input: var(--ph-input);
 }
 
 /* Smooth focus rings for pharmeazor inputs */
@@ -235,7 +278,8 @@
   width: 60px;
   height: 60px;
   border-radius: 16px;
-  background: var(--ph-green);
+  background: var(--ph-mark);
+  color: var(--ph-on-mark);
   flex-shrink: 0;
 }
 
@@ -493,14 +537,14 @@
   border: 1px solid var(--ph-border-card);
   border-radius: var(--ph-radius-pill);
   padding: 0.375rem 0.375rem 0.375rem 0.375rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--ph-shadow-control);
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
 .ph-welcome-prompt-inner:focus-within {
   border-color: var(--ph-green);
-  box-shadow: 0 0 0 3px rgba(61, 90, 39, 0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ph-green) 18%, transparent);
 }
 .ph-welcome-input {
   flex: 1;
@@ -568,8 +612,8 @@
   font-family: inherit;
 }
 .ph-suggestion-card:hover {
-  border-color: var(--ph-green-pill);
-  box-shadow: 0 2px 8px rgba(61, 90, 39, 0.06);
+  border-color: color-mix(in srgb, var(--ph-green) 45%, var(--ph-border-card));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ph-green) 12%, transparent);
 }
 .ph-suggestion-label {
   font-size: 0.675rem;
@@ -1351,8 +1395,8 @@
     box-shadow 0.12s;
 }
 .ph-followup-btn:hover {
-  border-color: var(--ph-green-pill);
-  box-shadow: 0 1px 4px rgba(61, 90, 39, 0.05);
+  border-color: color-mix(in srgb, var(--ph-green) 45%, var(--ph-border-card));
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--ph-green) 12%, transparent);
 }
 
 /* Streaming indicator */
@@ -1387,14 +1431,14 @@
   border: 1px solid var(--ph-border-card);
   border-radius: var(--ph-radius-pill);
   padding: 0.375rem 0.375rem 0.375rem 0.375rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--ph-shadow-control);
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
 .ph-chat-input-inner:focus-within {
   border-color: var(--ph-green);
-  box-shadow: 0 0 0 3px rgba(61, 90, 39, 0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ph-green) 18%, transparent);
 }
 .ph-chat-input {
   flex: 1;
@@ -1476,7 +1520,7 @@
   background: var(--ph-bg-card);
   border: 1px solid var(--ph-border-card);
   border-radius: var(--ph-radius-card);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--ph-shadow-popover);
   min-width: 230px;
   padding: 0.375rem;
   animation: ph-popup-in 0.12s ease;
@@ -1554,7 +1598,7 @@
   transition: border-color 0.15s;
 }
 .ph-attachment-chip--error {
-  border-color: #d44;
+  border-color: var(--ph-destructive);
 }
 .ph-attachment-thumb {
   position: relative;
@@ -1582,12 +1626,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--ph-bg) 72%, transparent);
   border-radius: 6px;
 }
 .ph-attachment-overlay--error {
-  color: #d44;
-  background: rgba(255, 240, 240, 0.85);
+  color: var(--ph-destructive);
+  background: color-mix(in srgb, var(--ph-destructive) 14%, var(--ph-bg));
 }
 @keyframes ph-spin {
   to {
@@ -1620,7 +1664,7 @@
 }
 .ph-attachment-error-label {
   font-size: 0.65rem;
-  color: #d44;
+  color: var(--ph-destructive);
   line-height: 1.3;
 }
 .ph-attachment-remove {
@@ -1641,7 +1685,7 @@
     color 0.12s;
 }
 .ph-attachment-remove:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: color-mix(in srgb, var(--ph-text) 10%, transparent);
   color: var(--ph-text);
 }
 

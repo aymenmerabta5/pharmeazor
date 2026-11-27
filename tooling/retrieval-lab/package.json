@@ -15,7 +15,7 @@
     "r2:organize": "python ../bucket_operations.py organize --group retrieval",
     "r2:reset": "python ../bucket_operations.py reset --group retrieval",
     "r2:sync": "python ../bucket_operations.py sync --group retrieval",
-    "check:python": "python -m compileall -q main.py config.py ../bucket_operations.py ../storage-lab src",
+    "check:python": "python -m compileall -q main.py config.py ../bucket_operations.py ../storage_lab src",
     "eval": "python eval/evaluate_rag_baseline.py && oxfmt --write eval/results",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check ."

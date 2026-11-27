@@ -64,18 +64,18 @@ export function ProfileView({
         <Text className="text-sm leading-6 text-muted-foreground">{description}</Text>
       </View>
 
-      <View className="overflow-hidden rounded-[28px] bg-primary p-5">
+      <View className="overflow-hidden rounded-[28px] bg-mark p-5">
         <View
           pointerEvents="none"
-          className="absolute -end-14 -top-20 size-52 rounded-full bg-primary-foreground/10"
+          className="absolute -end-14 -top-20 size-52 rounded-full bg-mark-foreground/10"
         />
         <View className="items-center gap-3">
-          <View className="size-20 items-center justify-center rounded-full bg-primary-foreground/15">
-            <Text className="text-2xl font-semibold text-primary-foreground">{initials}</Text>
+          <View className="size-20 items-center justify-center rounded-full bg-mark-foreground/15">
+            <Text className="text-2xl font-semibold text-mark-foreground">{initials}</Text>
           </View>
           <View className="items-center gap-1">
-            <Text className="text-xl font-semibold text-primary-foreground">{name}</Text>
-            {email ? <Text className="text-sm text-primary-foreground/75">{email}</Text> : null}
+            <Text className="text-xl font-semibold text-mark-foreground">{name}</Text>
+            {email ? <Text className="text-sm text-hero-muted">{email}</Text> : null}
           </View>
           <Badge variant="secondary">
             <Text>{roleLabel}</Text>

@@ -3,7 +3,7 @@
 The shared bucket module `tooling/bucket_operations.py` mirrors the corpus
 between the repository and the `pharmeazor` bucket through Cloudflare R2's
 S3-compatible API. It is used by the labs and by the bucket-first runner. The
-implementation lives in `tooling/storage-lab/storage_lab/`; the script at
+implementation lives in `tooling/storage_lab/`; the script at
 `tooling/bucket_operations.py` is the stable entry point and re-exports it.
 
 It reads the repository's existing `.env.local`; it does not keep a second copy
@@ -304,7 +304,7 @@ configuration or source, `130` interrupted.
 
 ```powershell
 python -m unittest discover -s tooling/tests -v
-python -m compileall -q tooling/storage-lab tooling/bucket_operations.py tooling/run_pipeline.py
+python -m compileall -q tooling/storage_lab tooling/bucket_operations.py tooling/run_pipeline.py
 ```
 
 After an upload, the public read base (when the bucket has public access) is

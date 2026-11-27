@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-LAB_ROOT = Path(__file__).resolve().parents[1]
+LAB_ROOT = Path(__file__).resolve().parent
 TOOL_ROOT = LAB_ROOT.parent
 REPO_ROOT = TOOL_ROOT.parent
 RETRIEVAL_ROOT = TOOL_ROOT / "retrieval-lab"

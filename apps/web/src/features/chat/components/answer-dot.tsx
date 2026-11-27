@@ -28,7 +28,7 @@ export function AnswerDot(): React.JSX.Element {
   return (
     <span className="ph-answer-dot" aria-hidden="true">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="10" fill="var(--ph-green)" />
+        <circle cx="10" cy="10" r="10" fill="var(--ph-mark)" />
         <LeafIcon />
       </svg>
     </span>
