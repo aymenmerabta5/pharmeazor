@@ -139,6 +139,17 @@ candidate groups only. It never creates canonical entities, resolves mentions,
 writes database rows, or populates Neo4j. Entity linking is documented in
 `docs/GRAPH_ENTITY_LINKING.md` and remains review-gated.
 
+Neo4j population is implemented as an approval-gated importer in
+`packages/modules/src/retrieval/kg/population` and
+`packages/api/src/workers/retrieval/`. `bun run retrieval:graph:import --
+--validate-only` is read-only. `--plan` and `--apply` require a recorded
+`status: "approved"` artifact whose identity, ontology version, taxonomy
+versions, and input checksums match the exact artifacts. Without that approval
+the importer reports `blocked_missing_approval` and publishes nothing. The
+current ontology and all candidate taxonomies remain unapproved; do not
+fabricate an approval, and do not treat the example approval template as
+approval. See `docs/GRAPH_POPULATION.md`.
+
 ### Do not
 
 - Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.

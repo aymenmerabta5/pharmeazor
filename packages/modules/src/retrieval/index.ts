@@ -140,4 +140,26 @@ export {
   type TextRelationshipSupport,
   type UnresolvedLinkCandidate,
 } from "./kg/extraction/index";
+export {
+  GRAPH_ENTITY_LABEL,
+  GRAPH_ONTOLOGY_VERSION,
+  GRAPH_POPULATION_APPROVAL_SCHEMA_VERSION,
+  GRAPH_POPULATION_MODEL_VERSION,
+  GRAPH_POPULATION_NODE_LABELS,
+  GRAPH_POPULATION_RELATIONSHIP_TYPES,
+  graphEntityLabels,
+  graphEvidenceId,
+  relationshipMapping,
+  validateGraphPopulationApproval,
+  type GraphApprovalExpectation,
+  type GraphApprovalValidation,
+  type GraphEntityMemberPlan,
+  type GraphEntityPlan,
+  type GraphPopulationApproval,
+  type GraphPopulationApprovalInputChecksums,
+  type GraphPopulationDirection,
+  type GraphPopulationNodeLabel,
+  type GraphPopulationRelationshipType,
+  type GraphRelationshipPlan,
+} from "./kg/population/index";
 export { assertNormalized, parseNpy, type NpyDtype, type NpyMatrix } from "./npy";

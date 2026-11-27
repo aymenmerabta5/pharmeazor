@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "status": "template",
+  "approvedBy": "REPLACE_WITH_PERSON_1",
+  "approvedAt": "REPLACE_WITH_ISO_DATE",
+  "reviewReference": "REPLACE_WITH_REVIEW_RECORD",
+  "ontologyVersion": "0.1",
+  "modelVersion": "graph-population-v0.1",
+  "entityTaxonomyVersion": "entity-mention-taxonomy-v0.1",
+  "linkTaxonomyVersion": "entity-link-candidate-taxonomy-v0.1",
+  "relationshipTaxonomyVersion": "relationship-candidate-taxonomy-v0.1",
+  "inputChecksums": {
+    "linkManifestSha256": "REPLACE_WITH_LINK_MANIFEST_SHA256",
+    "confidentMatchesSha256": "REPLACE_WITH_CONFIDENT_MATCHES_SHA256",
+    "relationshipManifestSha256": "REPLACE_WITH_RELATIONSHIP_MANIFEST_SHA256",
+    "relationshipCandidatesSha256": "REPLACE_WITH_RELATIONSHIP_CANDIDATES_SHA256"
+  },
+  "approvedNodeGroups": [
+    "product",
+    "substance",
+    "organization",
+    "clinical",
+    "population",
+    "dose_form",
+    "route",
+    "therapeutic_class"
+  ],
+  "nodeLabels": {
+    "product": "MedicinalProduct",
+    "substance": "Substance",
+    "organization": "Organization",
+    "clinical": "ClinicalConcept",
+    "population": "PopulationGroup",
+    "dose_form": "DoseForm",
+    "route": "RouteOfAdministration",
+    "therapeutic_class": "TherapeuticClass"
+  },
+  "approvedRelationshipKinds": [
+    "product_has_dose_form",
+    "product_has_route",
+    "product_has_authorization",
+    "product_has_atc_class",
+    "product_has_therapeutic_class",
+    "authorization_held_by_organization"
+  ],
+  "relationshipMappings": {
+    "product_has_dose_form": {
+      "type": "HAS_DOSE_FORM",
+      "direction": "forward"
+    },
+    "product_has_route": {
+      "type": "HAS_ROUTE",
+      "direction": "forward"
+    },
+    "product_has_authorization": {
+      "type": "AUTHORIZES",
+      "direction": "reverse"
+    },
+    "product_has_atc_class": {
+      "type": "CLASSIFIED_AS",
+      "direction": "forward"
+    },
+    "product_has_therapeutic_class": {
+      "type": "CLASSIFIED_AS",
+      "direction": "forward"
+    },
+    "authorization_held_by_organization": {
+      "type": "AUTHORIZATION_HOLDER",
+      "direction": "forward"
+    }
+  },
+  "expiresAt": "REPLACE_WITH_ISO_DATE"
+}

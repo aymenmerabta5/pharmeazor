@@ -1,7 +1,7 @@
 # Pharmeazor Knowledge Graph Logical Schema
 
 **Version:** 0.1<br>
-**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model and the candidate-only entity, relationship, and entity-link artifacts are implemented; there is no canonical graph writer or retrieval endpoint.<br>
+**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model, the candidate-only entity, relationship, and entity-link artifacts, and an approval-gated Neo4j population importer are implemented. No approved corpus graph has been published, and there is no retrieval endpoint.<br>
 **Date:** 2026-11-27<br>
 **Ontology contract:** [GRAPH_ONTOLOGY.md](./GRAPH_ONTOLOGY.md)<br>
 **Runtime context:** [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md), [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md)

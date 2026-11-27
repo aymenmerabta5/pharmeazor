@@ -45,10 +45,13 @@ implements graph retrieval; see
 [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md),
 [GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md),
 [GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md), and
-[GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). The current repository
-policy explicitly prohibits adding a knowledge-graph or graph-retrieval system
-without owner approval. This document records a design proposal; it does not
-override that policy.
+[GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). An approval-gated Neo4j
+population importer exists in [GRAPH_POPULATION.md](./GRAPH_POPULATION.md); it
+refuses to publish without a recorded approval matching the exact artifact
+checksums and the ontology/taxonomy versions. No approved corpus graph has been
+published. The current repository policy explicitly prohibits adding a
+knowledge-graph or graph-retrieval system without owner approval. This document
+records a design proposal; it does not override that policy.
 
 No part of this document has been medically validated. It is ready for
 multidisciplinary review, not for clinical use.

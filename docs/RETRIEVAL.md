@@ -395,10 +395,14 @@ candidate-only relationships whose endpoints reference those mentions or
 observations and whose support is either an exact text span or an explicit
 structured row. The parallel `retrieval:links:export` worker groups candidate
 mentions and observations into confident, ambiguous, and unresolved candidate
-clusters without creating canonical entities. None of these commands feeds the
-hybrid index, alters chunk IDs, resolves entities, publishes canonical
-relationships, or implements graph retrieval. The temporary mention,
-relationship, and link taxonomies require Person 1 review before canonical use.
+clusters without creating canonical entities. The approval-gated
+`retrieval:graph:import` worker validates those artifacts and can build or apply
+an ontology-mapped Neo4j plan. Its default validation mode is read-only; `--plan`
+and `--apply` require a recorded approval artifact matching exact checksums.
+None of these commands feeds the hybrid index, alters chunk IDs, resolves
+entities, publishes unapproved relationships, or implements graph retrieval. The
+temporary mention, relationship, and link taxonomies require Person 1 review
+before canonical use.
 
 ```text
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
@@ -471,6 +475,9 @@ bun run retrieval:relationships:export -- --dry-run   # validate candidate relat
 bun run retrieval:relationships:export                # write candidate-only relationship artifacts
 bun run retrieval:links:export -- --dry-run           # validate candidate entity links; write nothing
 bun run retrieval:links:export                        # write candidate-only link artifacts
+bun run retrieval:graph:import -- --validate-only     # validate graph inputs; no Neo4j connection
+bun run retrieval:graph:import -- --plan --approval <approval.json>
+bun run retrieval:graph:import -- --apply --approval <approval.json>
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,

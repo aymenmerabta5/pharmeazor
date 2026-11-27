@@ -279,9 +279,11 @@ fixture.
   relationship extraction is implemented in
   [GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md).
   Candidate-only entity linking and deduplication is implemented in
-  [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). Candidate assertions,
-  canonical graph publication, resolved entities, canonical relationships, and
-  GraphRAG remain deferred.
+  [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). An approval-gated Neo4j
+  population importer is implemented in
+  [GRAPH_POPULATION.md](./GRAPH_POPULATION.md), but no approved corpus graph has
+  been published. Candidate assertions, canonical graph publication, resolved
+  entities, canonical relationships, and GraphRAG remain deferred.
 - A graph golden set and baseline.
 - Promoting these boundaries into the hybrid index, which would require
   contextualization, embedding, artifact, trace, gold-label, and baseline
