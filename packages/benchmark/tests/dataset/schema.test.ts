@@ -88,6 +88,22 @@ describe("GoldAnnotationSchema", () => {
     expect(GoldAnnotationSchema.safeParse(verified).success).toBe(true);
   });
 
+  it("accepts the current chunk-id grammar and rejects extra identity segments", () => {
+    const currentId = "MED001__SRC_ANPP_RCP__DOC002__smpc#dosage-0#0";
+    expect(
+      GoldAnnotationSchema.safeParse({
+        ...validAnnotation,
+        relevant_chunk_ids: [currentId],
+      }).success,
+    ).toBe(true);
+    expect(
+      GoldAnnotationSchema.safeParse({
+        ...validAnnotation,
+        relevant_chunk_ids: [`${currentId}#parent`],
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects a missing reviewer_notes field", () => {
     const { reviewer_notes: _omit, ...rest } = validAnnotation;
     expect(GoldAnnotationSchema.safeParse(rest).success).toBe(false);

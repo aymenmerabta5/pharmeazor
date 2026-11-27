@@ -41,6 +41,26 @@ describe("artifactDocumentsFromSnapshot", () => {
     expect(document!.chunks[1]!.ordinal).toBe(1);
   });
 
+  it("drops section path and multi-section membership when rebuilding from an artifact", () => {
+    const artifact = row({
+      chunkId: "MED001__SRC_ANPP_RCP__DOC001__smpc#dosage-1#7",
+      sectionCode: "dosage",
+      text: "Contextualized note.\n\nBody text.\n",
+    });
+
+    const [document] = artifactDocumentsFromSnapshot([artifact], []);
+    const chunk = document!.chunks[0]!;
+
+    expect(chunk.sectionCode).toBe("dosage");
+    expect(chunk.sectionCodes).toEqual(["dosage"]);
+    expect(chunk.sectionHeading).toBe("dosage");
+    expect(chunk.sectionPath).toBe("");
+    expect(chunk.ordinal).toBe(7);
+    expect(chunk.contextNote).toBe("");
+    expect(chunk.content).toBe(artifact.text);
+    expect(chunk.contextualizedContent).toBe(artifact.text);
+  });
+
   it("joins manifest metadata when the artifact id is still present", () => {
     const artifact = row();
     const [document] = artifactDocumentsFromSnapshot(
