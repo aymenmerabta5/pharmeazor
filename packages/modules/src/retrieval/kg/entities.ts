@@ -80,7 +80,11 @@ export class EntityAccumulator {
     return this.entities.size;
   }
 
-  add(seed: EntitySeed, aliases: readonly AliasSeed[] = [], sources: readonly SourceSeed[] = []): string {
+  add(
+    seed: EntitySeed,
+    aliases: readonly AliasSeed[] = [],
+    sources: readonly SourceSeed[] = [],
+  ): string {
     const entityKey = seed.entityKey.trim();
     if (!entityKey) throw new Error(`Entity key is empty for ${seed.entityType}`);
     const entityId = entityIdFor(seed.entityType, entityKey);
@@ -248,7 +252,8 @@ export class EntityAccumulator {
     );
     aliases.sort(
       (left, right) =>
-        left.entityId.localeCompare(right.entityId) || left.aliasNorm.localeCompare(right.aliasNorm),
+        left.entityId.localeCompare(right.entityId) ||
+        left.aliasNorm.localeCompare(right.aliasNorm),
     );
     sources.sort(
       (left, right) =>

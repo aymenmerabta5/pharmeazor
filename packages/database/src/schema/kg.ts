@@ -39,7 +39,9 @@ export const kgEntities = pgTable(
     status: text("status").notNull().default("active"),
     mergedInto: text("merged_into"),
     confidence: real("confidence").notNull().default(1),
-    attributes: jsonb("attributes").notNull().default(sql`'{}'::jsonb`),
+    attributes: jsonb("attributes")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     buildId: text("build_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -87,7 +89,9 @@ export const kgEntitySources = pgTable(
     sourceId: text("source_id").notNull(),
     sourceKey: text("source_key").notNull(),
     sourceUrl: text("source_url"),
-    evidence: jsonb("evidence").notNull().default(sql`'{}'::jsonb`),
+    evidence: jsonb("evidence")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     buildId: text("build_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -129,7 +133,9 @@ export const kgMentions = pgTable(
     /** gazetteer | regex | cue | bullet | lexicon */
     method: text("method").notNull(),
     confidence: real("confidence").notNull(),
-    attributes: jsonb("attributes").notNull().default(sql`'{}'::jsonb`),
+    attributes: jsonb("attributes")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     buildId: text("build_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -149,7 +155,9 @@ export const kgBuildRuns = pgTable("kg_build_runs", {
   extractorVersion: text("extractor_version").notNull(),
   /** running | completed | failed */
   status: text("status").notNull(),
-  counts: jsonb("counts").notNull().default(sql`'{}'::jsonb`),
+  counts: jsonb("counts")
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   error: text("error"),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
@@ -162,7 +170,9 @@ export const kgEntityMerges = pgTable(
     sourceEntityId: text("source_entity_id").notNull(),
     targetEntityId: text("target_entity_id").notNull(),
     rule: text("rule").notNull(),
-    evidence: jsonb("evidence").notNull().default(sql`'{}'::jsonb`),
+    evidence: jsonb("evidence")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     buildId: text("build_id").notNull(),
     mergedAt: timestamp("merged_at", { withTimezone: true }).notNull().defaultNow(),
   },

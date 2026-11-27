@@ -39,10 +39,7 @@ export function useChatSession(initialQuestion?: string) {
       setInput("");
       setBusy(true);
       setPendingSince(createdAt);
-      setMessages((previous) => [
-        ...previous,
-        createUserMessage(question, createdAt, attachments),
-      ]);
+      setMessages((previous) => [...previous, createUserMessage(question, createdAt, attachments)]);
       // The shared history is built from what is actually searched for.
       if (question) history.record(question);
       setActiveQuery((current) => current ?? (question || "Attached files"));

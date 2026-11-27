@@ -136,12 +136,7 @@ export function ChatInputBar({
           placeholder={placeholder}
           className="ph-chat-input"
         />
-        <button
-          type="submit"
-          disabled={!canSend}
-          className="ph-chat-send"
-          aria-label={sendLabel}
-        >
+        <button type="submit" disabled={!canSend} className="ph-chat-send" aria-label={sendLabel}>
           <ArrowUp className="size-4" aria-hidden />
         </button>
       </div>

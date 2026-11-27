@@ -29,7 +29,11 @@ export function ChatMessageList({
       ) : (
         messages.map((message) =>
           message.role === "user" ? (
-            <UserBubble key={message.id} content={message.content} attachments={message.attachments} />
+            <UserBubble
+              key={message.id}
+              content={message.content}
+              attachments={message.attachments}
+            />
           ) : (
             <AssistantMessage key={message.id} message={message} />
           ),

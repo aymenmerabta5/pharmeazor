@@ -51,13 +51,7 @@ export const KG_SOURCE_KINDS = [
 
 export type KgSourceKind = (typeof KG_SOURCE_KINDS)[number];
 
-export const KG_MENTION_METHODS = [
-  "gazetteer",
-  "regex",
-  "cue",
-  "bullet",
-  "lexicon",
-] as const;
+export const KG_MENTION_METHODS = ["gazetteer", "regex", "cue", "bullet", "lexicon"] as const;
 
 export type KgMentionMethod = (typeof KG_MENTION_METHODS)[number];
 

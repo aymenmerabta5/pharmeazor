@@ -61,12 +61,8 @@ function AttachmentChip({
       {/* Filename + size */}
       <div className="ph-attachment-info">
         <span className="ph-attachment-name">{item.file.name}</span>
-        {!isError && (
-          <span className="ph-attachment-size">{formatBytes(item.file.size)}</span>
-        )}
-        {isError && (
-          <span className="ph-attachment-error-label">{item.error}</span>
-        )}
+        {!isError && <span className="ph-attachment-size">{formatBytes(item.file.size)}</span>}
+        {isError && <span className="ph-attachment-error-label">{item.error}</span>}
       </div>
 
       {/* Remove button */}

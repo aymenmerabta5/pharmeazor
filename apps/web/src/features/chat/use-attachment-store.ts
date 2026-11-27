@@ -134,8 +134,7 @@ export function useAttachmentStore(): AttachmentStore {
             ),
           );
         } catch (err) {
-          const message =
-            err instanceof Error ? err.message : "Upload failed";
+          const message = err instanceof Error ? err.message : "Upload failed";
           setAttachments((prev) =>
             prev.map((a) =>
               a.localId === item.localId ? { ...a, status: "error", error: message } : a,

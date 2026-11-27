@@ -145,20 +145,12 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   {
     key: "poudre_solution_buvable",
     label: "Poudre pour solution buvable",
-    patterns: [
-      "poudre pour solution buvable",
-      "pdre p sol buv",
-      "poudre solution buvable",
-    ],
+    patterns: ["poudre pour solution buvable", "pdre p sol buv", "poudre solution buvable"],
   },
   {
     key: "poudre_suspension_buvable",
     label: "Poudre pour suspension buvable",
-    patterns: [
-      "poudre pour suspension buvable",
-      "pdre p susp buv",
-      "poudre suspension buvable",
-    ],
+    patterns: ["poudre pour suspension buvable", "pdre p susp buv", "poudre suspension buvable"],
   },
   {
     key: "suppositoire",
@@ -385,7 +377,10 @@ export function normalizeDosageForm(value: string): {
   readonly key: string;
   readonly label: string;
 } {
-  const folded = foldKgText(value).replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim();
+  const folded = foldKgText(value)
+    .replace(/[^\p{L}\p{N} ]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   for (const { definition, pattern } of DOSAGE_FORM_BY_PATTERN) {
     if (folded === pattern || folded.includes(pattern)) {
       return { key: definition.key, label: definition.label };
@@ -449,7 +444,10 @@ export function normalizeJurisdiction(value: string): {
   readonly key: string;
   readonly label: string;
 } | null {
-  const folded = foldKgText(value).replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim();
+  const folded = foldKgText(value)
+    .replace(/[^\p{L}\p{N} ]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!folded || /\d/.test(folded)) return null;
   for (const [alias, key, label] of COUNTRY_ALIASES) {
     if (folded === alias) return { key, label };

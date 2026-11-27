@@ -14,11 +14,7 @@ function BubbleAttachment({ att }: { att: AttachmentRef }): React.JSX.Element {
   if (isImage && att.previewUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={att.previewUrl}
-        alt={att.originalName}
-        className="ph-bubble-attachment-img"
-      />
+      <img src={att.previewUrl} alt={att.originalName} className="ph-bubble-attachment-img" />
     );
   }
 

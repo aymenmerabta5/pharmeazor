@@ -103,7 +103,11 @@ export class Gazetteer {
   }
 }
 
-function matchesAt(tokens: readonly KgToken[], index: number, expected: readonly string[]): boolean {
+function matchesAt(
+  tokens: readonly KgToken[],
+  index: number,
+  expected: readonly string[],
+): boolean {
   for (let offset = 0; offset < expected.length; offset += 1) {
     if (tokens[index + offset]?.norm !== expected[offset]) return false;
   }
