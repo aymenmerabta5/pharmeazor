@@ -199,6 +199,124 @@ CREATE INDEX IF NOT EXISTS retrieval_products_dci_norm_idx
   ON retrieval_products (dci_norm);
 CREATE INDEX IF NOT EXISTS retrieval_products_status_idx
   ON retrieval_products (registration_status);
+
+-- ---------------------------------------------------------------------------
+-- Knowledge-graph entity sidecar. Not a retrieval arm.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS kg_entities (
+  entity_id        text PRIMARY KEY,
+  entity_type      text NOT NULL,
+  entity_key       text NOT NULL,
+  canonical_label  text NOT NULL,
+  normalized_label text NOT NULL,
+  status           text NOT NULL DEFAULT 'active',
+  merged_into      text REFERENCES kg_entities(entity_id) ON DELETE SET NULL,
+  confidence       real NOT NULL DEFAULT 1,
+  attributes       jsonb NOT NULL DEFAULT '{}'::jsonb,
+  build_id         text NOT NULL,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS kg_entities_type_key_idx
+  ON kg_entities (entity_type, entity_key);
+CREATE INDEX IF NOT EXISTS kg_entities_type_idx
+  ON kg_entities (entity_type);
+CREATE INDEX IF NOT EXISTS kg_entities_normalized_idx
+  ON kg_entities (normalized_label);
+CREATE INDEX IF NOT EXISTS kg_entities_build_idx
+  ON kg_entities (build_id);
+
+CREATE TABLE IF NOT EXISTS kg_entity_aliases (
+  entity_id   text NOT NULL REFERENCES kg_entities(entity_id) ON DELETE CASCADE,
+  alias_norm  text NOT NULL,
+  alias_raw   text NOT NULL,
+  language    text,
+  source_id   text NOT NULL,
+  confidence  real NOT NULL DEFAULT 1,
+  build_id    text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (entity_id, alias_norm)
+);
+
+CREATE INDEX IF NOT EXISTS kg_entity_aliases_norm_idx
+  ON kg_entity_aliases (alias_norm);
+CREATE INDEX IF NOT EXISTS kg_entity_aliases_build_idx
+  ON kg_entity_aliases (build_id);
+
+CREATE TABLE IF NOT EXISTS kg_entity_sources (
+  entity_id   text NOT NULL REFERENCES kg_entities(entity_id) ON DELETE CASCADE,
+  source_kind text NOT NULL,
+  source_id   text NOT NULL,
+  source_key  text NOT NULL,
+  source_url  text,
+  evidence    jsonb NOT NULL DEFAULT '{}'::jsonb,
+  build_id    text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (entity_id, source_kind, source_id, source_key)
+);
+
+CREATE INDEX IF NOT EXISTS kg_entity_sources_entity_idx
+  ON kg_entity_sources (entity_id);
+CREATE INDEX IF NOT EXISTS kg_entity_sources_kind_idx
+  ON kg_entity_sources (source_kind);
+CREATE INDEX IF NOT EXISTS kg_entity_sources_build_idx
+  ON kg_entity_sources (build_id);
+
+CREATE TABLE IF NOT EXISTS kg_mentions (
+  mention_id      text PRIMARY KEY,
+  entity_id       text NOT NULL REFERENCES kg_entities(entity_id) ON DELETE CASCADE,
+  artifact_id     text NOT NULL,
+  document_id     text NOT NULL,
+  chunk_id        text,
+  section_code    text NOT NULL,
+  section_heading text,
+  surface         text NOT NULL,
+  char_start      integer NOT NULL,
+  char_end        integer NOT NULL,
+  source_field    text NOT NULL,
+  text_hash       text NOT NULL,
+  method          text NOT NULL,
+  confidence      real NOT NULL,
+  attributes      jsonb NOT NULL DEFAULT '{}'::jsonb,
+  build_id        text NOT NULL,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS kg_mentions_entity_idx
+  ON kg_mentions (entity_id);
+CREATE INDEX IF NOT EXISTS kg_mentions_chunk_idx
+  ON kg_mentions (chunk_id);
+CREATE INDEX IF NOT EXISTS kg_mentions_artifact_idx
+  ON kg_mentions (artifact_id);
+CREATE INDEX IF NOT EXISTS kg_mentions_build_idx
+  ON kg_mentions (build_id);
+
+CREATE TABLE IF NOT EXISTS kg_build_runs (
+  run_id            text PRIMARY KEY,
+  mode              text NOT NULL,
+  corpus_hash       text NOT NULL,
+  extractor_version text NOT NULL,
+  status            text NOT NULL,
+  counts            jsonb NOT NULL DEFAULT '{}'::jsonb,
+  error             text,
+  started_at        timestamptz NOT NULL DEFAULT now(),
+  finished_at       timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS kg_entity_merges (
+  merge_id          text PRIMARY KEY,
+  source_entity_id  text NOT NULL,
+  target_entity_id  text NOT NULL,
+  rule              text NOT NULL,
+  evidence          jsonb NOT NULL DEFAULT '{}'::jsonb,
+  build_id          text NOT NULL,
+  merged_at         timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS kg_entity_merges_build_idx
+  ON kg_entity_merges (build_id);
 `;
 
 async function main(): Promise<void> {

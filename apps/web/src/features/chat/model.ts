@@ -18,11 +18,25 @@ export interface ChatSource {
   retained: boolean;
 }
 
+/**
+ * A file the user attached before sending.
+ * `objectId` is the `storedObjects.id` returned by the upload API.
+ * `previewUrl` is a local `blob:` URL for thumbnail display (images only).
+ */
+export interface AttachmentRef {
+  objectId: string;
+  originalName: string;
+  mimeType: string;
+  byteSize: number;
+  previewUrl?: string;
+}
+
 /** One message in the conversation log. */
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  attachments?: AttachmentRef[];
   answerLabel?: string;
   tags?: string[];
   sources?: ChatSource[];
@@ -31,11 +45,16 @@ export interface ChatMessage {
 }
 
 /** The question the user just sent. */
-export function createUserMessage(question: string, createdAt: number): ChatMessage {
+export function createUserMessage(
+  question: string,
+  createdAt: number,
+  attachments?: AttachmentRef[],
+): ChatMessage {
   return {
     id: `msg-${createdAt}-user`,
     role: "user",
     content: question.trim(),
+    ...(attachments && attachments.length > 0 ? { attachments } : {}),
   };
 }
 

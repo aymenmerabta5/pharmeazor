@@ -257,6 +257,13 @@ export const retrievalProducts = pgTable(
   ],
 );
 
+/**
+ * Knowledge-graph entities are a sidecar of retrieval, not a retrieval arm.
+ * They live in a separate module so the retrieval contract stays small, but
+ * are re-exported here because `schema/index.ts` is generated.
+ */
+export * from "./kg";
+
 /** Convenience re-export so adapter code can import one type. */
 export type RetrievalDocumentRow = typeof retrievalDocuments.$inferSelect;
 export type RetrievalChunkRow = typeof retrievalChunks.$inferSelect;
