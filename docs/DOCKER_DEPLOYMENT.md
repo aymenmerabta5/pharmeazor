@@ -42,7 +42,7 @@ managed instance that already has the extension, or at a container built from
 The development database is started with:
 
 ```bash
-docker compose --env-file .env.local up -d
+docker compose --env-file .env.local up -d postgres
 ```
 
 Compose builds the pgvector image on first run and mounts
@@ -51,10 +51,56 @@ automatically. For a database that already exists, run
 `bun run db:ensure-extensions` once; it is idempotent.
 
 `docker-compose.yml` and `start-database.sh` are generator-owned and are
-rewritten by `ghostinit sync`. There is one compose file and no override:
-Postgres with pgvector, Redis, and the Upstash-compatible REST proxy all live
-in `docker-compose.yml`, so a regeneration must be re-applied with the same
-contents. Keep the pgvector build and the digest pins when you restore it.
+rewritten by `ghostinit sync`. There is one main local compose file and no
+override: Postgres with pgvector, Neo4j 5, Redis, and the Upstash-compatible
+REST proxy all live in `docker-compose.yml`, so a regeneration must be
+re-applied with the same contents. Keep the pgvector build, the Neo4j digest
+pin, and the persistent volumes when you restore it.
+
+## Neo4j graph database
+
+The same local compose file defines an independent Neo4j 5.26.34 Community
+service. It does not replace PostgreSQL and does not import graph data on
+startup. Its data is stored in the named `neo4j_data` volume.
+
+Add the Neo4j variables to `.env.local` before any Compose command. Missing
+credentials are rejected by Compose interpolation:
+
+```text
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=<strong password of at least 8 characters without />
+NEO4J_HTTP_PORT=7475
+NEO4J_BOLT_PORT=7688
+NEO4J_DATABASE=neo4j
+NEO4J_HTTP_URL=http://localhost:7475
+```
+
+Start only Neo4j:
+
+```bash
+docker compose --env-file .env.local up -d neo4j
+docker compose --env-file .env.local ps neo4j
+docker compose --env-file .env.local logs -f neo4j
+```
+
+- Browser: `http://localhost:7475/browser/`
+- Bolt: `bolt://localhost:7688`
+- Database: `neo4j`
+- User/password: `NEO4J_USER` / `NEO4J_PASSWORD`
+- From another Compose service: `http://neo4j:7474`
+
+Stop it without deleting data:
+
+```bash
+docker compose --env-file .env.local stop neo4j
+```
+
+`docker compose down -v` deletes the graph volume and is never part of normal
+operation. Graph population remains approval-gated and is not run by Compose.
+
+`compose.production.yml` remains application-only, like its PostgreSQL
+contract. Point `NEO4J_HTTP_URL` at an externally managed Neo4j 5 instance in
+production.
 
 ## Continuous integration environment
 

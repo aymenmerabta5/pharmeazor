@@ -26,6 +26,7 @@ const TARGET = resolve(ROOT, ".env.local");
  */
 const OVERRIDES = {
   POSTGRES_PASSWORD: "ci-only-not-a-secret",
+  NEO4J_PASSWORD: "ci-only-not-a-secret",
   BETTER_AUTH_SECRET: "ci-only-better-auth-secret-000000000000",
   EVE_INTERNAL_AUTH_SECRET: "ci-only-eve-internal-secret-000000000000",
   UPSTASH_REDIS_REST_URL: "https://ci.invalid",

@@ -1,6 +1,6 @@
 # Neo4j graph population
 
-**Status:** importer implemented, approval-gated, and **not executed against a real Neo4j instance** in this repository.  
+**Status:** importer and local Neo4j 5 Compose service implemented, approval-gated, and **not started or executed against a real Neo4j instance** in this repository.  
 **Ontology:** `GRAPH_ONTOLOGY.md` version 0.1 — still a draft.  
 **Candidate taxonomies:** entity, relationship, and entity-link taxonomies remain temporary and unapproved by Person 1.  
 **Approval gate:** no graph data may be published without a recorded `status: "approved"` artifact matching the exact upstream checksums.
@@ -26,7 +26,8 @@ The current repository has:
 - no Person 1/domain approval record for the ontology or candidate taxonomies;
 - no approved entity-link artifact;
 - no approved relationship artifact;
-- no Neo4j service, driver, or connection configured.
+- a Neo4j 5 service is defined in `docker-compose.yml`, but it has not been
+  started and no import target has been initialized.
 
 The importer therefore reports `blocked_missing_approval` and imports zero nodes
 and zero relationships. `docs/GRAPH_POPULATION_APPROVAL.example.json` is a
@@ -189,7 +190,57 @@ bun run retrieval:graph:import -- --apply --approval <approval.json>
 
 The approval file is never optional for `--plan` or `--apply`.
 
-## 10. Observed validation result
+## 10. Local Neo4j service
+
+`docker-compose.yml` defines a separate `neo4j` service using the pinned Neo4j
+5.26.34 Community image. It does not replace or modify the PostgreSQL service.
+The graph database persists in the named `neo4j_data` volume; logs use
+`neo4j_logs`.
+
+Add the new variables to the existing `.env.local` before running any Compose
+command. Compose interpolation is fail-closed for missing Neo4j credentials:
+
+```text
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=<strong password, at least 8 characters, no />
+NEO4J_HTTP_PORT=7475
+NEO4J_BOLT_PORT=7688
+NEO4J_DATABASE=neo4j
+NEO4J_HTTP_URL=http://localhost:7475
+NEO4J_HEAP_INITIAL_SIZE=512m
+NEO4J_HEAP_MAX_SIZE=1G
+NEO4J_PAGECACHE_SIZE=512m
+```
+
+Connection settings for the importer:
+
+- HTTP endpoint: `http://localhost:7475`
+- Browser: `http://localhost:7475/browser/`
+- Bolt: `bolt://localhost:7688`
+- Database: `neo4j`
+- User/password: `NEO4J_USER` / `NEO4J_PASSWORD`
+- From another Compose service, use `http://neo4j:7474`; the host-run importer
+  uses the mapped `http://localhost:7475`.
+
+Start only Neo4j later, without starting or importing the application:
+
+```bash
+docker compose --env-file .env.local up -d neo4j
+docker compose --env-file .env.local ps neo4j
+docker compose --env-file .env.local logs -f neo4j
+```
+
+Stop it without deleting data:
+
+```bash
+docker compose --env-file .env.local stop neo4j
+```
+
+`docker compose down -v` deletes the graph volume and is never part of normal
+operation. Starting the service does not publish candidates; the approval-gated
+importer must be run separately.
+
+## 11. Observed validation result
 
 Full validation on the current artifacts, without approval:
 
@@ -223,7 +274,7 @@ The low number of resolvable relationships is expected: many relationship
 endpoints are structured observations that remain ambiguous or unresolved in the
 entity-link artifact. They must not be published.
 
-## 11. Implementation surfaces
+## 12. Implementation surfaces
 
 | Concern                                             | Location                                                                                                                                     |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -234,7 +285,7 @@ entity-link artifact. They must not be published.
 | CLI                                                 | `packages/api/src/workers/retrieval/import-graph.ts`                                                                                         |
 | Tests                                               | `packages/modules/tests/retrieval-kg-population.test.ts`, `packages/api/tests/graph-import.test.ts`, `packages/api/tests/neo4j-http.test.ts` |
 
-## 12. Remaining limitations
+## 13. Remaining limitations
 
 - No Person 1/domain approval exists, so the current corpus has not been
   published and no real Neo4j import has run.
@@ -247,6 +298,6 @@ entity-link artifact. They must not be published.
   cluster record.
 - Relationship support evidence is referenced by ID; a native Neo4j relationship
   cannot own an outgoing `SUPPORTED_BY` edge.
-- No Neo4j service is defined in the repository; the target must be provisioned
-  externally.
+- The Compose service is defined but was not started; no real Neo4j data exists
+  yet.
 - No GraphRAG projection or retrieval endpoint is implemented.

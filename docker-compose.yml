@@ -3,10 +3,10 @@
 #   docker compose --env-file .env.local up -d --build
 #
 # Everything the application needs to run locally lives here: Postgres 18.7
-# with pgvector 0.8.7, Redis 7.4.12, and the Upstash-compatible REST proxy the
-# cache adapter talks to. There is deliberately no `docker-compose.override.yml`:
-# a second file let the two drift, and the pgvector build is not optional for
-# this project.
+# with pgvector 0.8.7, Neo4j 5.26.34 Community for the knowledge graph, Redis
+# 7.4.12, and the Upstash-compatible REST proxy the cache adapter talks to.
+# There is deliberately no `docker-compose.override.yml`: a second file let the
+# two drift, and the pgvector build is not optional for this project.
 #
 # `docker-compose.yml` is generator-owned. A `ghostinit sync` may rewrite it;
 # re-apply this file afterwards. The build stays reproducible because
@@ -46,6 +46,44 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+
+  neo4j:
+    # Neo4j 5.26.34 Community, pinned by digest. The graph importer is
+    # approval-gated; this service only provides the external database target.
+    # Host ports are deliberately non-standard so this can run beside another
+    # local Neo4j instance. Browser: http://localhost:7475/browser/
+    # Bolt: bolt://localhost:7688
+    image: neo4j:5.26.34-community@sha256:2c48628bc28c68d7e2787f76262dfc9d7c21a8f7f290e30da901c489aa7fe50d
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      # The image consumes NEO4J_AUTH. NEO4J_USER/NEO4J_PASSWORD are also
+      # exposed to the health check so it never needs hardcoded credentials.
+      NEO4J_AUTH: "${NEO4J_USER:?NEO4J_USER is required}/${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}"
+      NEO4J_USER: "${NEO4J_USER:?NEO4J_USER is required}"
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}"
+      NEO4J_server_http_listen__address: "0.0.0.0:7474"
+      NEO4J_server_bolt_listen__address: "0.0.0.0:7687"
+      NEO4J_server_memory_heap_initial__size: "${NEO4J_HEAP_INITIAL_SIZE:-512m}"
+      NEO4J_server_memory_heap_max__size: "${NEO4J_HEAP_MAX_SIZE:-1G}"
+      NEO4J_server_memory_pagecache_size: "${NEO4J_PAGECACHE_SIZE:-512m}"
+      NEO4J_dbms_security_auth__minimum__password__length: "8"
+    ports:
+      - "127.0.0.1:${NEO4J_HTTP_PORT:-7475}:7474"
+      - "127.0.0.1:${NEO4J_BOLT_PORT:-7688}:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'cypher-shell -u "$${NEO4J_USER}" -p "$${NEO4J_PASSWORD}" ''RETURN 1'' >/dev/null 2>&1 || exit 1',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
 
   redis:
     # Pinned by digest: `7-alpine` is a moving tag, and a silent Redis minor
@@ -145,4 +183,8 @@ services:
 
 volumes:
   postgres_data:
+  neo4j_data:
+    # Persistent graph data. `docker compose down` preserves it; `down -v`
+    # deletes it and is never part of normal operation.
+  neo4j_logs:
   redis_data:

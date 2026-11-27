@@ -157,8 +157,14 @@ base is the official `postgres:18.7-trixie` image, and the extension comes
 from the signed PGDG apt repository that image already trusts.
 
 ```bash
-docker compose --env-file .env.local up -d      # builds the image on first run
+docker compose --env-file .env.local up -d postgres  # builds the image on first run
+docker compose --env-file .env.local up -d neo4j     # optional graph target
 ```
+
+Compose interpolation is fail-closed for the Neo4j credentials, so add the
+`NEO4J_*` variables from `.env.example` to `.env.local` before running either
+command. Starting Neo4j does not import graph data; population remains
+approval-gated.
 
 Two paths register the extension in a database:
 
@@ -172,10 +178,12 @@ no `pg_upgrade`, and an existing data directory opens on the new image
 unchanged.
 
 `docker-compose.yml` and `start-database.sh` are generator-owned, so a
-`ghostinit sync` may rewrite the compose file. It is the only compose file in
-the repository: the pgvector service, Redis, and the Upstash-compatible REST
-proxy all live in it, with the two third-party images pinned by digest. Restore
-it from version control after a regeneration rather than splitting it again.
+`ghostinit sync` may rewrite the compose file. It is the main local compose
+file: the pgvector service, Neo4j 5, Redis, and the Upstash-compatible REST
+proxy all live in it, with the third-party images pinned by digest. Starting
+Neo4j does not import graph data; population remains approval-gated. Restore
+the compose file from version control after a regeneration rather than
+splitting it again.
 
 ## Model choices
 

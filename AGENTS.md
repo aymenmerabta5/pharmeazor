@@ -13,6 +13,7 @@
 - Frontend apps: mobile, web.
 - Web framework: Next.js 16.4.6.
 - Database: PostgreSQL 18.7 through Drizzle in `packages/database`, with pgvector 0.8.7 enabled. The image is built from `docker/postgres/Dockerfile` and pins both the server patch and the extension build.
+- Graph target: Neo4j 5.26.34 Community is an optional, independent service in `docker-compose.yml` with the persistent `neo4j_data` volume. Its importer is approval-gated; the service does not publish candidates or alter PostgreSQL.
 - TypeScript: 7.0.2. React: 19.3.1 on web; mobile stays on React 19.2.3 and React Native 0.86.3 for Expo SDK 57 compatibility.
 - Next development and builds run under Node with Turbopack; the dev supervisor still launches them through Bun. The previous Webpack compatibility profile and the `@react-pdf/renderer` preload were retired with the Next.js 16.4/Turbopack migration.
 - Enabled capabilities: auth, typed-api, billing, email, analytics, i18n, eve, storage, pdf, cache.
@@ -237,7 +238,8 @@ Do not bypass release age, integrity, reviewed patches, audits, or recovery leas
 - Self-hosting must follow `docs/EVE_SELF_HOSTING.md`, including persistent Workflow state and both proxy route families for a separate Eve service.
 - Database scripts are `bun run db:generate`, `bun run db:migrate`, and `bun run db:push`. Run `bun run db:ensure-extensions` on a database that predates the vector extension; it is idempotent.
 - A database that already holds subscriptions carries them over with `bun run db:migrate:billing` before `bun run db:push`. The script is idempotent and a no-op on a fresh database. It seeds the plan catalog, backfills the plan and the period of every legacy subscription, and recreates the `billing_provider` enum without the rails this application does not offer. It reports the subscription rows it drops, because a dropped row can be a live provider subscription that keeps charging the customer.
-- The development database is Postgres 18.7 with pgvector 0.8.7, built from `docker/postgres/Dockerfile`. `docker-compose.yml` is generator-owned and is the only compose file: Postgres, Redis, and the Upstash-compatible REST proxy all live in it, with third-party images pinned by digest. A `ghostinit sync` may rewrite it; restore it from version control afterwards.
+- The development database is Postgres 18.7 with pgvector 0.8.7, built from `docker/postgres/Dockerfile`. `docker-compose.yml` is generator-owned and is the main local compose file: Postgres, Neo4j 5.26.34 Community, Redis, and the Upstash-compatible REST proxy all live in it, with third-party images pinned by digest. A `ghostinit sync` may rewrite it; restore it from version control afterwards.
+- The Neo4j service is an external graph target only: its data lives in the `neo4j_data` volume, authentication comes from `NEO4J_USER`/`NEO4J_PASSWORD`, and starting it does not import data. Graph population remains approval-gated and must be run separately with `retrieval:graph:import` after a recorded approval.
 - Retrieval follows `docs/RETRIEVAL.md` and the "Retrieval Architecture" section. It is not a GhostInit capability; it is assembled from the existing packages on owner approval.
 
 ## Frontend Conventions
