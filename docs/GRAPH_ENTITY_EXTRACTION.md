@@ -1,7 +1,7 @@
 # Candidate-only entity extraction
 
-**Status:** implemented as an offline, artifact-first candidate pipeline.  
-**Taxonomy:** `entity-mention-taxonomy-v0.1` — temporary and not approved.  
+**Status:** implemented as an offline, artifact-first candidate pipeline.
+**Taxonomy:** `entity-mention-taxonomy-v0.1` — temporary and not approved.
 **Review gate:** Person 1 must review the mention kinds and node/value classification before canonical entities, linking, relationships, or graph retrieval are implemented.
 
 This layer turns the raw text units produced by
