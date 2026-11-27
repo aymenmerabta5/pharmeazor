@@ -3,12 +3,17 @@
 **Status:** implemented as an offline, artifact-first candidate pipeline.  
 **Taxonomy:** `relationship-candidate-taxonomy-v0.1` — temporary and not approved.  
 **Source entity taxonomy:** `entity-mention-taxonomy-v0.1`.  
-**Review gate:** Person 1 must review the relationship kinds, endpoint semantics, and qualifier rules before canonical relationships, entity linking, or graph publication are implemented.
+**Review gate:** Person 1 must review the relationship kinds, endpoint semantics, and qualifier rules before canonical relationships, canonical entity linking, or graph publication are implemented.
 
 This layer derives candidate relationships from the candidate entity artifact
 and the `graph-evidence-v1` text units. It does not create canonical entities,
 resolve mentions, publish relationship truth, write PostgreSQL, populate Neo4j,
 embed graph objects, or alter Hybrid RAG.
+
+Candidate entity linking is a parallel downstream artifact documented in
+[GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). Relationship extraction
+does not require it and does not use relationship endpoints as entity identity
+evidence.
 
 ## 1. Boundary
 
@@ -227,8 +232,10 @@ workflow.
   is also a substance or class term; manual review remains required.
 - Structured rows can contain source-specific encoding quirks and missing
   fields; missing values remain unknown.
-- No canonical entities, entity linking, relationship publication, database
-  persistence, or Neo4j population exist.
+- No canonical entities, resolved entity links, relationship publication,
+  database persistence, or Neo4j population exist. Candidate-only entity
+  linking is documented separately in
+  [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md).
 - No manually labelled relationship golden set or graph evaluation baseline
   exists.
 - `product_has_storage_condition` was not observed in the current snapshot.

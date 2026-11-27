@@ -32,6 +32,38 @@ export {
   splitSubstances,
 } from "../normalize";
 export {
+  ENTITY_LINK_TAXONOMY_VERSION,
+  LINK_GROUP_DEFINITIONS,
+  LINK_GROUPS,
+  isLinkGroup,
+  linkGroupForKind,
+  type LinkGroup,
+  type LinkGroupDefinition,
+} from "./entity-link-kinds";
+export {
+  clusterEntityLinks,
+  linkRecordFromMention,
+  linkRecordsForStructuredRow,
+} from "./entity-link";
+export type {
+  CandidateEntityCluster,
+  LinkCandidateObservationState,
+  LinkCandidateStatus,
+  LinkClusterOptions,
+  LinkClusterResult,
+  LinkContextConflict,
+  LinkDuplicateState,
+  LinkEndpointKind,
+  LinkEndpointRef,
+  LinkEvidence,
+  LinkIdentityKeyRef,
+  LinkMetadataEvidence,
+  LinkRecord,
+  LinkStructuredEvidence,
+  LinkTextEvidence,
+  UnresolvedLinkCandidate,
+} from "./entity-link-types";
+export {
   RELATIONSHIP_KIND_DEFINITIONS,
   RELATIONSHIP_KINDS,
   RELATIONSHIP_TAXONOMY_VERSION,

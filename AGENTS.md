@@ -131,6 +131,14 @@ relationship truth, create canonical entities, write database rows, or populate
 Neo4j. Relationship extraction is documented in
 `docs/GRAPH_RELATIONSHIP_EXTRACTION.md` and remains review-gated.
 
+The same extraction directory owns the temporary
+`entity-link-candidate-taxonomy-v0.1` and deterministic linking rules.
+`bun run retrieval:links:export -- --dry-run` reads the entity artifact and
+writes no output; the non-dry command emits confident, ambiguous, and unresolved
+candidate groups only. It never creates canonical entities, resolves mentions,
+writes database rows, or populates Neo4j. Entity linking is documented in
+`docs/GRAPH_ENTITY_LINKING.md` and remains review-gated.
+
 ### Do not
 
 - Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.

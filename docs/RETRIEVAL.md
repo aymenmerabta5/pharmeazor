@@ -393,10 +393,12 @@ candidate-only entity mentions and structured observations with exact spans and
 provenance. The downstream `retrieval:relationships:export` worker writes
 candidate-only relationships whose endpoints reference those mentions or
 observations and whose support is either an exact text span or an explicit
-structured row. None of these commands feeds the hybrid index, alters chunk IDs,
-links entities, publishes canonical relationships, or implements graph
-retrieval. The temporary mention and relationship taxonomies require Person 1
-review before canonical use.
+structured row. The parallel `retrieval:links:export` worker groups candidate
+mentions and observations into confident, ambiguous, and unresolved candidate
+clusters without creating canonical entities. None of these commands feeds the
+hybrid index, alters chunk IDs, resolves entities, publishes canonical
+relationships, or implements graph retrieval. The temporary mention,
+relationship, and link taxonomies require Person 1 review before canonical use.
 
 ```text
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
@@ -467,6 +469,8 @@ bun run retrieval:entities:export -- --dry-run        # validate candidate entit
 bun run retrieval:entities:export                     # write candidate-only mention artifacts
 bun run retrieval:relationships:export -- --dry-run   # validate candidate relationships; write nothing
 bun run retrieval:relationships:export                # write candidate-only relationship artifacts
+bun run retrieval:links:export -- --dry-run           # validate candidate entity links; write nothing
+bun run retrieval:links:export                        # write candidate-only link artifacts
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,

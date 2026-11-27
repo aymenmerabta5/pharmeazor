@@ -37,15 +37,18 @@ entity-resolution process, GraphRAG projection, graph database, or clinical
 publication workflow exists in the repository. An additive
 `graph-evidence-v1` chunking text model now prepares source-mapped evidence
 units, a candidate-only entity-mention pipeline can emit typed mentions and
-structured observations, and a candidate-only relationship pipeline can emit
-quarantined relationship records over those endpoints. None creates canonical
-graph records or implements graph retrieval; see
+structured observations, a candidate-only relationship pipeline can emit
+quarantined relationship records over those endpoints, and a candidate-only
+linking pipeline can group mentions and observations into confident, ambiguous,
+and unresolved candidate clusters. None creates canonical graph records or
+implements graph retrieval; see
 [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md),
-[GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md), and
-[GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md). The
-current repository policy explicitly prohibits adding a knowledge-graph or
-graph-retrieval system without owner approval. This document records a design
-proposal; it does not override that policy.
+[GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md),
+[GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md), and
+[GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). The current repository
+policy explicitly prohibits adding a knowledge-graph or graph-retrieval system
+without owner approval. This document records a design proposal; it does not
+override that policy.
 
 No part of this document has been medically validated. It is ready for
 multidisciplinary review, not for clinical use.

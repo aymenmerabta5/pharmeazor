@@ -15,6 +15,12 @@ Relationship candidates are a separate downstream artifact documented in
 layer references this artifact's mention and observation IDs; it does not change
 this artifact's records or introduce canonical entity IDs.
 
+Candidate entity linking and deduplication is another separate downstream
+artifact documented in
+[GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). It groups mentions and
+observations into confident, ambiguous, and unresolved candidate clusters
+without resolving them to canonical entities.
+
 ## 1. Boundary
 
 The pipeline produces only:
@@ -230,10 +236,11 @@ No LLM-as-a-Judge is used. The evaluation protocol is deterministic:
 - Free-text clinical recall is not yet comprehensive.
 - Dictionary matching can produce ambiguous or over-broad candidates.
 - Structured CSV encoding/quirks are preserved, not silently corrected.
-- No canonical entities, entity linking, database persistence, or Neo4j
-  population exist. Relationships are candidate-only in the separate
+- No canonical entities, resolved entity links, database persistence, or Neo4j
+  population exist. Entity links and relationships are candidate-only in the
+  separate [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md) and
   [GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md)
-  artifact; no canonical relationship exists.
+  artifacts; no canonical link or relationship exists.
 - Text evidence is embedded in each mention JSONL record. A future database
   staging design must split it into a separate `EvidenceSpan` row without
   changing the source span/hash invariants.

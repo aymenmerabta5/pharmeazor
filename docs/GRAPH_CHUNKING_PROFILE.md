@@ -278,8 +278,10 @@ fixture.
   [GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md). Candidate
   relationship extraction is implemented in
   [GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md).
-  Candidate assertions, canonical graph publication, entity linking, canonical
-  relationships, and GraphRAG remain deferred.
+  Candidate-only entity linking and deduplication is implemented in
+  [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md). Candidate assertions,
+  canonical graph publication, resolved entities, canonical relationships, and
+  GraphRAG remain deferred.
 - A graph golden set and baseline.
 - Promoting these boundaries into the hybrid index, which would require
   contextualization, embedding, artifact, trace, gold-label, and baseline

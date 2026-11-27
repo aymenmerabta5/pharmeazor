@@ -1,7 +1,7 @@
 # Pharmeazor Knowledge Graph Logical Schema
 
 **Version:** 0.1<br>
-**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model and the candidate-only entity and relationship artifacts are implemented; there is no canonical graph writer or retrieval endpoint.<br>
+**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model and the candidate-only entity, relationship, and entity-link artifacts are implemented; there is no canonical graph writer or retrieval endpoint.<br>
 **Date:** 2026-11-27<br>
 **Ontology contract:** [GRAPH_ONTOLOGY.md](./GRAPH_ONTOLOGY.md)<br>
 **Runtime context:** [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md), [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md)
@@ -280,8 +280,10 @@ replacement grammar.
 
 - **Layer:** candidate observation.
 - **Status:** an offline, artifact-first candidate implementation now exists in
-  [GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md); database
-  persistence and entity linking remain proposed.
+  [GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md). Candidate-only
+  grouping is implemented in
+  [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md); canonical resolution
+  and database persistence remain proposed.
 - **Identity:** `(extractionRunId, evidenceSpanId, mentionOrdinal, candidateType)`.
 - **Fields:**
   - `R mentionId`, `R extractionRunId`, `R evidenceSpanId`.
