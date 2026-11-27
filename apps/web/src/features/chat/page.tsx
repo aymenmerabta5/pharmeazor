@@ -8,6 +8,7 @@ import { useSurfaceTranslations } from "@/lib/translations";
 import { ChatHero } from "./components/chat-hero";
 import { ChatInputBar } from "./components/chat-input-bar";
 import { ChatMessageList } from "./components/chat-message-list";
+import { useAttachmentStore } from "./use-attachment-store";
 import { useChatSession } from "./use-chat-session";
 import { useChatSidebar } from "./use-chat-sidebar";
 
@@ -30,10 +31,17 @@ export function ChatPage({
   const shell = useAppShell();
   const sidebar = useChatSidebar();
   const session = useChatSession(initialQuestion);
+  const attachmentStore = useAttachmentStore();
   const inConversation = session.activeQuery !== null || session.messages.length > 0;
   // The saved entry supplies the title once history resolves; the live query
   // covers the moment before that, so a deep link never opens untitled.
   const title = session.activeTitle ?? session.activeQuery;
+
+  /** Consume uploaded attachment refs and dispatch the message. */
+  function handleSend() {
+    const refs = attachmentStore.consumeRefs();
+    session.send(undefined, refs.length > 0 ? refs : undefined);
+  }
 
   return (
     <div className="ph-surface ph-welcome-layout">
@@ -70,10 +78,11 @@ export function ChatPage({
               <ChatInputBar
                 value={session.input}
                 onChange={session.setInput}
-                onSend={() => session.send()}
+                onSend={handleSend}
                 busy={session.busy}
                 placeholder={t("inputPlaceholder")}
                 sendLabel={t("send")}
+                attachmentStore={attachmentStore}
               />
               <p className="ph-chat-disclaimer">{t("disclaimer")}</p>
             </div>
@@ -83,9 +92,10 @@ export function ChatPage({
             <ChatHero
               value={session.input}
               onChange={session.setInput}
-              onSend={() => session.send()}
+              onSend={handleSend}
               onSuggest={(question) => session.send(question)}
               busy={session.busy}
+              attachmentStore={attachmentStore}
             />
 
             <footer className="ph-welcome-footer">

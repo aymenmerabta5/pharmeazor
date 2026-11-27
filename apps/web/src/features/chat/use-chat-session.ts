@@ -2,7 +2,12 @@
 import * as React from "react";
 import { useChatHistory } from "@/hooks/use-chat-history";
 import type { ChatHistoryEntry } from "@/lib/chat-history";
-import { createAssistantReply, createUserMessage, type ChatMessage } from "./model";
+import {
+  createAssistantReply,
+  createUserMessage,
+  type AttachmentRef,
+  type ChatMessage,
+} from "./model";
 
 /** Delay before the demo assistant reply lands. */
 const REPLY_DELAY_MS = 900;
@@ -25,18 +30,19 @@ export function useChatSession(initialQuestion?: string) {
   const handledInitialQuery = React.useRef(false);
 
   const send = React.useCallback(
-    (text?: string) => {
+    (text?: string, attachments?: AttachmentRef[]) => {
       const question = (text ?? input).trim();
-      if (!question || busy) return;
+      // Allow sending with attachments only (no text required).
+      if ((!question && (!attachments || attachments.length === 0)) || busy) return;
 
       const createdAt = Date.now();
       setInput("");
       setBusy(true);
       setPendingSince(createdAt);
-      setMessages((previous) => [...previous, createUserMessage(question, createdAt)]);
+      setMessages((previous) => [...previous, createUserMessage(question, createdAt, attachments)]);
       // The shared history is built from what is actually searched for.
-      history.record(question);
-      setActiveQuery((current) => current ?? question);
+      if (question) history.record(question);
+      setActiveQuery((current) => current ?? (question || "Attached files"));
     },
     [busy, history, input],
   );
