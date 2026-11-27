@@ -383,6 +383,14 @@ The current slice owns stages 1 to 3 and exposes them to the agent. The
 `packages/benchmark`; model-written contextualization is still generated outside
 this repository.
 
+A separate, additive `graph-evidence-v1` profile lives in
+`packages/modules/src/retrieval/graph-chunk.ts` and is documented in
+[GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md). It prepares exact
+source-mapped evidence units for the proposed graph schema. The offline
+`retrieval:graph:export` worker writes versioned evidence files with source and
+output checksums. It does not feed the hybrid index, alter chunk IDs, or
+implement graph retrieval.
+
 ```text
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
           -> BGE-M3 embed -> pgvector halfvec(1024) + BM25 postings
@@ -446,6 +454,8 @@ bun run retrieval:import-aliases               # brand -> substance expansion ta
 bun run retrieval:import-aliases -- --dry-run
 bun run retrieval:import-registry              # merge the two register catalogues
 bun run retrieval:import-registry -- --dry-run
+bun run retrieval:graph:export -- --dry-run     # validate graph evidence chunks; write nothing
+bun run retrieval:graph:export                  # write versioned graph evidence files
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,

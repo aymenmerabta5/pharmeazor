@@ -18,7 +18,7 @@
 - Enabled capabilities: auth, typed-api, billing, email, analytics, i18n, eve, storage, pdf, cache.
 - Billing providers: stripe, chargily, manual.
 - Durable agent: `apps/harness` on eve@1.0.1, Groq `openai/gpt-oss-120b` with a 131,072-token context window, plus a Python sandbox that reads PDF, Word, and spreadsheet documents.
-- Retrieval is not a GhostInit capability in this configuration. It is an owner-approved extension only, assembled from the packages already in this repository. See "Retrieval Architecture".
+- Retrieval is not a GhostInit capability in this configuration. Hybrid retrieval and the additive `graph-evidence-v1` chunking profile are owner-approved extensions assembled from the packages already in this repository. See "Retrieval Architecture".
 - Generator CLI: the pinned architecture checker and the generated-state gate run `ghostinit@0.1.0` from the public npm registry. The generator owns `packages/database/src/schema/index.ts`, `packages/api/src/contract.ts`, `packages/api/src/router.ts`, and `packages/modules/src/index.ts`; `bunx --bun ghostinit@0.1.0 sync --check --json` must report them in sync.
 - Dependency floors: `better-auth` 1.7.25, `next` 16.4.6, `zod` 4.6.7, `undici` 8.12.3, `node-forge` 1.4.3, `decode-uri-component` 0.5.1. The transitive floors are root `overrides`; the `node-forge@1.4.0` patch is retired because 1.4.3 clears every advisory it worked around.
 
@@ -33,7 +33,7 @@ Keep domain policies and contracts independent of frameworks, application servic
 
 ## Retrieval Architecture
 
-Retrieval is not implemented. `docs/RETRIEVAL.md` carries the evidence, model choices, and rollout order; this section is the binding contract for how it must be built. Build from the packages already in this repository. Do not add a vector service, a retrieval framework, or a top-level retrieval package to make this work.
+Hybrid retrieval (dense + BM25 + RRF + reranking) is implemented. A canonical knowledge graph and graph retrieval are not implemented. `docs/RETRIEVAL.md` carries the evidence, model choices, and rollout order; this section is the binding contract. Build from the packages already in this repository. Do not add a vector service, a retrieval framework, or a top-level retrieval package to make this work.
 
 The pipeline is fixed. Each stage exists to make the next one measurable.
 
@@ -85,6 +85,7 @@ Mirror the `storage` capability rather than inventing a shape.
 | --------------------------------------------------- | ------------------------------------------------- |
 | Offline raw-source cleaning (maintainer batch tool) | `tooling/cleaning-lab/`                           |
 | Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                 |
+| Additive graph-evidence text model                  | `packages/modules/src/retrieval/graph-chunk.ts`   |
 | Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                |
 | Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`       |
 | oRPC contract and procedures                        | `packages/api/src/retrieval/`                     |
@@ -97,10 +98,27 @@ Provider SDKs stay in the adapters. Domain code depends on ports, never on an SD
 
 `tooling/cleaning-lab/` prepares the corpus offline: it turns the raw collection into clean Markdown plus an import manifest, and it stops there. It is a maintainer-side batch tool, not a runtime path, so it never parses a document in a request. The chunk table, the chunk identifiers, and the contextualization notes are owned by `packages/modules/src/retrieval/`. The splitter inside the corpus tool is a preview that proves the documents split cleanly; it is not the production chunker.
 
+### Graph-compatible chunking profile
+
+`packages/modules/src/retrieval/graph-chunk.ts` owns the additive
+`graph-evidence-v1` profile described in `docs/GRAPH_CHUNKING_PROFILE.md`. It is
+an offline text model, not a graph retrieval system. It keeps the hybrid
+chunker byte-compatible and scopes logical identity as
+`graph-evidence-v1:<configFingerprint>:<snapshotFingerprint>:<legacyChunkId>`.
+The configuration fingerprint includes algorithm, section-taxonomy, and
+text-helper versions. `legacyChunkId` is diagnostic only: it keeps the existing
+grammar but can describe different text in the two profiles, so it is never a
+hybrid lookup key. The profile uses exact UTF-16 source spans over
+front-matter-stripped clean Markdown. Raw `content` is the only evidence
+surface; generated table headers and list markers exist only in
+`displayContent`. `bun run retrieval:graph:export -- --dry-run` writes no graph
+index; the optional non-dry export emits versioned evidence files only. It has
+no database writer, embedding path, extractor, or runtime endpoint.
+
 ### Do not
 
 - Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.
-- Do not add a knowledge graph or a graph-retrieval system. Measured against the same corpus it matched a plain hybrid pipeline at roughly 14x the per-query cost.
+- Do not add a canonical knowledge graph or a graph-retrieval system without recorded owner and domain approval. Measured against the same corpus, GraphRAG matched a plain hybrid pipeline at roughly 14x the per-query cost. The implemented graph-compatible chunking profile is evidence preparation only and is not graph retrieval.
 - Do not add multi-agent retrieval loops before the golden set exists. They multiply cost and latency and hide which stage is failing.
 - Do not treat the model as the access-control layer, the injection scanner, or the citation validator. Those are code responsibilities.
 - Do not evaluate a retrieval change by reading a handful of answers.

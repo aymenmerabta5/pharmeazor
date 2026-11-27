@@ -522,3 +522,10 @@ Those changes should update these characterization tests in the same reviewed
 diff and state which existing behavior is intentionally changing. This phase
 does not authorize or implement graph extraction, GraphRAG, re-embedding, or a
 new index.
+
+A later additive profile, `graph-evidence-v1`, now implements section-pure
+boundaries, source mappings, table/list protection, and overlap provenance in
+`packages/modules/src/retrieval/graph-chunk.ts`. It leaves this phase's legacy
+behavior and characterization tests unchanged; see
+[GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md). It still does not
+authorize graph extraction, GraphRAG, re-embedding, or a new index.

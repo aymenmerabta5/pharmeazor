@@ -77,6 +77,15 @@ export interface ChunkingOptions {
 const DEFAULT_MAX_CHARS = 4_096;
 const DEFAULT_MIN_GROUP_CHARS = 800;
 
+/**
+ * Version markers for helpers shared with the graph profile. Bump the relevant
+ * marker whenever changing front-matter removal, sanitization, injection
+ * detection, or the heading taxonomy in a way that can move graph boundaries,
+ * section codes, or identities.
+ */
+export const RETRIEVAL_TEXT_HELPER_VERSION = "retrieval-text-v1" as const;
+export const SECTION_TAXONOMY_VERSION = "clinical-heading-v1" as const;
+
 interface HeadingFrame {
   readonly id: number;
   readonly level: number;

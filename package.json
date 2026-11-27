@@ -42,6 +42,7 @@
     "retrieval:ingest:artifact": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --vectors tooling/embedding-lab/output/embeddings --vectors-as-source",
     "retrieval:ingest:artifact:dry": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/ingest.ts --vectors tooling/embedding-lab/output/embeddings --vectors-as-source --dry-run",
     "retrieval:trace:benchmark": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/benchmark-trace.ts",
+    "retrieval:graph:export": "bun --conditions=react-server packages/api/src/workers/retrieval/export-graph-chunks.ts",
     "retrieval:fetch:vectors": "python tooling/embedding-lab/fetch_artifact.py",
     "retrieval:fetch:vectors:check": "python tooling/embedding-lab/fetch_artifact.py --validate-only",
     "retrieval:import:r2": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/import-r2.ts",

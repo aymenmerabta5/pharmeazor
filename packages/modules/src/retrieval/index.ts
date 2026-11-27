@@ -1,4 +1,6 @@
 export {
+  RETRIEVAL_TEXT_HELPER_VERSION,
+  SECTION_TAXONOMY_VERSION,
   chunkMarkdownDocument,
   contextKeyFor,
   detectRetrievalInjection,
@@ -9,4 +11,32 @@ export {
   type ChunkSourceDocument,
   type ChunkingOptions,
 } from "./chunk";
+export {
+  GRAPH_CHUNKER_VERSION,
+  GRAPH_CHUNKING_PROFILE,
+  GRAPH_OFFSET_ENCODING,
+  GRAPH_OFFSET_SURFACE,
+  type GraphBlockKind,
+  type GraphChunkingConfig,
+  type GraphChunkDiagnostic,
+  type GraphChunkingOptions,
+  type GraphChunkingProfile,
+  type GraphChunkingResult,
+  type GraphDiagnosticSeverity,
+  type GraphDocumentBody,
+  type GraphDocumentSection,
+  type GraphEvidenceSpan,
+  type GraphOffsetEncoding,
+  type GraphOffsetSurface,
+  type GraphGeneratedSpan,
+  type GraphListMetadata,
+  type GraphListItemPart,
+  type GraphOverlap,
+  type GraphOverlapAlignment,
+  type GraphSourceSpan,
+  type GraphTableMetadata,
+  type GraphTextUnit,
+} from "./graph-chunk-types";
+export { chunkGraphMarkdownDocument, graphChunkingConfig, graphDocumentBody } from "./graph-chunk";
+export { assertValidGraphChunkingResult, graphEvidenceSpan } from "./graph-chunk-validation";
 export { assertNormalized, parseNpy, type NpyDtype, type NpyMatrix } from "./npy";

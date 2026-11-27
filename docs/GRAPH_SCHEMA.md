@@ -1,10 +1,10 @@
 # Pharmeazor Knowledge Graph Logical Schema
 
 **Version:** 0.1<br>
-**Status:** Draft — logical design only; not a database schema and not approved for implementation<br>
+**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model is implemented; it has no graph writer or retrieval endpoint.<br>
 **Date:** 2026-11-27<br>
 **Ontology contract:** [GRAPH_ONTOLOGY.md](./GRAPH_ONTOLOGY.md)<br>
-**Runtime context:** [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md)
+**Runtime context:** [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md), [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md)
 
 This document defines **how** the ontology is logically structured: node
 records, relationship records, identity keys, hashes, qualifiers, evidence,
@@ -152,8 +152,10 @@ The tables below use `R` for required, `C` for conditional, and `O` for optional
 within the proposed logical schema. `P` marks a proposed field with no current
 production field (for example `rawContentSha256`). Existing source fields are
 noted where applicable. Where an existing stable identifier exists, it supplies
-the logical identity field: `sourceId` for `Source`, `artifactId` for `Document`,
-and `chunkId` for `TextUnit`; no replacement grammar is introduced.
+the logical identity field: `sourceId` for `Source` and `artifactId` for
+`Document`. `TextUnit` uses the profile/config-scoped `textUnitId`; its
+`legacyChunkId` keeps the existing grammar for diagnostics without introducing a
+replacement grammar.
 
 ### 3.1 Evidence and observation nodes
 
@@ -220,26 +222,41 @@ and `chunkId` for `TextUnit`; no replacement grammar is introduced.
 #### `TextUnit`
 
 - **Layer:** evidence.
-- **Status:** existing production chunk; proposed logical evidence node.
-- **Identity:** existing `chunk_id` format
-  `<artifact>#<primary-section>-<occurrence>#<ordinal>`; do not change it here.
+- **Status:** the hybrid chunk exists in production; the additive
+  `graph-evidence-v1` profile is implemented as a pure text model and is not yet
+  persisted.
+- **Identity:** profile/config/snapshot-scoped `textUnitId`:
+  `<chunkingProfile>:<configFingerprint>:<snapshotFingerprint>:<legacyChunkId>`.
+  `legacyChunkId` retains the existing grammar
+  `<artifact>#<primary-section>-<occurrence>#<ordinal>` but is diagnostic only:
+  the two profiles can emit the same string for different text. The
+  configuration fingerprint covers algorithm, taxonomy and text-helper
+  versions, offset surface/encoding, window, and overlap; the snapshot
+  fingerprint covers the exact document body.
 - **Fields:**
-  - `R chunkId`, `R artifactId`, `R content`, `R contentHash`.
+  - `R textUnitId`, `R chunkingProfile`, `R legacyChunkId`, `R artifactId`,
+    `R documentSnapshotId`, `R content`, `R rawContentSha256`.
   - `R ordinal`, `R tokenEstimate`.
+  - `C contentHash` — existing contextualized hash; not a raw evidence hash.
   - `C sectionCode`, `C sectionCodes[]`, `C sectionHeading`, `C sectionPath`.
+  - `C sectionId` — exact graph-section membership in `graph-evidence-v1`; the
+    hybrid profile keeps only coarse aggregate codes.
   - `C contextKey`, `C contextNote`, `C contextualizedContent`.
   - `C language`, `C injectionRisk`.
-  - `C documentSectionIds[]` — **proposed coarse or exact coverage**, not a
-    claim that the current chunker stores explicit parent IDs, child membership,
-    or source offsets; headings and paths do exist.
-  - `P rawContentSha256` — proposed hash of raw `content`; do not reuse the
-    existing contextualized `contentHash`.
-- **Invariants:** `content` is evidence-compatible; `contextualizedContent` is
-  retrieval input and may not back an `EvidenceSpan`. Existing section headings
-  and paths are present; explicit parent IDs, child membership, and spans are
-  not. Existing section-code arrays are aggregate membership, not source spans.
-- **Existing basis:** `retrieval_chunks` and `ChunkDraft`; see
-  `docs/RAG_CHUNKER_PHASE1.md`.
+  - `C sourceSpan`, `C uniqueSourceSpan`, `C uniqueLocalSpan`, `C overlaps[]` —
+    implemented for `graph-evidence-v1`; the offset surface and encoding are
+    result-level fields. Absent on legacy hybrid chunks.
+  - `C tableMetadata`, `C listMetadata`, `C generatedSpans[]` — structural
+    sidecars for graph units; generated display prefixes are not evidence.
+- **Invariants:** graph `content` is an exact raw slice of
+  `clean-markdown-body-v1`, and `rawContentSha256` hashes that slice.
+  `contextualizedContent` is retrieval input and may not back an `EvidenceSpan`.
+  A graph unit belongs to exactly one `DocumentSection`; legacy `sectionCodes[]`
+  is aggregate membership, not source-span verification. Generated table
+  headers and list markers live only in `displayContent` and are never evidence.
+- **Existing basis:** `retrieval_chunks` and `ChunkDraft` for hybrid;
+  `graph-chunk.ts` and [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md)
+  for `graph-evidence-v1`; see `docs/RAG_CHUNKER_PHASE1.md` for the legacy gaps.
 
 #### `EvidenceSpan`
 
@@ -611,36 +628,36 @@ Relationship constraints:
 
 Hashes detect content change; they do not decide clinical identity.
 
-| Logical type                                            | Identity key                                                              | Content/version hash                                                                      | Notes                                             |
-| ------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `Source`                                                | existing `sourceId`                                                       | registry snapshot hash/version                                                            | Registry changes are versioned                    |
-| `Document`                                              | existing `artifactId`                                                     | existing `contentSha256`; optional source raw hash                                        | `documentId` groups parts; not product identity   |
-| `DocumentSection`                                       | artifact + occurrence/start + section hash                                | section content hash + document hash                                                      | Existing manifest has no section ID               |
-| `TextUnit`                                              | existing `chunkId`                                                        | existing contextualized `contentHash`; proposed `rawContentSha256`; existing `contextKey` | Do not reuse contextualized hash for raw evidence |
-| `EvidenceSpan`                                          | text unit + offset encoding + start/end + quote hash                      | `quoteSha256`                                                                             | Exact quote must validate                         |
-| `EntityMention`                                         | extraction run + span + occurrence + type                                 | input/output hash                                                                         | Not an entity                                     |
-| `ExtractionRun`                                         | run + input snapshot + method version                                     | input/output manifest hash                                                                | Reproducibility only                              |
-| `CandidateAssertion`                                    | opaque candidate ID                                                       | derivation/signature hash optional                                                        | Not canonical; no truth hash                      |
-| `Substance`                                             | reviewed internal ID + external mappings                                  | semantic metadata version                                                                 | Text labels are not identity                      |
-| `MedicinalProduct`                                      | reviewed internal ID + jurisdiction context                               | source/version references                                                                 | `MEDxxx` is not this identity                     |
-| `PharmaceuticalProduct`                                 | reviewed internal ID + composition/form signature                         | reviewed signature hash optional                                                          | Strength/form changes matter                      |
-| `ProductPackage`                                        | reviewed internal ID + source package context                             | source package hash                                                                       | Pack variants retained                            |
-| `DoseForm`, `RouteOfAdministration`, `TherapeuticClass` | reviewed ID or scheme+code/version                                        | vocabulary version                                                                        | No merge by label                                 |
-| `Organization`                                          | reviewed internal ID + optional registry ID                               | source/version                                                                            | Names do not merge                                |
-| `RegulatoryAuthorization`                               | jurisdiction + authority + authorization number + source version          | register/version hash                                                                     | Missing number means unresolved                   |
-| `Term`                                                  | entity + language + script + normalized text + term type + source context | normalization version                                                                     | No global text identity                           |
-| `ClinicalConcept`                                       | reviewed internal ID + optional external mapping                          | mapping version                                                                           | No string merge                                   |
-| `PopulationGroup`                                       | reviewed ID + criteria signature                                          | criteria hash optional                                                                    | Missing criteria not defaults                     |
-| `IngredientComposition`                                 | reviewed composition ID + product/substance/role/basis signature          | source text/structured hash                                                               | Strength/version retained                         |
-| `ClinicalUseAssertion`                                  | reviewed canonical assertion ID                                           | `semanticHash` for change detection                                                       | Identity requires review                          |
-| `DosageGuideline`                                       | reviewed canonical guideline ID                                           | semantic hash for change detection                                                        | Raw dose text remains                             |
-| `ProjectionRun`                                         | projection run ID                                                         | canonical snapshot + config hash                                                          | Derived only                                      |
-| `ProjectedEntity`                                       | run + canonical type + canonical ID                                       | projection input hash                                                                     | One per run                                       |
-| `ProjectedRelationship`                                 | run + canonical relationship/assertion ID                                 | projection input hash                                                                     | Qualifier sidecar                                 |
-| `ProjectedTextUnit`                                     | run + canonical text unit ID                                              | projection input hash                                                                     | Raw/context surface labelled                      |
-| `Community`                                             | run + level + community ID                                                | run hash                                                                                  | Unstable across runs                              |
-| `CommunityReport`                                       | run + community + report version                                          | text hash + prompt/model hash                                                             | Never evidence                                    |
-| `EmbeddingRecord`                                       | index version + target type/id + model/revision                           | target text hash                                                                          | No identity inference                             |
+| Logical type                                            | Identity key                                                                 | Content/version hash                                                                   | Notes                                             |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `Source`                                                | existing `sourceId`                                                          | registry snapshot hash/version                                                         | Registry changes are versioned                    |
+| `Document`                                              | existing `artifactId`                                                        | existing `contentSha256`; optional source raw hash                                     | `documentId` groups parts; not product identity   |
+| `DocumentSection`                                       | artifact + occurrence/start + section hash                                   | section content hash + document hash                                                   | Existing manifest has no section ID               |
+| `TextUnit`                                              | profile/config/snapshot-scoped `textUnitId`; `legacyChunkId` diagnostic only | graph `rawContentSha256`; existing contextualized `contentHash`; existing `contextKey` | Do not reuse contextualized hash for raw evidence |
+| `EvidenceSpan`                                          | text unit + offset encoding + start/end + quote hash                         | `quoteSha256`                                                                          | Exact quote must validate                         |
+| `EntityMention`                                         | extraction run + span + occurrence + type                                    | input/output hash                                                                      | Not an entity                                     |
+| `ExtractionRun`                                         | run + input snapshot + method version                                        | input/output manifest hash                                                             | Reproducibility only                              |
+| `CandidateAssertion`                                    | opaque candidate ID                                                          | derivation/signature hash optional                                                     | Not canonical; no truth hash                      |
+| `Substance`                                             | reviewed internal ID + external mappings                                     | semantic metadata version                                                              | Text labels are not identity                      |
+| `MedicinalProduct`                                      | reviewed internal ID + jurisdiction context                                  | source/version references                                                              | `MEDxxx` is not this identity                     |
+| `PharmaceuticalProduct`                                 | reviewed internal ID + composition/form signature                            | reviewed signature hash optional                                                       | Strength/form changes matter                      |
+| `ProductPackage`                                        | reviewed internal ID + source package context                                | source package hash                                                                    | Pack variants retained                            |
+| `DoseForm`, `RouteOfAdministration`, `TherapeuticClass` | reviewed ID or scheme+code/version                                           | vocabulary version                                                                     | No merge by label                                 |
+| `Organization`                                          | reviewed internal ID + optional registry ID                                  | source/version                                                                         | Names do not merge                                |
+| `RegulatoryAuthorization`                               | jurisdiction + authority + authorization number + source version             | register/version hash                                                                  | Missing number means unresolved                   |
+| `Term`                                                  | entity + language + script + normalized text + term type + source context    | normalization version                                                                  | No global text identity                           |
+| `ClinicalConcept`                                       | reviewed internal ID + optional external mapping                             | mapping version                                                                        | No string merge                                   |
+| `PopulationGroup`                                       | reviewed ID + criteria signature                                             | criteria hash optional                                                                 | Missing criteria not defaults                     |
+| `IngredientComposition`                                 | reviewed composition ID + product/substance/role/basis signature             | source text/structured hash                                                            | Strength/version retained                         |
+| `ClinicalUseAssertion`                                  | reviewed canonical assertion ID                                              | `semanticHash` for change detection                                                    | Identity requires review                          |
+| `DosageGuideline`                                       | reviewed canonical guideline ID                                              | semantic hash for change detection                                                     | Raw dose text remains                             |
+| `ProjectionRun`                                         | projection run ID                                                            | canonical snapshot + config hash                                                       | Derived only                                      |
+| `ProjectedEntity`                                       | run + canonical type + canonical ID                                          | projection input hash                                                                  | One per run                                       |
+| `ProjectedRelationship`                                 | run + canonical relationship/assertion ID                                    | projection input hash                                                                  | Qualifier sidecar                                 |
+| `ProjectedTextUnit`                                     | run + canonical text unit ID                                                 | projection input hash                                                                  | Raw/context surface labelled                      |
+| `Community`                                             | run + level + community ID                                                   | run hash                                                                               | Unstable across runs                              |
+| `CommunityReport`                                       | run + community + report version                                             | text hash + prompt/model hash                                                          | Never evidence                                    |
+| `EmbeddingRecord`                                       | index version + target type/id + model/revision                              | target text hash                                                                       | No identity inference                             |
 
 Additional hash rules:
 
@@ -874,9 +891,11 @@ mistaken for an existing database shape.
 | `retrieval_documents.content_markdown`                                                 | `Document` content/source surface               | Existing clean Markdown                                                  |
 | `retrieval_documents.metadata`                                                         | Source metadata/section hints                   | Metadata only; not canonical graph rows                                  |
 | manifest `sections[]` (`code`, `heading`, `level`, `start_char`, `end_char`)           | `DocumentSection`                               | Existing generated metadata; first-class section node proposed           |
-| `retrieval_chunks.chunk_id`                                                            | `TextUnit.chunkId`                              | Existing production ID; do not change                                    |
+| `retrieval_chunks.chunk_id`                                                            | `TextUnit.legacyChunkId`                        | Existing hybrid ID; graph units keep the grammar for diagnostics only    |
+| graph `textUnitId`                                                                     | `TextUnit.textUnitId`                           | Sidecar identity; profile + config + snapshot + legacy chunk id          |
 | `retrieval_chunks.content`                                                             | `TextUnit.content`                              | Existing raw evidence-compatible text                                    |
 | `retrieval_chunks.contextualized_content`                                              | `TextUnit.contextualizedContent`                | Existing retrieval input; not evidence                                   |
+| graph raw source/unique/overlap spans                                                  | `TextUnit` source mapping                       | Implemented pure profile; not persisted yet                              |
 | `retrieval_chunks.content_hash`                                                        | `TextUnit` existing contextualized hash         | Already defined; do not treat as raw quote hash                          |
 | `retrieval_chunks.context_key`                                                         | `TextUnit.contextKey`                           | Existing note-cache key; not canonical identity                          |
 | `retrieval_chunks.section_code` / `section_codes` / `section_heading` / `section_path` | `TextUnit` section metadata                     | Existing aggregate/primary labels; not exact source spans                |
@@ -909,32 +928,32 @@ evaluation by query class. This document does not authorize that routing.
 
 #### 9.3 Type-level mapping
 
-| Proposed logical type                                              | Existing production/source material                                                              | Status                      | Important gap                                                                                             |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `Source`                                                           | `source_id`, `source_name`, authority/jurisdiction metadata in source registry and manifest      | Metadata exists             | No canonical source table; authority conflict                                                             |
-| `Document`                                                         | `retrieval_documents`; manifest rows; clean Markdown                                             | Existing                    | No canonical evidence spans; some dates null                                                              |
-| `DocumentSection`                                                  | manifest `sections[]` with heading/code/level/start/end                                          | Metadata exists             | No first-class section table/ID                                                                           |
-| `TextUnit`                                                         | `retrieval_chunks`; `ChunkDraft`; `chunkId`                                                      | Existing                    | No explicit parent IDs/child membership/source span; packed sections; contextualized hash is not raw hash |
-| `EvidenceSpan`                                                     | None                                                                                             | Not implemented             | Exact offsets/quote validation absent                                                                     |
-| `EntityMention`                                                    | None                                                                                             | Not implemented             | Extraction/resolution absent                                                                              |
-| `ExtractionRun`                                                    | None                                                                                             | Not implemented             | Run/provider/prompt provenance absent                                                                     |
-| `CandidateAssertion`                                               | None                                                                                             | Not implemented             | No quarantine store                                                                                       |
-| `Substance`                                                        | `manifest.inn`/`medicine_names`; `name_map.dci`; `bdpm_composition.designation`/`substance_code` | Partial structured material | No reviewed canonical substance IDs                                                                       |
-| `MedicinalProduct`                                                 | source title/brand; `medicine_ids` grouping; register rows                                       | Partial                     | `MEDxxx` is not product identity                                                                          |
-| `PharmaceuticalProduct`                                            | title/form/strength strings; structured form/dosage                                              | Partial                     | `strength_form` is empty in observed clean docs; no canonical composition grouping                        |
-| `ProductPackage`                                                   | structured `pack`/`packaging`                                                                    | Partial                     | No canonical package ID; pack variants                                                                    |
-| `DoseForm`                                                         | `form` strings and `dosage_forms` sections                                                       | Partial                     | No controlled vocabulary mapping                                                                          |
-| `RouteOfAdministration`                                            | Some source text/form strings                                                                    | Weak                        | No dedicated normalized route field                                                                       |
-| `TherapeuticClass`                                                 | `name_map.atc`, `name_map.class` fields present in all 4,714 inspected name-map rows             | Partial                     | No general mapping/version/coverage; corpus coverage remains partial                                      |
-| `Organization`                                                     | `holder` (40/558), source registry, RCP holder/manufacturer text                                 | Partial                     | No reviewed organization identity                                                                         |
-| `RegulatoryAuthorization`                                          | structured `registration_number`, status, initial/final dates; BDPM `cis`                        | Partial                     | No canonical authorization records; authority conflict                                                    |
-| `Term`                                                             | source labels, `name_map`, `retrieval_aliases`                                                   | Partial                     | `retrieval_aliases` is query expansion, not a canonical term store                                        |
-| `ClinicalConcept`                                                  | source condition/effect text                                                                     | Textual only                | No reviewed concept IDs/mappings                                                                          |
-| `PopulationGroup`                                                  | source population/pregnancy/renal text                                                           | Textual only                | No structured population extraction                                                                       |
-| `IngredientComposition`                                            | `bdpm_composition` rows; composition sections; nomenclature form/dosage                          | Partial                     | No canonical composition statements/evidence links                                                        |
-| `ClinicalUseAssertion`                                             | indications/contraindications/warnings/interactions/adverse sections                             | Textual only                | No extraction, assertion IDs, or publication workflow                                                     |
-| `DosageGuideline`                                                  | dosage sections and label directions                                                             | Textual only                | No structured dose/qualifier extraction                                                                   |
-| `ProjectionRun` and all projected/community/report/embedding nodes | None                                                                                             | Not implemented             | No GraphRAG index or graph database                                                                       |
+| Proposed logical type                                              | Existing production/source material                                                              | Status                                     | Important gap                                                                      |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `Source`                                                           | `source_id`, `source_name`, authority/jurisdiction metadata in source registry and manifest      | Metadata exists                            | No canonical source table; authority conflict                                      |
+| `Document`                                                         | `retrieval_documents`; manifest rows; clean Markdown                                             | Existing                                   | No canonical evidence spans; some dates null                                       |
+| `DocumentSection`                                                  | manifest `sections[]`; `graph-chunk.ts` section model                                            | Metadata exists; graph model implemented   | No first-class section table; graph output not persisted                           |
+| `TextUnit`                                                         | `retrieval_chunks`; `ChunkDraft`; `graph-chunk.ts`                                               | Hybrid existing; graph profile implemented | Graph has exact section/source mapping; legacy chunks do not; no graph writer      |
+| `EvidenceSpan`                                                     | `graphEvidenceSpan` mechanical validator                                                         | Partial helper; not persisted              | Extraction, storage, and assertion publication absent                              |
+| `EntityMention`                                                    | None                                                                                             | Not implemented                            | Extraction/resolution absent                                                       |
+| `ExtractionRun`                                                    | None                                                                                             | Not implemented                            | Run/provider/prompt provenance absent                                              |
+| `CandidateAssertion`                                               | None                                                                                             | Not implemented                            | No quarantine store                                                                |
+| `Substance`                                                        | `manifest.inn`/`medicine_names`; `name_map.dci`; `bdpm_composition.designation`/`substance_code` | Partial structured material                | No reviewed canonical substance IDs                                                |
+| `MedicinalProduct`                                                 | source title/brand; `medicine_ids` grouping; register rows                                       | Partial                                    | `MEDxxx` is not product identity                                                   |
+| `PharmaceuticalProduct`                                            | title/form/strength strings; structured form/dosage                                              | Partial                                    | `strength_form` is empty in observed clean docs; no canonical composition grouping |
+| `ProductPackage`                                                   | structured `pack`/`packaging`                                                                    | Partial                                    | No canonical package ID; pack variants                                             |
+| `DoseForm`                                                         | `form` strings and `dosage_forms` sections                                                       | Partial                                    | No controlled vocabulary mapping                                                   |
+| `RouteOfAdministration`                                            | Some source text/form strings                                                                    | Weak                                       | No dedicated normalized route field                                                |
+| `TherapeuticClass`                                                 | `name_map.atc`, `name_map.class` fields present in all 4,714 inspected name-map rows             | Partial                                    | No general mapping/version/coverage; corpus coverage remains partial               |
+| `Organization`                                                     | `holder` (40/558), source registry, RCP holder/manufacturer text                                 | Partial                                    | No reviewed organization identity                                                  |
+| `RegulatoryAuthorization`                                          | structured `registration_number`, status, initial/final dates; BDPM `cis`                        | Partial                                    | No canonical authorization records; authority conflict                             |
+| `Term`                                                             | source labels, `name_map`, `retrieval_aliases`                                                   | Partial                                    | `retrieval_aliases` is query expansion, not a canonical term store                 |
+| `ClinicalConcept`                                                  | source condition/effect text                                                                     | Textual only                               | No reviewed concept IDs/mappings                                                   |
+| `PopulationGroup`                                                  | source population/pregnancy/renal text                                                           | Textual only                               | No structured population extraction                                                |
+| `IngredientComposition`                                            | `bdpm_composition` rows; composition sections; nomenclature form/dosage                          | Partial                                    | No canonical composition statements/evidence links                                 |
+| `ClinicalUseAssertion`                                             | indications/contraindications/warnings/interactions/adverse sections                             | Textual only                               | No extraction, assertion IDs, or publication workflow                              |
+| `DosageGuideline`                                                  | dosage sections and label directions                                                             | Textual only                               | No structured dose/qualifier extraction                                            |
+| `ProjectionRun` and all projected/community/report/embedding nodes | None                                                                                             | Not implemented                            | No GraphRAG index or graph database                                                |
 
 Existing production fields that must not be reinterpreted:
 
@@ -1146,12 +1165,12 @@ remain authoritative.
 
 ## 13. Open schema decisions
 
-1. Are `DocumentSection` offsets relative to the cleaned body or the whole
-   Markdown file? The current manifest has offsets, but the exact surface must be
-   verified before evidence spans are implemented.
-2. Should `EvidenceSpan` use Unicode code-point offsets or UTF-16 code units?
-   The choice must be fixed before extraction and validated across French and
-   Arabic text.
+1. **Resolved for `graph-evidence-v1`:** offsets are relative to
+   `clean-markdown-body-v1`, the exact front-matter-stripped clean Markdown body.
+   Manifest code-point offsets are validation metadata and are not mixed in.
+2. **Resolved for `graph-evidence-v1`:** offsets use UTF-16 code units,
+   matching JavaScript and the existing KG tokenizer/gazetteer. Arabic
+   punctuation and non-BMP text are covered by the profile contract tests.
 3. Which population criteria become structured fields, and which remain source
    wording?
 4. How should n-ary interactions and dosage guidelines be represented in the

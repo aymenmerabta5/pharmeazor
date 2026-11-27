@@ -34,10 +34,13 @@ Define a minimal, evidence-bearing ontology that can:
 
 This is a **proposed v0.1**. No canonical graph, extraction pipeline,
 entity-resolution process, GraphRAG projection, graph database, or clinical
-publication workflow exists in the repository. The current repository policy
-explicitly prohibits adding a knowledge-graph or graph-retrieval system without
-owner approval (`AGENTS.md:100-106`). This document records a design proposal; it
-does not override that policy.
+publication workflow exists in the repository. An additive
+`graph-evidence-v1` chunking text model now prepares source-mapped evidence
+units, but it does not create graph records or implement graph retrieval; see
+[GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md). The current repository
+policy explicitly prohibits adding a knowledge-graph or graph-retrieval system
+without owner approval. This document records a design proposal; it does not
+override that policy.
 
 No part of this document has been medically validated. It is ready for
 multidisciplinary review, not for clinical use.
