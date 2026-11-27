@@ -1,4 +1,5 @@
 import type * as React from "react";
+import { useRouter } from "expo-router";
 import { useAgentScope } from "./use-agent-scope";
 import { useAgentConversation } from "./use-agent-conversation";
 import { useInitialAgentPrompt } from "./use-initial-agent-prompt";
@@ -18,10 +19,22 @@ export function AgentScreen({
   onInitialPromptConsumed?: () => void;
 }): React.JSX.Element {
   const scope = useAgentScope();
+  const router = useRouter();
   return (
     <AgentSession
       key={scope.key}
       phase={scope.phase}
+      subscribed={scope.subscribed}
+      entitlementPending={scope.entitlementPending}
+      entitlementError={scope.entitlementError}
+      onRetryEntitlement={scope.retryEntitlement}
+      account={{
+        initials: scope.initials,
+        name: scope.name,
+        email: scope.email,
+        planName: scope.planName,
+      }}
+      onManagePlan={() => router.push("/billing")}
       initialPrompt={initialPrompt}
       onInitialPromptConsumed={onInitialPromptConsumed}
     />
@@ -30,10 +43,27 @@ export function AgentScreen({
 
 function AgentSession({
   phase,
+  subscribed,
+  entitlementPending,
+  entitlementError,
+  onRetryEntitlement,
+  account,
+  onManagePlan,
   initialPrompt,
   onInitialPromptConsumed,
 }: {
   phase: "pending" | "authenticated" | "anonymous";
+  subscribed: boolean;
+  entitlementPending: boolean;
+  entitlementError: boolean;
+  onRetryEntitlement(): void;
+  account: {
+    initials: string;
+    name: string | null;
+    email: string | null;
+    planName: string | null;
+  };
+  onManagePlan(): void;
   initialPrompt?: string;
   onInitialPromptConsumed?: () => void;
 }): React.JSX.Element {
@@ -45,7 +75,7 @@ function AgentSession({
     initialPrompt,
     conversation.send,
     conversation.pending,
-    phase === "authenticated",
+    phase === "authenticated" && subscribed,
     onInitialPromptConsumed,
   );
   const suggestions: AgentSuggestion[] = SUGGESTION_KEYS.map((key) => ({
@@ -59,6 +89,12 @@ function AgentSession({
       error={conversation.error}
       isPending={phase === "pending"}
       isAuthenticated={phase === "authenticated"}
+      planPending={entitlementPending}
+      planError={entitlementError}
+      onRetryPlan={onRetryEntitlement}
+      subscribed={subscribed}
+      account={account}
+      onManagePlan={onManagePlan}
       pending={conversation.pending}
       suggestions={suggestions}
       scrollRef={scrollRef}

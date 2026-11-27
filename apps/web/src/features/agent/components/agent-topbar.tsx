@@ -17,7 +17,11 @@ export function AgentTopbar({
   onExpand(): void;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("agent");
-  const planLabel = planName ? t("planBadge", { plan: planName }) : t("freePlan");
+  const planLabel = planPending
+    ? t("loadingAccount")
+    : planName
+      ? t("planBadge", { plan: planName })
+      : t("freePlan");
   return (
     <header className="flex h-[72px] shrink-0 items-center justify-end gap-2 px-4 sm:px-6 lg:px-8">
       {collapsed ? (
@@ -36,7 +40,7 @@ export function AgentTopbar({
         href="/settings/billing"
         className="inline-flex h-8 items-center rounded-full bg-secondary px-3 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
-        {planPending ? t("freePlan") : planLabel}
+        {planLabel}
       </Link>
       <Button
         className="h-10 rounded-xl px-5 text-sm font-semibold"

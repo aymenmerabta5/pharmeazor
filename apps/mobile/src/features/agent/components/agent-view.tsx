@@ -5,13 +5,29 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AgentSuggestion, ChatMessage } from "../model";
+import { AgentAccountBar } from "./agent-account-bar";
 import { AgentConversation } from "./agent-conversation";
 import { AgentEmpty } from "./agent-empty";
+import { AgentPlanError } from "./agent-plan-error";
+import { AgentUpgrade } from "./agent-upgrade";
 import type { NamespaceTranslate } from "@/lib/i18n";
+
+export interface AgentAccount {
+  initials: string;
+  name: string | null;
+  email: string | null;
+  planName: string | null;
+}
 
 export interface AgentViewProps {
   isPending: boolean;
   isAuthenticated: boolean;
+  planPending: boolean;
+  planError: boolean;
+  onRetryPlan(): void;
+  subscribed: boolean;
+  account: AgentAccount;
+  onManagePlan(): void;
   error: string | null;
   messages: readonly ChatMessage[];
   pending: boolean;
@@ -25,6 +41,12 @@ export interface AgentViewProps {
 export function AgentView({
   isPending,
   isAuthenticated,
+  planPending,
+  planError,
+  onRetryPlan,
+  subscribed,
+  account,
+  onManagePlan,
   error,
   messages,
   pending,
@@ -34,10 +56,13 @@ export function AgentView({
   onSuggestion,
   t,
 }: AgentViewProps): React.JSX.Element {
-  if (isPending)
+  if (isPending || (isAuthenticated && planPending))
     return (
-      <View className="flex-1 items-center justify-center">
+      <View className="flex-1 items-center justify-center gap-3 bg-background">
         <ActivityIndicator />
+        {isAuthenticated ? (
+          <Text className="text-sm text-muted-foreground">{t("checkingPlan")}</Text>
+        ) : null}
       </View>
     );
   if (!isAuthenticated) {
@@ -59,10 +84,21 @@ export function AgentView({
       </View>
     );
   }
-
   return (
     <View className="flex-1 bg-background">
-      {messages.length === 0 ? (
+      <AgentAccountBar
+        initials={account.initials}
+        name={account.name}
+        email={account.email}
+        planName={account.planName}
+        onManagePlan={onManagePlan}
+        t={t}
+      />
+      {planError ? (
+        <AgentPlanError onRetry={onRetryPlan} t={t} />
+      ) : !subscribed ? (
+        <AgentUpgrade onManagePlan={onManagePlan} t={t} />
+      ) : messages.length === 0 ? (
         <AgentEmpty suggestions={suggestions} onSuggestion={onSuggestion} error={error} t={t} />
       ) : (
         <AgentConversation
@@ -73,7 +109,9 @@ export function AgentView({
           t={t}
         />
       )}
-      <View className="border-t border-border bg-background px-3 pb-2 pt-2">{composer}</View>
+      {subscribed ? (
+        <View className="border-t border-border bg-background px-3 pb-2 pt-2">{composer}</View>
+      ) : null}
     </View>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
+import * as React from "react";
 import { useAppForm, useStore } from "@/components/ui/form";
 import { useAgentSession } from "./queries";
 import { sendAgentPrompt } from "./mutations";
 import { conversationTitle, lastUserText } from "./model";
 
-export function useAgentConversation() {
+export function useAgentConversation(initialQuestion?: string) {
   const agent = useAgentSession();
   // Eve reports outstanding work as "busy" or "resuming"; the transcript marker follows the
   // assistant message Eve is still streaming.
@@ -32,6 +33,18 @@ export function useAgentConversation() {
       }
     },
   });
+  const handledInitialQuestion = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    // Eve reports "busy" or "resuming" while it restores a durable session.
+    // Sending during that window is dropped, so wait until it is idle and only
+    // then mark the question handled.
+    if (!initialQuestion || busy) return;
+    if (handledInitialQuestion.current === initialQuestion) return;
+    handledInitialQuestion.current = initialQuestion;
+    form.reset();
+    void send(initialQuestion);
+    window.history.replaceState(null, "", "/agent");
+  }, [busy, initialQuestion, form, send]);
   const input = useStore(form.store, (state) => state.values.input);
   const setInput = (value: string): void => {
     form.setFieldValue("input", value);

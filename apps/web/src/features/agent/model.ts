@@ -57,11 +57,42 @@ export function accountInitials(user: AgentAccountIdentity | null | undefined): 
   return email ? email.slice(0, 2).toUpperCase() : "PH";
 }
 
+const PLAN_TIER_NAMES: Readonly<Record<string, string>> = {
+  basic: "Basic",
+  standard: "Standard",
+  pro: "Pro",
+};
+
+/** The tier behind a plan id, whether it is billed monthly or yearly. */
+export function planTierOf(planId: string | null | undefined): "basic" | "standard" | "pro" | null {
+  const value = planId?.trim();
+  if (!value) return null;
+  const tier = value.endsWith("-yearly") ? value.slice(0, -"-yearly".length) : value;
+  return tier === "basic" || tier === "standard" || tier === "pro" ? tier : null;
+}
+
 /** Turn a stored plan id into the short product name shown in the badge. */
 export function planDisplayName(planId: string | null | undefined): string | null {
   const value = planId?.trim();
   if (!value) return null;
+  const tier = planTierOf(value);
+  if (tier) return PLAN_TIER_NAMES[tier] ?? null;
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** A subscription is live while its paid period has not run out. */
+export function isLiveAgentSubscription(
+  subscription: { status: string; currentPeriodEnd?: string | null },
+  now = Date.now(),
+): boolean {
+  if (
+    subscription.status !== "active" &&
+    subscription.status !== "trialing" &&
+    subscription.status !== "on_trial"
+  )
+    return false;
+  const end = subscription.currentPeriodEnd ? Date.parse(subscription.currentPeriodEnd) : NaN;
+  return Number.isFinite(end) && end > now;
 }
 
 export function messageText(message: AgentMessageLike): string {

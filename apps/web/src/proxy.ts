@@ -10,24 +10,13 @@ import { isMaintenanceExemptPath, isProtectedPath } from "@/lib/protected-paths"
 
 export {
   AUTH_PATHS,
-  DESIGN_PREVIEW_PATHS,
   MAINTENANCE_EXEMPT_PATHS,
   PROTECTED_PATHS,
   PUBLIC_BILLING_PATHS,
   isAuthPath,
-  isDesignPreviewPath,
   isMaintenanceExemptPath,
   isProtectedPath,
 } from "@/lib/protected-paths";
-
-/**
- * The legacy `/agent` alias stays reachable without a session in development
- * so an old bookmark still redirects to the unified surface; the route keeps
- * the session guard in a production build.
- */
-function designPreviewEnabled(): boolean {
-  return process.env.NODE_ENV !== "production";
-}
 
 interface MaintenanceStatus {
   enabled: boolean;
@@ -63,7 +52,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (isProtectedPath(pathname, designPreviewEnabled()) && !getSessionCookie(request)) {
+  if (isProtectedPath(pathname) && !getSessionCookie(request)) {
     const response = NextResponse.redirect(new URL("/auth/sign-in", request.url));
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     response.headers.set("CDN-Cache-Control", "no-store");

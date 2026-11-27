@@ -26,7 +26,11 @@ export function AgentConversationSidebar({
   const t = useSurfaceTranslations("agent");
   const questions = userMessages(conversation.messages);
   const current = questions[questions.length - 1]?.id;
-  const planLabel = account.planName ? t("planBadge", { plan: account.planName }) : t("freePlan");
+  const planLabel = account.planPending
+    ? t("loadingAccount")
+    : account.planName
+      ? t("planBadge", { plan: account.planName })
+      : t("freePlan");
   return (
     <aside className="sticky top-0 hidden h-dvh w-[272px] shrink-0 flex-col border-e border-border/70 bg-sidebar px-5 pb-5 pt-5 lg:flex">
       <Link
@@ -71,7 +75,7 @@ export function AgentConversationSidebar({
           })}
         </nav>
       </div>
-      {account.planName !== "Pro" ? (
+      {account.planTier !== "pro" ? (
         <div className="mt-4 rounded-2xl border border-border/80 bg-card p-4 shadow-control">
           <p className="text-base font-semibold tracking-tight">{t("upgradeTitle")}</p>
           <p className="mt-2 text-sm leading-5 text-muted-foreground">{t("upgradeDescription")}</p>

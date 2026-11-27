@@ -1,23 +1,23 @@
 "use client";
 import { useAuth } from "@/hooks/use-auth";
 import { useBilling } from "@/hooks/use-billing";
-import { accountInitials, planDisplayName } from "./model";
+import { accountInitials, isLiveAgentSubscription, planDisplayName, planTierOf } from "./model";
 
 /** Account chrome for the agent rail and plan badge. */
 export function useAgentAccount() {
   const auth = useAuth();
   const billing = useBilling();
-  const active = billing.subscriptions.find(
-    (subscription) =>
-      subscription.status === "active" ||
-      subscription.status === "trialing" ||
-      subscription.status === "on_trial",
-  );
-  const planId = active?.planId ?? null;
+  const live = billing.subscriptions.find((subscription) => isLiveAgentSubscription(subscription));
+  const planId = live?.planId ?? null;
+  const email = auth.user?.email ?? null;
   return {
     initials: accountInitials(auth.user),
-    name: auth.user?.name ?? auth.user?.email ?? null,
+    name: auth.user?.name ?? null,
+    email,
+    planId,
     planName: planDisplayName(planId),
+    planTier: planTierOf(planId),
     planPending: auth.isPending || billing.isLoading,
+    signedIn: Boolean(auth.user),
   };
 }

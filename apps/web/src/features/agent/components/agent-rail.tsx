@@ -16,6 +16,7 @@ import {
 import { useSurfaceTranslations } from "@/lib/translations";
 import type { useAgentAccount } from "../use-agent-account";
 import type { useAgentConversation } from "../use-agent-conversation";
+import { AgentAccountSheet } from "./agent-account-sheet";
 import { AgentBrandMark } from "./agent-brand-mark";
 
 export function AgentRail({
@@ -31,7 +32,7 @@ export function AgentRail({
   return (
     <aside className="sticky top-0 flex h-dvh w-16 shrink-0 flex-col items-center border-e border-border/70 bg-sidebar pb-10 pt-4 lg:w-[72px]">
       <Link
-        href="/dashboard"
+        href="/agent"
         aria-label="pharmeazor"
         className="rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
       >
@@ -103,17 +104,16 @@ export function AgentRail({
         <div className="[&_button]:size-10 [&_button]:rounded-xl [&_button]:border [&_button]:border-border/70 [&_button]:bg-card [&_button]:text-muted-foreground [&_button]:shadow-control [&_button:hover]:bg-card/80 [&_svg]:size-[18px]">
           <ThemeToggle />
         </div>
-        <Link
-          href="/settings"
-          aria-label={t("accountSettings")}
-          className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
-        >
-          <Avatar className="size-10 border-0">
-            <AvatarFallback className="bg-secondary text-[0.8rem] font-semibold text-primary">
-              {account.initials}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
+        <AgentAccountSheet
+          account={account}
+          trigger={
+            <Avatar className="size-10 border-0">
+              <AvatarFallback className="bg-secondary text-[0.8rem] font-semibold text-primary">
+                {account.initials}
+              </AvatarFallback>
+            </Avatar>
+          }
+        />
       </div>
     </aside>
   );

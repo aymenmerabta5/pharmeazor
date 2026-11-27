@@ -2,8 +2,8 @@
  * Route access policy for the proxy.
  *
  * Pure path matching with no framework imports, so the policy can be read and
- * tested without a request. The proxy owns the environment and passes the
- * result of the design-preview check in.
+ * tested without a request. The proxy owns the environment and only applies
+ * the result.
  */
 
 /** The routes a customer needs when they come back from checkout. */
@@ -16,15 +16,6 @@ export const PROTECTED_PATHS = [
   "/admin",
   "/settings",
 ] as const;
-
-/**
- * Routes that render a design prototype with no session of their own.
- *
- * The prototype is a local design surface, so it stays reachable without a
- * login while it is being built. The route now only redirects to the unified
- * chat surface; the bypass is never enabled in a production build.
- */
-export const DESIGN_PREVIEW_PATHS = ["/agent"] as const;
 
 /** Routes that render an authentication screen. */
 export const AUTH_PATHS = ["/login", "/auth"] as const;
@@ -42,22 +33,10 @@ function matchesPath(path: string, base: string): boolean {
   return nextChar === "/" || nextChar === "?" || nextChar === "#";
 }
 
-/** True when the path renders a design prototype that needs no session. */
-export function isDesignPreviewPath(pathname: string): boolean {
-  return DESIGN_PREVIEW_PATHS.some((path) => matchesPath(pathname, path));
-}
-
-/**
- * True when the path requires a session.
- *
- * `designPreviewEnabled` opens the design prototype without a session. It is
- * a caller decision because it depends on the environment, which this module
- * deliberately does not read.
- */
-export function isProtectedPath(pathname: string, designPreviewEnabled = false): boolean {
+/** True when the path requires a session. */
+export function isProtectedPath(pathname: string): boolean {
   if (PUBLIC_BILLING_PATHS.some((path) => pathname === path || pathname === path + "/"))
     return false;
-  if (designPreviewEnabled && isDesignPreviewPath(pathname)) return false;
   return PROTECTED_PATHS.some((path) => matchesPath(pathname, path));
 }
 
