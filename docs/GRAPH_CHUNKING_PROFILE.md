@@ -276,8 +276,10 @@ fixture.
 - Context notes for graph units and graph retrieval projections.
 - Candidate mention extraction is implemented in
   [GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md). Candidate
-  assertions, canonical graph publication, entity linking, relationships, and
-  GraphRAG remain deferred.
+  relationship extraction is implemented in
+  [GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md).
+  Candidate assertions, canonical graph publication, entity linking, canonical
+  relationships, and GraphRAG remain deferred.
 - A graph golden set and baseline.
 - Promoting these boundaries into the hybrid index, which would require
   contextualization, embedding, artifact, trace, gold-label, and baseline

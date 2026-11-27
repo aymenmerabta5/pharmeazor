@@ -7,8 +7,13 @@
 This layer turns the raw text units produced by
 [`graph-evidence-v1`](./GRAPH_CHUNKING_PROFILE.md) into typed entity mentions and
 structured observations. It does not create canonical entities, resolve
-mentions, extract relationships, write PostgreSQL, populate Neo4j, embed graph
-objects, or alter Hybrid RAG.
+mentions, extract relationships itself, write PostgreSQL, populate Neo4j, embed
+graph objects, or alter Hybrid RAG.
+
+Relationship candidates are a separate downstream artifact documented in
+[GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md). That
+layer references this artifact's mention and observation IDs; it does not change
+this artifact's records or introduce canonical entity IDs.
 
 ## 1. Boundary
 
@@ -225,8 +230,10 @@ No LLM-as-a-Judge is used. The evaluation protocol is deterministic:
 - Free-text clinical recall is not yet comprehensive.
 - Dictionary matching can produce ambiguous or over-broad candidates.
 - Structured CSV encoding/quirks are preserved, not silently corrected.
-- No canonical entities, entity linking, relationships, database persistence, or
-  Neo4j population exist.
+- No canonical entities, entity linking, database persistence, or Neo4j
+  population exist. Relationships are candidate-only in the separate
+  [GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md)
+  artifact; no canonical relationship exists.
 - Text evidence is embedded in each mention JSONL record. A future database
   staging design must split it into a separate `EvidenceSpan` row without
   changing the source span/hash invariants.

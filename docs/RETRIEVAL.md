@@ -390,9 +390,13 @@ source-mapped evidence units for the proposed graph schema. The offline
 `retrieval:graph:export` worker writes versioned evidence files with source and
 output checksums. The additive `retrieval:entities:export` worker then writes
 candidate-only entity mentions and structured observations with exact spans and
-provenance. Neither command feeds the hybrid index, alters chunk IDs, links
-entities, creates relationships, or implements graph retrieval. The temporary
-mention taxonomy requires Person 1 review before canonical use.
+provenance. The downstream `retrieval:relationships:export` worker writes
+candidate-only relationships whose endpoints reference those mentions or
+observations and whose support is either an exact text span or an explicit
+structured row. None of these commands feeds the hybrid index, alters chunk IDs,
+links entities, publishes canonical relationships, or implements graph
+retrieval. The temporary mention and relationship taxonomies require Person 1
+review before canonical use.
 
 ```text
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
@@ -459,8 +463,10 @@ bun run retrieval:import-registry              # merge the two register catalogu
 bun run retrieval:import-registry -- --dry-run
 bun run retrieval:graph:export -- --dry-run     # validate graph evidence chunks; write nothing
 bun run retrieval:graph:export                  # write versioned graph evidence files
-bun run retrieval:entities:export -- --dry-run  # validate candidate entity extraction; write nothing
-bun run retrieval:entities:export               # write candidate-only mention artifacts
+bun run retrieval:entities:export -- --dry-run        # validate candidate entity extraction; write nothing
+bun run retrieval:entities:export                     # write candidate-only mention artifacts
+bun run retrieval:relationships:export -- --dry-run   # validate candidate relationships; write nothing
+bun run retrieval:relationships:export                # write candidate-only relationship artifacts
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,

@@ -1,7 +1,7 @@
 # Pharmeazor Knowledge Graph Logical Schema
 
 **Version:** 0.1<br>
-**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model is implemented; it has no graph writer or retrieval endpoint.<br>
+**Status:** Draft — the logical schema and canonical graph are not approved for implementation. The separate `graph-evidence-v1` chunking text model and the candidate-only entity and relationship artifacts are implemented; there is no canonical graph writer or retrieval endpoint.<br>
 **Date:** 2026-11-27<br>
 **Ontology contract:** [GRAPH_ONTOLOGY.md](./GRAPH_ONTOLOGY.md)<br>
 **Runtime context:** [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md), [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md)
@@ -559,6 +559,13 @@ replacement grammar.
   signals, not evidence or identity.
 
 ## 4. Relationship records
+
+A candidate-only, artifact-first implementation now emits quarantined
+relationship records over entity-mention and structured-observation endpoints.
+It does not persist this logical table, resolve endpoints, or publish canonical
+truth; see
+[GRAPH_RELATIONSHIP_EXTRACTION.md](./GRAPH_RELATIONSHIP_EXTRACTION.md). The
+logical schema below remains proposed.
 
 Every relationship is stored as a record with:
 

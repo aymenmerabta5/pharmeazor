@@ -31,6 +31,35 @@ export {
   normalizeStrength,
   splitSubstances,
 } from "../normalize";
+export {
+  RELATIONSHIP_KIND_DEFINITIONS,
+  RELATIONSHIP_KINDS,
+  RELATIONSHIP_TAXONOMY_VERSION,
+  relationshipKindDefinition,
+  type RelationshipExtractionMode,
+  type RelationshipFamily,
+  type RelationshipKind,
+  type RelationshipKindDefinition,
+  type RelationshipScope,
+} from "./relationship-kinds";
+export { extractStructuredRowRelationships, extractTextRelationships } from "./relationship";
+export type {
+  MentionRelationshipEndpoint,
+  MetadataRelationshipSupport,
+  ObservationRelationshipEndpoint,
+  RelationshipCandidateRecord,
+  RelationshipEndpoint,
+  RelationshipMatchQuality,
+  RelationshipMethod,
+  RelationshipObservationState,
+  RelationshipSupport,
+  StructuredRelationshipInput,
+  StructuredRelationshipResult,
+  StructuredRelationshipSupport,
+  TextRelationshipInput,
+  TextRelationshipResult,
+  TextRelationshipSupport,
+} from "./relationship-types";
 export { extractTextUnitMentions } from "./text";
 export type {
   CandidateObservationState,

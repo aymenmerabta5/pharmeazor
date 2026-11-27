@@ -122,6 +122,15 @@ manifest. It does not create canonical entities, entity links, relationships,
 database rows, or runtime endpoints. The taxonomy remains unreviewed until
 Person 1 signs it off.
 
+The same extraction directory owns the temporary
+`relationship-candidate-taxonomy-v0.1` and deterministic relationship rules.
+`bun run retrieval:relationships:export -- --dry-run` reads the graph and entity
+artifacts and writes no output; the non-dry command emits only candidate
+relationship JSONL and a manifest. It does not resolve endpoints, publish
+relationship truth, create canonical entities, write database rows, or populate
+Neo4j. Relationship extraction is documented in
+`docs/GRAPH_RELATIONSHIP_EXTRACTION.md` and remains review-gated.
+
 ### Do not
 
 - Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.
