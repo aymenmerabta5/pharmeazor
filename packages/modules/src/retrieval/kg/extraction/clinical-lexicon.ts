@@ -1,0 +1,215 @@
+import type { MentionKind } from "./mention-kinds";
+import type { MentionLexiconSeed } from "./types";
+
+/**
+ * Small, explicitly temporary clinical mention vocabulary grounded in recurring
+ * corpus terms (indications, adverse reactions, monitoring and interactions).
+ * It is not a clinical terminology and must be reviewed by Person 1.
+ */
+const TERMS: ReadonlyArray<{
+  readonly kind: MentionKind;
+  readonly terms: readonly string[];
+  readonly conceptKind?: string;
+}> = [
+  {
+    kind: "clinical_condition",
+    terms: [
+      "douleur",
+      "pain",
+      "fièvre",
+      "fever",
+      "inflammation",
+      "infection",
+      "hypertension",
+      "diabète",
+      "diabetes",
+      "asthme",
+      "asthma",
+      "insuffisance rénale",
+      "renal impairment",
+      "insuffisance hépatique",
+      "hepatic impairment",
+      "angor",
+      "angina",
+      "infarctus du myocarde",
+      "myocardial infarction",
+      "accident vasculaire cérébral",
+      "stroke",
+      "maladie thromboembolique",
+      "thromboembolism",
+      "arthrose",
+      "osteoarthritis",
+      "arthrite",
+      "arthritis",
+      "migraine",
+      "épilepsie",
+      "epilepsy",
+      "dépression",
+      "depression",
+      "anxiété",
+      "anxiety",
+      "ulcère",
+      "ulcer",
+      "goutte",
+      "gout",
+      "allergie",
+      "allergy",
+      "rhume",
+      "cold",
+      "grippe",
+      "flu",
+      "covid-19",
+    ],
+    conceptKind: "condition",
+  },
+  {
+    kind: "symptom",
+    terms: [
+      "fièvre",
+      "fever",
+      "douleur",
+      "pain",
+      "toux",
+      "cough",
+      "essoufflement",
+      "shortness of breath",
+      "vertige",
+      "dizziness",
+      "fatigue",
+      "nausée",
+      "nausea",
+      "vomissement",
+      "vomiting",
+    ],
+    conceptKind: "symptom",
+  },
+  {
+    kind: "adverse_effect",
+    terms: [
+      "nausée",
+      "nausea",
+      "vomissement",
+      "vomiting",
+      "diarrhée",
+      "diarrhea",
+      "constipation",
+      "céphalée",
+      "headache",
+      "vertige",
+      "dizziness",
+      "rash",
+      "éruption cutanée",
+      "prurit",
+      "pruritus",
+      "urticaire",
+      "urticaria",
+      "saignement",
+      "bleeding",
+      "ecchymose",
+      "bruising",
+      "douleur abdominale",
+      "abdominal pain",
+      "hypotension",
+      "tachycardie",
+      "tachycardia",
+      "œdème",
+      "edema",
+      "anaphylaxie",
+      "anaphylaxis",
+      "angioedème",
+      "angioedema",
+      "hépatotoxicité",
+      "hepatotoxicity",
+      "néphrotoxicité",
+      "nephrotoxicity",
+    ],
+    conceptKind: "adverse_effect",
+  },
+  {
+    kind: "clinical_finding",
+    terms: [
+      "hypotension",
+      "hypertension",
+      "tachycardie",
+      "tachycardia",
+      "bradycardie",
+      "bradycardia",
+      "hyperkaliémie",
+      "hyperkalemia",
+      "hypokaliémie",
+      "hypokalemia",
+      "hyperglycémie",
+      "hyperglycemia",
+      "hypoglycémie",
+      "hypoglycemia",
+      "anémie",
+      "anemia",
+      "thrombopénie",
+      "thrombocytopenia",
+      "neutropénie",
+      "neutropenia",
+      "leucopénie",
+      "leukopenia",
+    ],
+    conceptKind: "finding",
+  },
+  {
+    kind: "medical_procedure",
+    terms: ["dialyse", "dialysis", "chirurgie", "surgery", "transfusion", "vaccination"],
+    conceptKind: "procedure",
+  },
+  {
+    kind: "laboratory_test",
+    terms: ["INR", "créatinine", "creatinine", "transaminases", "bilirubine", "bilirubin"],
+    conceptKind: "laboratory_test",
+  },
+  {
+    kind: "monitoring_parameter",
+    terms: [
+      "potassium",
+      "sodium",
+      "glycémie",
+      "glucose",
+      "hémoglobine",
+      "hemoglobin",
+      "plaquettes",
+      "platelets",
+      "tension artérielle",
+      "blood pressure",
+    ],
+    conceptKind: "monitoring_parameter",
+  },
+  {
+    kind: "biological_target",
+    terms: ["COX-1", "COX-2", "cyclooxygénase", "cyclooxygenase"],
+    conceptKind: "biological_target",
+  },
+  {
+    kind: "food_or_beverage",
+    terms: ["alcool", "alcohol", "pamplemousse", "grapefruit"],
+    conceptKind: "food_or_beverage",
+  },
+];
+
+export const CLINICAL_LEXICON_VERSION = "clinical-mention-lexicon-v0.1" as const;
+
+export function clinicalMentionLexiconSeeds(): MentionLexiconSeed[] {
+  const seeds: MentionLexiconSeed[] = [];
+  for (const group of TERMS) {
+    for (const surface of group.terms) {
+      seeds.push({
+        surface,
+        candidateKind: group.kind,
+        sourceKind: "lexicon",
+        sourceId: CLINICAL_LEXICON_VERSION,
+        sourceKey: `${group.kind}:${surface}`,
+        attributes: {
+          lexiconVersion: CLINICAL_LEXICON_VERSION,
+          conceptKind: group.conceptKind,
+          reviewRequired: true,
+        },
+      });
+    }
+  }
+  return seeds;
+}

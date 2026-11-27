@@ -279,7 +279,9 @@ replacement grammar.
 #### `EntityMention`
 
 - **Layer:** candidate observation.
-- **Status:** proposed.
+- **Status:** an offline, artifact-first candidate implementation now exists in
+  [GRAPH_ENTITY_EXTRACTION.md](./GRAPH_ENTITY_EXTRACTION.md); database
+  persistence and entity linking remain proposed.
 - **Identity:** `(extractionRunId, evidenceSpanId, mentionOrdinal, candidateType)`.
 - **Fields:**
   - `R mentionId`, `R extractionRunId`, `R evidenceSpanId`.
