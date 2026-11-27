@@ -1,9 +1,9 @@
 # Neo4j graph population
 
-**Status:** importer and local Neo4j 5 Compose service implemented, approval-gated, and **not started or executed against a real Neo4j instance** in this repository.  
-**Ontology:** `GRAPH_ONTOLOGY.md` version 0.1 — still a draft.  
-**Candidate taxonomies:** entity, relationship, and entity-link taxonomies remain temporary and unapproved by Person 1.  
-**Approval gate:** no graph data may be published without a recorded `status: "approved"` artifact matching the exact upstream checksums.
+- **Status:** importer and local Neo4j 5 Compose service implemented, approval-gated, and **not started or executed against a real Neo4j instance** in this repository.
+- **Ontology:** `GRAPH_ONTOLOGY.md` version 0.1 — still a draft.
+- **Candidate taxonomies:** entity, relationship, and entity-link taxonomies remain temporary and unapproved by Person 1.
+- **Approval gate:** no graph data may be published without a recorded `status: "approved"` artifact matching the exact upstream checksums.
 
 ## 1. What this stage does
 

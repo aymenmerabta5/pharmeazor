@@ -1,9 +1,9 @@
 # Candidate-only entity linking and deduplication
 
-**Status:** implemented as an offline, artifact-first candidate pipeline.  
-**Taxonomy:** `entity-link-candidate-taxonomy-v0.1` — temporary and not approved.  
-**Source entity taxonomy:** `entity-mention-taxonomy-v0.1`.  
-**Review gate:** Person 1 must review the link groups, identity keys, and conflict rules before canonical entities, resolved links, database persistence, or graph publication are implemented.
+- **Status:** implemented as an offline, artifact-first candidate pipeline.
+- **Taxonomy:** `entity-link-candidate-taxonomy-v0.1` — temporary and not approved.
+- **Source entity taxonomy:** `entity-mention-taxonomy-v0.1`.
+- **Review gate:** Person 1 must review the link groups, identity keys, and conflict rules before canonical entities, resolved links, database persistence, or graph publication are implemented.
 
 This layer groups candidate mentions and structured observations that appear to
 refer to the same real-world entity. It does not create canonical entities,

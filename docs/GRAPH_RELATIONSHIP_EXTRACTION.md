@@ -1,9 +1,9 @@
 # Candidate-only relationship extraction
 
-**Status:** implemented as an offline, artifact-first candidate pipeline.  
-**Taxonomy:** `relationship-candidate-taxonomy-v0.1` — temporary and not approved.  
-**Source entity taxonomy:** `entity-mention-taxonomy-v0.1`.  
-**Review gate:** Person 1 must review the relationship kinds, endpoint semantics, and qualifier rules before canonical relationships, canonical entity linking, or graph publication are implemented.
+- **Status:** implemented as an offline, artifact-first candidate pipeline.
+- **Taxonomy:** `relationship-candidate-taxonomy-v0.1` — temporary and not approved.
+- **Source entity taxonomy:** `entity-mention-taxonomy-v0.1`.
+- **Review gate:** Person 1 must review the relationship kinds, endpoint semantics, and qualifier rules before canonical relationships, canonical entity linking, or graph publication are implemented.
 
 This layer derives candidate relationships from the candidate entity artifact
 and the `graph-evidence-v1` text units. It does not create canonical entities,
