@@ -388,8 +388,11 @@ A separate, additive `graph-evidence-v1` profile lives in
 [GRAPH_CHUNKING_PROFILE.md](./GRAPH_CHUNKING_PROFILE.md). It prepares exact
 source-mapped evidence units for the proposed graph schema. The offline
 `retrieval:graph:export` worker writes versioned evidence files with source and
-output checksums. It does not feed the hybrid index, alter chunk IDs, or
-implement graph retrieval.
+output checksums. The additive `retrieval:entities:export` worker then writes
+candidate-only entity mentions and structured observations with exact spans and
+provenance. Neither command feeds the hybrid index, alters chunk IDs, links
+entities, creates relationships, or implements graph retrieval. The temporary
+mention taxonomy requires Person 1 review before canonical use.
 
 ```text
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
@@ -456,6 +459,8 @@ bun run retrieval:import-registry              # merge the two register catalogu
 bun run retrieval:import-registry -- --dry-run
 bun run retrieval:graph:export -- --dry-run     # validate graph evidence chunks; write nothing
 bun run retrieval:graph:export                  # write versioned graph evidence files
+bun run retrieval:entities:export -- --dry-run  # validate candidate entity extraction; write nothing
+bun run retrieval:entities:export               # write candidate-only mention artifacts
 ```
 
 `retrieval:ingest:vectors` reads the embedding lab's `manifest.json`,

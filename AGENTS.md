@@ -112,8 +112,15 @@ hybrid lookup key. The profile uses exact UTF-16 source spans over
 front-matter-stripped clean Markdown. Raw `content` is the only evidence
 surface; generated table headers and list markers exist only in
 `displayContent`. `bun run retrieval:graph:export -- --dry-run` writes no graph
-index; the optional non-dry export emits versioned evidence files only. It has
-no database writer, embedding path, extractor, or runtime endpoint.
+index; the optional non-dry export emits versioned evidence files only.
+
+`packages/modules/src/retrieval/kg/extraction/` owns the temporary
+candidate-only entity-mention taxonomy and deterministic extractors.
+`bun run retrieval:entities:export -- --dry-run` reads the graph artifact and
+writes no output; the non-dry command emits only mention/observation JSONL and a
+manifest. It does not create canonical entities, entity links, relationships,
+database rows, or runtime endpoints. The taxonomy remains unreviewed until
+Person 1 signs it off.
 
 ### Do not
 
