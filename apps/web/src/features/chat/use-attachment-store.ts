@@ -13,8 +13,8 @@
  */
 
 import * as React from "react";
-import { orpcClient } from "@/lib/orpc";
 import type { AttachmentRef } from "./model";
+import { uploadAttachment } from "./mutations";
 
 export type UploadStatus = "uploading" | "ready" | "error";
 
@@ -115,7 +115,7 @@ export function useAttachmentStore(): AttachmentStore {
       if (item.status !== "uploading") continue;
       void (async () => {
         try {
-          const result = await orpcClient.storage.upload({ file: item.file });
+          const result = await uploadAttachment(item.file);
           setAttachments((prev) =>
             prev.map((a) =>
               a.localId === item.localId
