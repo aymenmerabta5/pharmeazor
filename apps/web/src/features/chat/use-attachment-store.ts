@@ -80,16 +80,18 @@ function nextLocalId() {
 
 export function useAttachmentStore(): AttachmentStore {
   const [attachments, setAttachments] = React.useState<PendingAttachment[]>([]);
+  // Latest staged items for callbacks that must read synchronously (consume)
+  // and for the unmount cleanup, where a state updater would never run.
+  const attachmentsRef = React.useRef<PendingAttachment[]>([]);
+  attachmentsRef.current = attachments;
 
-  /* Revoke all blob URLs on unmount. */
+  /* Revoke all still-staged blob URLs on unmount. */
   React.useEffect(() => {
     return () => {
-      setAttachments((prev) => {
-        for (const item of prev) {
-          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-        }
-        return [];
-      });
+      for (const item of attachmentsRef.current) {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      }
+      attachmentsRef.current = [];
     };
   }, []);
 
@@ -154,15 +156,14 @@ export function useAttachmentStore(): AttachmentStore {
   }, []);
 
   const consumeRefs = React.useCallback((): AttachmentRef[] => {
-    let refs: AttachmentRef[] = [];
-    setAttachments((prev) => {
-      refs = prev.filter((a) => a.status === "ready" && a.ref).map((a) => a.ref!);
-      /* Revoke preview URLs of consumed items. */
-      for (const a of prev) {
-        if (a.status === "ready" && a.previewUrl) URL.revokeObjectURL(a.previewUrl);
-      }
-      return [];
-    });
+    // Read the latest staged items synchronously. A state updater is not
+    // guaranteed to run before this callback returns, which silently dropped
+    // attachments from the message and cleared the composer.
+    const current = attachmentsRef.current;
+    const refs = current.filter((a) => a.status === "ready" && a.ref).map((a) => a.ref!);
+    // Keep preview URLs alive: the sent message bubble still renders them.
+    attachmentsRef.current = [];
+    setAttachments([]);
     return refs;
   }, []);
 

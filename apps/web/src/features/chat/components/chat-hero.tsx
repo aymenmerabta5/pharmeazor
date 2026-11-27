@@ -45,6 +45,8 @@ export function ChatHero({
   onSuggest,
   busy,
   attachmentStore,
+  canAttach,
+  onRequireAuth,
 }: {
   value: string;
   onChange(value: string): void;
@@ -52,6 +54,8 @@ export function ChatHero({
   onSuggest(question: string): void;
   busy: boolean;
   attachmentStore: AttachmentStore;
+  canAttach: boolean;
+  onRequireAuth(): void;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("welcome");
 
@@ -84,7 +88,11 @@ export function ChatHero({
           )}
 
           <div className="ph-welcome-prompt-inner">
-            <ChatAttachButton attachmentStore={attachmentStore} />
+            <ChatAttachButton
+              attachmentStore={attachmentStore}
+              canAttach={canAttach}
+              onRequireAuth={onRequireAuth}
+            />
 
             <label htmlFor="welcome-input" className="sr-only">
               {t("inputLabel")}

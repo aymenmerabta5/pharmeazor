@@ -1,6 +1,7 @@
 import { oc } from "@orpc/contract";
 import { oz } from "@orpc/zod";
 import { z } from "zod";
+import { z as z3 } from "zod/v3";
 
 export const storedObjectSchema = z.object({
   id: z.string().min(1),
@@ -17,7 +18,9 @@ export const storedObjectSchema = z.object({
 export const storageContract = {
   upload: oc
     .route({ method: "POST", path: "/storage/objects" })
-    .input(z.object({ file: oz.file() }))
+    // @orpc/zod's file() is a Zod v3 schema; Zod 4 rejects it as a nested
+    // element, so this input uses the matching v3 object builder.
+    .input(z3.object({ file: oz.file() }))
     .output(storedObjectSchema),
   uploadBase64: oc
     .route({ method: "POST", path: "/storage/objects/base64" })

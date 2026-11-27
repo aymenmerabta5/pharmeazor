@@ -16,6 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("siteTitle"), description: t("siteDescription") };
 }
 
+const themeBootstrapScript =
+  '(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"&&t!=="system")t="light";if(t==="system")t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var d=document.documentElement;d.classList.remove("light","dark");d.classList.add(t);if(t==="light"||t==="dark")d.style.colorScheme=t;}catch(e){document.documentElement.classList.add("light");}})();';
+
 const localeBootstrapScript =
   '(function(){try{var match=document.cookie.match(/(?:^|; )NEXT_LOCALE=([^;]*)/);var locale=match?decodeURIComponent(match[1]):"en";if(locale!=="en"&&locale!=="fr"&&locale!=="ar")locale="en";document.documentElement.lang=locale;document.documentElement.dir=locale==="ar"?"rtl":"ltr";}catch{}})();';
 
@@ -47,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
+        <script id="theme-bootstrap" dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         <script id="locale-bootstrap" dangerouslySetInnerHTML={{ __html: localeBootstrapScript }} />
       </head>
       <body className="antialiased bg-background text-foreground">

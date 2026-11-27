@@ -32,6 +32,7 @@ export function ChatPage({
   const sidebar = useChatSidebar();
   const session = useChatSession(initialQuestion);
   const attachmentStore = useAttachmentStore();
+  const canAttach = shell.identity.status === "authenticated";
   const inConversation = session.activeQuery !== null || session.messages.length > 0;
   // The saved entry supplies the title once history resolves; the live query
   // covers the moment before that, so a deep link never opens untitled.
@@ -83,6 +84,8 @@ export function ChatPage({
                 placeholder={t("inputPlaceholder")}
                 sendLabel={t("send")}
                 attachmentStore={attachmentStore}
+                canAttach={canAttach}
+                onRequireAuth={() => router.push("/auth/sign-in")}
               />
               <p className="ph-chat-disclaimer">{t("disclaimer")}</p>
             </div>
@@ -96,6 +99,8 @@ export function ChatPage({
               onSuggest={(question) => session.send(question)}
               busy={session.busy}
               attachmentStore={attachmentStore}
+              canAttach={canAttach}
+              onRequireAuth={() => router.push("/auth/sign-in")}
             />
 
             <footer className="ph-welcome-footer">

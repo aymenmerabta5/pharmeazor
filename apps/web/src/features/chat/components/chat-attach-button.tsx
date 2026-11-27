@@ -11,8 +11,12 @@ import type { AttachmentStore } from "../use-attachment-store";
  */
 export function ChatAttachButton({
   attachmentStore,
+  canAttach,
+  onRequireAuth,
 }: {
   attachmentStore: AttachmentStore;
+  canAttach: boolean;
+  onRequireAuth(): void;
 }): React.JSX.Element {
   const [popupOpen, setPopupOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -63,9 +67,21 @@ export function ChatAttachButton({
         ref={addBtnRef}
         type="button"
         className={`ph-attach-btn${popupOpen ? " ph-attach-btn--open" : ""}`}
-        aria-label={popupOpen ? "Close attachment menu" : "Add attachment"}
+        aria-label={
+          canAttach
+            ? popupOpen
+              ? "Close attachment menu"
+              : "Add attachment"
+            : "Sign in to add attachments"
+        }
         aria-expanded={popupOpen}
-        onClick={() => setPopupOpen((v) => !v)}
+        onClick={() => {
+          if (!canAttach) {
+            onRequireAuth();
+            return;
+          }
+          setPopupOpen((v) => !v);
+        }}
       >
         {popupOpen ? <X className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
       </button>
