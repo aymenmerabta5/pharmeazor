@@ -37,7 +37,7 @@
     ]
   },
   "generatedBy": "0.1.0",
-  "generatedAt": "2026-11-20T19:02:37.435Z",
+  "generatedAt": "2026-11-27T11:56:41.450Z",
   "files": {
     ".cursor/rules/ghostinit.mdc": {
       "path": ".cursor/rules/ghostinit.mdc",
@@ -16660,8 +16660,8 @@
       "path": "packages/database/src/schema/index.ts",
       "owner": "adapter",
       "lifecycle": "generator-owned",
-      "contentHash": "f9b8553048ae638648ceecf6ae8c44166c6272c34737d92c14e8ded7168a34ba",
-      "size": 269,
+      "contentHash": "7f4c86e4c1317256055cddd9e1f5ff2eb9e8548fdf7514cf9506537604117c60",
+      "size": 291,
       "provenance": {
         "renderer": "resolved-template-compiler.v2",
         "source": "src/templates",

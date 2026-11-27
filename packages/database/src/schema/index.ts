@@ -3,6 +3,7 @@ export * from "./auth";
 export * from "./billing";
 export * from "./enums";
 export * from "./eve";
+export * from "./kg";
 export * from "./manual-payments";
 export * from "./posts";
 export * from "./retrieval";
