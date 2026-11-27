@@ -1,9 +1,9 @@
 # Pharmeazor Knowledge Graph Logical Schema
 
-**Version:** 0.1  
-**Status:** Draft — logical design only; not a database schema and not approved for implementation  
-**Date:** 2026-11-27  
-**Ontology contract:** [GRAPH_ONTOLOGY.md](./GRAPH_ONTOLOGY.md)  
+**Version:** 0.1<br>
+**Status:** Draft — logical design only; not a database schema and not approved for implementation<br>
+**Date:** 2026-11-27<br>
+**Ontology contract:** [GRAPH_ONTOLOGY.md](./GRAPH_ONTOLOGY.md)<br>
 **Runtime context:** [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md)
 
 This document defines **how** the ontology is logically structured: node

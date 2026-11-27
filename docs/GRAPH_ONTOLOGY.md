@@ -1,8 +1,8 @@
 # Pharmeazor Knowledge Graph Ontology
 
-**Version:** 0.1  
-**Status:** Draft — design only; not approved for implementation  
-**Date:** 2026-11-27  
+**Version:** 0.1<br>
+**Status:** Draft — design only; not approved for implementation<br>
+**Date:** 2026-11-27<br>
 **Companion documents:** [GRAPH_SCHEMA.md](./GRAPH_SCHEMA.md), [RETRIEVAL.md](./RETRIEVAL.md), [RAG_CHUNKER_PHASE1.md](./RAG_CHUNKER_PHASE1.md)
 
 This document defines **what** the canonical pharmaceutical knowledge graph is
