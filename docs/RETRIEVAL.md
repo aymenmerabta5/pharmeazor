@@ -411,7 +411,9 @@ and `--apply` require a recorded approval artifact matching exact checksums.
 validates artifact evidence and computes entity, relationship, and entity-link
 metrics when manually labelled gold data exists. No gold labels are committed.
 None of these commands feeds the hybrid index, alters chunk IDs, resolves
-entities, publishes unapproved relationships, or implements graph retrieval. The
+entities, or publishes unapproved relationships. They produce evidence and an
+import plan; the optional read path described below is a separate,
+disabled-by-default retrieval arm that serves only fully published records. The
 temporary mention, relationship, and link taxonomies require Person 1 review
 before canonical use.
 
@@ -419,32 +421,35 @@ before canonical use.
 offline:  manifest.jsonl -> structure-aware chunker -> contextual note
           -> BGE-M3 embed -> pgvector halfvec(1024) + BM25 postings
 online:   query -> BGE-M3 embed ─┬─> dense search (cosine, HNSW)
-                                 └─> BM25 search (postings, k1=1.2, b=0.75)
+                                 ├─> BM25 search (postings, k1=1.2, b=0.75)
+                                 └─> graph evidence (optional, published only)
           -> reciprocal rank fusion (k=60) -> cross-encoder rerank -> top-k
           -> injection scan -> citation-labelled passages
 ```
 
-| Concern                       | Implementation                                                            |
-| ----------------------------- | ------------------------------------------------------------------------- |
-| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                                 |
-| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`                    |
-| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts`           |
-| Tables                        | `packages/database/src/schema/retrieval.ts`                               |
-| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`              |
-| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`                         |
-| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`             |
-| Composition root              | `packages/api/src/composition/retrieval.ts`                               |
-| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`            |
-| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                            |
-| Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`               |
-| Brand expansion               | `packages/services/src/retrieval/expand.ts`                               |
-| Alias import                  | `packages/api/src/workers/retrieval/import-aliases.ts`                    |
-| Registry import               | `packages/api/src/workers/retrieval/import-registry.ts`                   |
-| Registry adapter              | `packages/api/src/adapters/retrieval/registry.ts`                         |
-| Registry transport            | `packages/api/src/retrieval/registry-http.ts` + `/api/retrieval/registry` |
-| Registry agent tool           | `apps/harness/agent/tools/lookup_algerian_registry.ts`                    |
-| Wire contract                 | `packages/contracts/src/retrieval.ts`                                     |
-| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`                       |
+| Concern                       | Implementation                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| Chunking, section codes       | `packages/modules/src/retrieval/chunk.ts`                                    |
+| BM25 tokenizer and fusion     | `packages/services/src/retrieval/{tokenize,fusion}.ts`                       |
+| Retrieval policy and use case | `packages/services/src/retrieval/{policy,retrieval.service}.ts`              |
+| Tables                        | `packages/database/src/schema/retrieval.ts`                                  |
+| Idempotent DDL                | `packages/database/src/workers/database/ensure-retrieval.ts`                 |
+| Postgres hybrid adapter       | `packages/api/src/adapters/retrieval/postgres.ts`                            |
+| Graph reader and bridge       | `packages/api/src/adapters/retrieval/{graph,graph-evidence,graph-bridge}.ts` |
+| Graph publication gate        | `packages/modules/src/retrieval/kg/population/graph-publication.ts`          |
+| Embedding and reranker HTTP   | `packages/api/src/adapters/retrieval/{embedding,reranker}.ts`                |
+| Composition root              | `packages/api/src/composition/retrieval.ts`                                  |
+| Signed internal transport     | `packages/api/src/retrieval/http.ts` + `/api/retrieval/search`               |
+| Offline indexer               | `packages/api/src/workers/retrieval/ingest.ts`                               |
+| Provenance backfill           | `packages/api/src/workers/retrieval/backfill-provenance.ts`                  |
+| Brand expansion               | `packages/services/src/retrieval/expand.ts`                                  |
+| Alias import                  | `packages/api/src/workers/retrieval/import-aliases.ts`                       |
+| Registry import               | `packages/api/src/workers/retrieval/import-registry.ts`                      |
+| Registry adapter              | `packages/api/src/adapters/retrieval/registry.ts`                            |
+| Registry transport            | `packages/api/src/retrieval/registry-http.ts` + `/api/retrieval/registry`    |
+| Registry agent tool           | `apps/harness/agent/tools/lookup_algerian_registry.ts`                       |
+| Wire contract                 | `packages/contracts/src/retrieval.ts`                                        |
+| Agent tool                    | `apps/harness/agent/tools/search_medical_corpus.ts`                          |
 
 `ghostinit sync` owns `packages/database/src/schema/index.ts` and
 `packages/modules/src/index.ts`, so the retrieval module and schema are
@@ -618,6 +623,53 @@ never an indication, a dose, or a recommendation. A `withdrawn` or
 `total` reports how many rows match before the page limit, so "how many
 paracetamol products are registered" is answerable without paging.
 
+### Optional graph arm
+
+The graph arm is a third RRF list beside dense and BM25. It is disabled by
+default (`RETRIEVAL_GRAPH_ENABLED=false`) and runs only when a Neo4j target is
+configured. It never replaces the hybrid pipeline: a graph outage is caught by
+the service, recorded as `diagnostics.graph = "failed"`, and the hybrid result
+is returned. A graph-only candidate survives when both hybrid arms are empty.
+
+**Published only.** The reader starts from `GraphEntity` nodes whose label or
+aliases contain a query term, expands one hop, and returns text evidence only
+when the entity, the relationship, and the neighbour all satisfy the same
+triple:
+
+```text
+publicationState = "published"
+reviewState      = "approved"
+observationState = "promoted"
+```
+
+The Cypher predicate is the first gate and `isPublishedGraphRecord` re-checks
+every returned row in TypeScript, so a future query edit cannot widen what is
+served. Candidate, quarantined, superseded, and retracted records never enter
+the candidate set. A one-hop neighbour scores half the strongest seed; evidence
+inherits its entity score, and the same quote attached to several entities is
+counted once at the strongest score.
+
+**Exact-quote bridge.** Graph evidence is joined to the hybrid index by
+`artifactId` plus the exact evidence `quote` contained in the raw
+`retrieval_chunks.content`. `legacyChunkId` is diagnostic only: the same id can
+describe different text in the graph and hybrid profiles, so it is never a
+lookup key. The bridge applies every `RetrievalFilter`, the active embedding
+model, and `injection_risk = false` inside the SQL query before ranking, then
+re-checks exact inclusion in code. It cannot read a chunk the hybrid arms could
+not read.
+
+**Scores and diagnostics.** Graph candidates are capped at
+`RETRIEVAL_LIMITS.graphCandidates` (30) and fused by rank like the other arms.
+Returned chunks expose `scores.graph` and `scores.graphRank`; diagnostics expose
+`graph` (`applied`, `disabled`, or `failed`) and `graphCandidates`.
+
+The arm is deliberately inert today. The importer writes candidate records
+(`reviewState: "approved_candidate"`, `observationState: "quarantined"`) and no
+`publicationState`, and no publication stage exists in this repository. Enabling
+the arm without published data therefore returns an empty graph list and leaves
+the hybrid answer unchanged. Do not fabricate a publication state to populate
+it.
+
 ### Serving the models
 
 Query embedding and reranking need an HTTP endpoint, not a particular server.
@@ -661,23 +713,34 @@ reranker.
 
 Server-only variables, read by `packages/api/src/adapters/retrieval/config.ts`:
 
-| Variable                         | Default                                             | Meaning                                                                  |
-| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
-| `RETRIEVAL_EMBEDDING_URL`        | required                                            | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings`                 |
-| `RETRIEVAL_EMBEDDING_MODE`       | `tei`                                               | `tei` or `openai`                                                        |
-| `RETRIEVAL_EMBEDDING_MODEL`      | `BAAI/bge-m3`                                       | Stored on every chunk; changing it forces re-embedding                   |
-| `RETRIEVAL_EMBEDDING_DIMENSIONS` | `1024`                                              | Must stay 1024 to match the `halfvec` column                             |
-| `RETRIEVAL_EMBEDDING_API_KEY`    | unset                                               | Sent as `Authorization: Bearer` when set                                 |
-| `RETRIEVAL_EMBEDDING_TIMEOUT_MS` | `20000`                                             | Per-request timeout                                                      |
-| `RETRIEVAL_EMBEDDING_BATCH_SIZE` | `16`                                                | Texts per request, capped at 64                                          |
-| `RETRIEVAL_RERANKER_URL`         | unset                                               | TEI `/rerank`; unset returns fusion order                                |
-| `RETRIEVAL_RERANKER_MODEL`       | `BAAI/bge-reranker-v2-m3`                           | Model name reported in diagnostics                                       |
-| `RETRIEVAL_RERANKER_API_KEY`     | unset                                               | Sent as `Authorization: Bearer` when set                                 |
-| `RETRIEVAL_RERANKER_TIMEOUT_MS`  | `10000`                                             | Per-request timeout, applied to each batch                               |
-| `RETRIEVAL_RERANKER_BATCH_SIZE`  | `32`                                                | Documents per request, capped at 64; match TEI's `max_client_batch_size` |
-| `RETRIEVAL_REQUIRE_RERANK`       | `false`                                             | Fail the request instead of degrading                                    |
-| `RETRIEVAL_EMBEDDING_MODEL_DIR`  | `./tooling/embedding-lab/models/bge-m3`             | Compose-only host path mounted at `/data`                                |
-| `RETRIEVAL_RERANKER_MODEL_DIR`   | `./tooling/embedding-lab/models/bge-reranker-v2-m3` | Compose-only host path mounted at `/data`                                |
+| Variable                          | Default                                             | Meaning                                                                  |
+| --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `RETRIEVAL_EMBEDDING_URL`         | required                                            | BGE-M3 endpoint, TEI `/embed` or OpenAI `/v1/embeddings`                 |
+| `RETRIEVAL_EMBEDDING_MODE`        | `tei`                                               | `tei` or `openai`                                                        |
+| `RETRIEVAL_EMBEDDING_MODEL`       | `BAAI/bge-m3`                                       | Stored on every chunk; changing it forces re-embedding                   |
+| `RETRIEVAL_EMBEDDING_DIMENSIONS`  | `1024`                                              | Must stay 1024 to match the `halfvec` column                             |
+| `RETRIEVAL_EMBEDDING_API_KEY`     | unset                                               | Sent as `Authorization: Bearer` when set                                 |
+| `RETRIEVAL_EMBEDDING_TIMEOUT_MS`  | `20000`                                             | Per-request timeout                                                      |
+| `RETRIEVAL_EMBEDDING_BATCH_SIZE`  | `16`                                                | Texts per request, capped at 64                                          |
+| `RETRIEVAL_RERANKER_URL`          | unset                                               | TEI `/rerank`; unset returns fusion order                                |
+| `RETRIEVAL_RERANKER_MODEL`        | `BAAI/bge-reranker-v2-m3`                           | Model name reported in diagnostics                                       |
+| `RETRIEVAL_RERANKER_API_KEY`      | unset                                               | Sent as `Authorization: Bearer` when set                                 |
+| `RETRIEVAL_RERANKER_TIMEOUT_MS`   | `10000`                                             | Per-request timeout, applied to each batch                               |
+| `RETRIEVAL_RERANKER_BATCH_SIZE`   | `32`                                                | Documents per request, capped at 64; match TEI's `max_client_batch_size` |
+| `RETRIEVAL_REQUIRE_RERANK`        | `false`                                             | Fail the request instead of degrading                                    |
+| `RETRIEVAL_GRAPH_ENABLED`         | `false`                                             | Enable the optional published-graph arm; requires Neo4j credentials      |
+| `RETRIEVAL_GRAPH_TIMEOUT_MS`      | `3000`                                              | Per-transaction Neo4j timeout; a slow graph degrades to hybrid           |
+| `RETRIEVAL_GRAPH_ENTITY_LIMIT`    | `24`                                                | Seed entities matched from the query                                     |
+| `RETRIEVAL_GRAPH_NEIGHBOR_LIMIT`  | `48`                                                | One-hop published neighbours                                             |
+| `RETRIEVAL_GRAPH_EVIDENCE_LIMIT`  | `160`                                               | Text-span evidence rows read from Neo4j                                  |
+| `RETRIEVAL_GRAPH_CHUNK_LIMIT`     | `200`                                               | Chunks the exact-quote bridge may inspect                                |
+| `RETRIEVAL_GRAPH_CANDIDATE_LIMIT` | `30`                                                | Graph candidates handed to fusion                                        |
+| `RETRIEVAL_EMBEDDING_MODEL_DIR`   | `./tooling/embedding-lab/models/bge-m3`             | Compose-only host path mounted at `/data`                                |
+| `RETRIEVAL_RERANKER_MODEL_DIR`    | `./tooling/embedding-lab/models/bge-reranker-v2-m3` | Compose-only host path mounted at `/data`                                |
+
+Enabling the graph arm without `NEO4J_HTTP_URL`, `NEO4J_USER`, and
+`NEO4J_PASSWORD` fails closed with `RETRIEVAL_NOT_CONFIGURED`; placeholder
+values are rejected. `NEO4J_DATABASE` defaults to `neo4j`.
 
 `RETRIEVAL_EMBEDDING_URL` is required for query embedding at runtime and for
 the HTTP ingest path. `retrieval:ingest:vectors` does not read it: the model
@@ -691,3 +754,6 @@ name and revision come from the artifact manifest.
   next tuning workstream, not a model upgrade.
 - Query reformulation. The agent gets one tool call budget, not a retrieval
   loop; add a second round only when the golden set shows multi-hop misses.
+- Graph retrieval quality has no measured baseline. The arm is inert until a
+  publication stage promotes reviewed records; measure it against the hybrid
+  baseline on the golden set before enabling it for production traffic.

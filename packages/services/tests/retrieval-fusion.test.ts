@@ -30,6 +30,28 @@ describe("reciprocal rank fusion", () => {
     expect(fused[0]?.lexicalRank).toBe(1);
   });
 
+  it("fuses a third graph arm and records its score and rank", () => {
+    const fused = fuseRankedLists([
+      { arm: "dense", candidates: [candidate("a", 1, 0.99)] },
+      { arm: "graph", candidates: [candidate("a", 1, 0.9), candidate("g", 2, 0.4)] },
+    ]);
+    const a = fused.find((entry) => entry.chunkId === "a");
+    const g = fused.find((entry) => entry.chunkId === "g");
+
+    expect(a?.rrfScore).toBeCloseTo(1 / 61 + 1 / 61, 12);
+    expect(a?.graphScore).toBe(0.9);
+    expect(a?.graphRank).toBe(1);
+    expect(g?.graphScore).toBe(0.4);
+    expect(g?.graphRank).toBe(2);
+  });
+
+  it("uses the graph rank when breaking a score tie", () => {
+    const fused = fuseRankedLists([
+      { arm: "graph", candidates: [candidate("z", 1), candidate("y", 1)] },
+    ]);
+    expect(fused.map((entry) => entry.chunkId)).toEqual(["y", "z"]);
+  });
+
   it("breaks score ties by best rank and then by id", () => {
     const fused = fuseRankedLists([
       { arm: "dense", candidates: [candidate("z", 1), candidate("y", 1)] },

@@ -93,6 +93,9 @@ export interface RetrievalScores {
   readonly denseRank?: number;
   readonly lexical?: number;
   readonly lexicalRank?: number;
+  /** Graph evidence score, present only when the optional graph arm ran. */
+  readonly graph?: number;
+  readonly graphRank?: number;
   readonly rrf: number;
   readonly rerank?: number;
 }
@@ -120,16 +123,28 @@ export interface RetrievedChunk extends RetrievalCandidate {
 
 export type RerankStatus = "applied" | "disabled" | "failed";
 
+/**
+ * State of the optional graph arm.
+ *
+ * `applied` means the arm ran, even if it found nothing. `failed` means the
+ * arm was enabled but its Neo4j or bridge query failed, and the hybrid result
+ * was returned without it. A failed graph arm never fails retrieval.
+ */
+export type GraphRetrievalStatus = "applied" | "disabled" | "failed";
+
 export interface RetrievalDiagnostics {
   readonly embeddingModel: string;
   readonly rerankerModel: string | null;
   readonly denseCandidates: number;
   readonly lexicalCandidates: number;
+  /** Candidates the graph arm contributed before fusion, after deduplication. */
+  readonly graphCandidates: number;
   readonly fusedCandidates: number;
   readonly rerankedCandidates: number;
   readonly returnedChunks: number;
   readonly droppedForInjection: number;
   readonly rerank: RerankStatus;
+  readonly graph: GraphRetrievalStatus;
   readonly elapsedMs: number;
   /** Terms the alias layer appended to the lexical query, if any. */
   readonly expandedTerms: readonly string[];

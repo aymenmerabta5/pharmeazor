@@ -3,7 +3,7 @@ import {
   HttpNeo4jClient,
   Neo4jHttpError,
   neo4jConfigFromEnv,
-} from "../src/workers/retrieval/neo4j-http";
+} from "../src/adapters/retrieval/neo4j-http";
 
 describe("Neo4j HTTP adapter", () => {
   it("sends basic auth to the database transaction endpoint", async () => {
@@ -67,5 +67,42 @@ describe("Neo4j HTTP adapter", () => {
           database: "bad/name",
         }),
     ).toThrow("database name");
+  });
+
+  it("sends no abort signal when no timeout is configured", async () => {
+    let captured: RequestInit | undefined;
+    const client = new HttpNeo4jClient({
+      url: "http://neo4j.test:7474",
+      user: "neo4j",
+      password: "secret",
+      fetchImpl: async (_url, init) => {
+        captured = init;
+        return new Response(JSON.stringify({ results: [{ columns: [], data: [] }], errors: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    });
+    await client.run([{ statement: "RETURN 1 AS value" }]);
+    expect(captured!.signal).toBeUndefined();
+  });
+
+  it("aborts a slow transaction at the configured timeout", async () => {
+    const client = new HttpNeo4jClient({
+      url: "http://neo4j.test:7474",
+      user: "neo4j",
+      password: "secret",
+      timeoutMs: 20,
+      fetchImpl: (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = init?.signal;
+          if (!signal) {
+            reject(new Error("the client must pass an abort signal when a timeout is set"));
+            return;
+          }
+          signal.addEventListener("abort", () => reject(signal.reason ?? new Error("aborted")));
+        }),
+    });
+    await expect(client.run([{ statement: "MATCH (n) RETURN n" }])).rejects.toThrow();
   });
 });

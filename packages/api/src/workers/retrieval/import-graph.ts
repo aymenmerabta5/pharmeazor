@@ -16,7 +16,7 @@ import {
   type GraphPopulationOptions,
 } from "./graph-population";
 import { importGraphPlan } from "./graph-import";
-import { HttpNeo4jClient, neo4jConfigFromEnv } from "./neo4j-http";
+import { HttpNeo4jClient, neo4jConfigFromEnv } from "../../adapters/retrieval/neo4j-http";
 
 const DEFAULT_LINK_DIR = "tooling/cleaning-lab/output/entity-links";
 const DEFAULT_RELATIONSHIP_DIR = "tooling/cleaning-lab/output/relationships";

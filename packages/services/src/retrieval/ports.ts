@@ -38,6 +38,26 @@ export interface RetrievalIndexPort {
   loadCandidates(chunkIds: readonly string[]): Promise<RetrievalCandidate[]>;
 }
 
+export interface GraphRetrievalInput {
+  readonly query: string;
+  /** Folded query terms, already bounded by service policy. */
+  readonly terms: readonly string[];
+  readonly limit: number;
+  readonly filter: RetrievalFilter;
+}
+
+/**
+ * Optional third retrieval arm over published graph evidence.
+ *
+ * The adapter owns both the Neo4j read and the exact-quote bridge back to
+ * `retrieval_chunks`. It must return only chunk ids that exist in the hybrid
+ * index and must apply `RetrievalFilter` before ranking. Returning `[]` is the
+ * normal state while no published graph exists.
+ */
+export interface GraphRetrievalPort {
+  search(input: GraphRetrievalInput): Promise<RankedCandidate[]>;
+}
+
 export interface RerankInput {
   readonly query: string;
   readonly documents: readonly string[];

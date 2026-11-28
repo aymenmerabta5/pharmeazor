@@ -1,4 +1,6 @@
 import type {
+  GraphRetrievalStatus,
+  RankedCandidate,
   RetrievalPrincipal,
   RetrievalRequest,
   RetrievalResult,
@@ -9,7 +11,13 @@ import { AUTHORITY_PRECEDENCE, authorityDescriptor, findAuthorityOverlaps } from
 import { fuseRankedLists, type FusedCandidate } from "./fusion";
 import { aliasCandidateKeys, expandQueryTerms, type QueryExpansion } from "./expand";
 import { normalizeRetrievalRequest, RETRIEVAL_LIMITS } from "./policy";
-import type { AliasPort, EmbeddingPort, RerankPort, RetrievalIndexPort } from "./ports";
+import type {
+  AliasPort,
+  EmbeddingPort,
+  GraphRetrievalPort,
+  RerankPort,
+  RetrievalIndexPort,
+} from "./ports";
 import { queryTerms } from "./tokenize";
 
 export interface RetrievalServiceDependencies {
@@ -22,6 +30,11 @@ export interface RetrievalServiceDependencies {
    * correctness requirement.
    */
   readonly aliases?: AliasPort | null;
+  /**
+   * Optional third arm over published graph evidence. Its outage degrades to
+   * the hybrid result; it never fails retrieval.
+   */
+  readonly graph?: GraphRetrievalPort | null;
   /**
    * When true, a reranker outage fails the request instead of silently
    * returning fusion order. Set this in production deployments where ranking
@@ -47,6 +60,7 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
   const now = dependencies.now ?? (() => performance.now());
   const reranker = dependencies.reranker ?? null;
   const aliases = dependencies.aliases ?? null;
+  const graph = dependencies.graph ?? null;
 
   return {
     async search(
@@ -79,6 +93,34 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
         }
       }
 
+      // The graph arm does not need the query embedding, so it starts before
+      // the embedding call and overlaps both hybrid arms. A graph outage is
+      // contained here: retrieval continues with dense + lexical + rerank.
+      let graphStatus: GraphRetrievalStatus = graph ? "applied" : "disabled";
+      const graphCandidatesPromise: Promise<RankedCandidate[]> = graph
+        ? Promise.resolve()
+            .then(() =>
+              graph.search({
+                query,
+                terms: expansion.terms,
+                limit: RETRIEVAL_LIMITS.graphCandidates,
+                filter,
+              }),
+            )
+            .then((candidates) =>
+              normalizeGraphCandidates(candidates, RETRIEVAL_LIMITS.graphCandidates),
+            )
+            .catch((cause) => {
+              graphStatus = "failed";
+              dependencies.warn?.(
+                `Graph retrieval failed; returning hybrid results: ${
+                  cause instanceof Error ? cause.message : "unknown error"
+                }`,
+              );
+              return [];
+            })
+        : Promise.resolve([]);
+
       let queryEmbedding: number[];
       try {
         queryEmbedding = await dependencies.embedding.embedQuery(query, options.signal);
@@ -89,8 +131,9 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
 
       let dense: Awaited<ReturnType<RetrievalIndexPort["denseSearch"]>>;
       let lexical: Awaited<ReturnType<RetrievalIndexPort["lexicalSearch"]>>;
+      let graphCandidates: RankedCandidate[];
       try {
-        [dense, lexical] = await Promise.all([
+        [dense, lexical, graphCandidates] = await Promise.all([
           dependencies.index.denseSearch({
             embedding: queryEmbedding,
             model: dependencies.embedding.model,
@@ -103,6 +146,7 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
             limit: RETRIEVAL_LIMITS.lexicalCandidates,
             filter,
           }),
+          graphCandidatesPromise,
         ]);
       } catch (cause) {
         if (isRetrievalError(cause)) throw cause;
@@ -115,6 +159,9 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
         [
           { arm: "dense", candidates: dense },
           { arm: "lexical", candidates: lexical },
+          ...(graphCandidates.length > 0
+            ? [{ arm: "graph" as const, candidates: graphCandidates }]
+            : []),
         ],
         RETRIEVAL_LIMITS.rrfK,
       ).slice(0, RETRIEVAL_LIMITS.fusionCandidates);
@@ -129,11 +176,13 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
             rerankerModel: reranker?.model ?? null,
             denseCandidates: dense.length,
             lexicalCandidates: lexical.length,
+            graphCandidates: graphCandidates.length,
             fusedCandidates: 0,
             rerankedCandidates: 0,
             returnedChunks: 0,
             droppedForInjection: 0,
             rerank: reranker ? "applied" : "disabled",
+            graph: graphStatus,
             elapsedMs: Math.round(now() - startedAt),
             expandedTerms: expansion.expandedTerms,
             ambiguousAliases: expansion.ambiguousAliases,
@@ -239,11 +288,13 @@ export function createRetrievalService(dependencies: RetrievalServiceDependencie
           rerankerModel: reranker?.model ?? null,
           denseCandidates: dense.length,
           lexicalCandidates: lexical.length,
+          graphCandidates: graphCandidates.length,
           fusedCandidates: fused.length,
           rerankedCandidates: reranked.length,
           returnedChunks: selected.length,
           droppedForInjection,
           rerank: rerankStatus,
+          graph: graphStatus,
           elapsedMs: Math.round(now() - startedAt),
           expandedTerms: expansion.expandedTerms,
           ambiguousAliases: expansion.ambiguousAliases,
@@ -269,9 +320,38 @@ function scoresFor(
     ...(match?.denseRank !== undefined ? { denseRank: match.denseRank } : {}),
     ...(match?.lexicalScore !== undefined ? { lexical: match.lexicalScore } : {}),
     ...(match?.lexicalRank !== undefined ? { lexicalRank: match.lexicalRank } : {}),
+    ...(match?.graphScore !== undefined ? { graph: match.graphScore } : {}),
+    ...(match?.graphRank !== undefined ? { graphRank: match.graphRank } : {}),
     rrf: match?.rrfScore ?? 0,
     ...(rerankScore !== undefined ? { rerank: rerankScore } : {}),
   };
+}
+
+/**
+ * The graph adapter already ranks its candidates, but the service re-ranks
+ * them so a future adapter cannot inject an out-of-order or duplicate list
+ * into fusion. RRF consumes the rank, so this is a correctness boundary, not
+ * a cosmetic sort.
+ */
+function normalizeGraphCandidates(
+  candidates: readonly RankedCandidate[],
+  limit: number,
+): RankedCandidate[] {
+  const seen = new Set<string>();
+  const normalized: Array<{ chunkId: string; score: number }> = [];
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate.chunkId !== "string" || candidate.chunkId.length === 0) {
+      continue;
+    }
+    if (!Number.isFinite(candidate.score)) continue;
+    if (seen.has(candidate.chunkId)) continue;
+    seen.add(candidate.chunkId);
+    normalized.push({ chunkId: candidate.chunkId, score: candidate.score });
+  }
+  return normalized
+    .sort((left, right) => right.score - left.score || left.chunkId.localeCompare(right.chunkId))
+    .slice(0, limit)
+    .map((candidate, index) => ({ ...candidate, rank: index + 1 }));
 }
 
 function citationLabel(candidate: {

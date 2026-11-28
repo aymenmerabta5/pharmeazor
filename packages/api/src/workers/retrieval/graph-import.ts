@@ -10,7 +10,7 @@ import {
   type LinkEvidence,
 } from "@repo/modules/retrieval";
 import { readJsonlFile } from "./artifact-jsonl";
-import type { Neo4jClient, Neo4jStatement } from "./neo4j-http";
+import type { Neo4jClient, Neo4jStatement } from "../../adapters/retrieval/neo4j-http";
 import { relationshipSupportAsEvidence } from "./graph-population";
 
 export interface GraphImportOptions {

@@ -34,7 +34,7 @@ Keep domain policies and contracts independent of frameworks, application servic
 
 ## Retrieval Architecture
 
-Hybrid retrieval (dense + BM25 + RRF + reranking) is implemented. A canonical knowledge graph and graph retrieval are not implemented. `docs/RETRIEVAL.md` carries the evidence, model choices, and rollout order; this section is the binding contract. Build from the packages already in this repository. Do not add a vector service, a retrieval framework, or a top-level retrieval package to make this work.
+Hybrid retrieval (dense + BM25 + RRF + reranking) is implemented. An optional, disabled-by-default third arm reads fully published Neo4j evidence; it is inert until a separate publication stage promotes records, and no canonical knowledge graph is published in this repository. `docs/RETRIEVAL.md` carries the evidence, model choices, and rollout order; this section is the binding contract. Build from the packages already in this repository. Do not add a vector service, a retrieval framework, or a top-level retrieval package to make this work.
 
 The pipeline is fixed. Each stage exists to make the next one measurable.
 
@@ -61,6 +61,7 @@ extract → chunk → contextualize → embed + index → hybrid retrieve → re
 - Rerank the fused candidates with a cross-encoder before composing the answer: roughly 50 candidates in, the top 5-10 out. Reranking is the largest single quality lift in the pipeline and it costs less than an extra agent loop.
 - Keep composed context small: 3-5 chunks, 2,000-4,000 tokens. Context length is not a substitute for relevance.
 - Match the embedding model to the corpus languages. The product ships EN, FR, and AR; a monolingual embedder silently breaks two of them.
+- An optional third arm may read published Neo4j evidence when `RETRIEVAL_GRAPH_ENABLED=true`. It is disabled by default, contributes a third RRF list capped at 30 candidates, and serves only records whose `publicationState`, `reviewState`, and `observationState` are `published`, `approved`, and `promoted`; both the Cypher predicate and the TypeScript re-check enforce that gate. Graph evidence bridges to hybrid chunks by `artifactId` plus the exact evidence quote in raw `retrieval_chunks.content`, never by `legacyChunkId`, and applies every retrieval filter inside the bridge query. A graph failure degrades to the hybrid result.
 
 ### Generation
 
@@ -82,18 +83,19 @@ extract → chunk → contextualize → embed + index → hybrid retrieve → re
 
 Mirror the `storage` capability rather than inventing a shape.
 
-| Concern                                             | Location                                          |
-| --------------------------------------------------- | ------------------------------------------------- |
-| Offline raw-source cleaning (maintainer batch tool) | `tooling/cleaning-lab/`                           |
-| Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                 |
-| Additive graph-evidence text model                  | `packages/modules/src/retrieval/graph-chunk.ts`   |
-| Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                |
-| Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`       |
-| oRPC contract and procedures                        | `packages/api/src/retrieval/`                     |
-| Postgres hybrid retrieval adapter                   | `packages/api/src/adapters/retrieval/postgres.ts` |
-| Embedding and reranking provider adapters           | `packages/api/src/adapters/retrieval/`            |
-| Composition root                                    | `packages/api/src/composition/retrieval.ts`       |
-| Agent retrieval tool                                | `apps/harness/agent/tools/`                       |
+| Concern                                             | Location                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Offline raw-source cleaning (maintainer batch tool) | `tooling/cleaning-lab/`                                                      |
+| Chunking, contextualization, retrieval use-cases    | `packages/modules/src/retrieval/`                                            |
+| Additive graph-evidence text model                  | `packages/modules/src/retrieval/graph-chunk.ts`                              |
+| Retrieval ports, authorization filters, policies    | `packages/services/src/retrieval/`                                           |
+| Retrieval tables, vector and lexical columns        | `packages/database/src/schema/retrieval.ts`                                  |
+| oRPC contract and procedures                        | `packages/api/src/retrieval/`                                                |
+| Postgres hybrid retrieval adapter                   | `packages/api/src/adapters/retrieval/postgres.ts`                            |
+| Published graph evidence reader and bridge          | `packages/api/src/adapters/retrieval/{graph,graph-evidence,graph-bridge}.ts` |
+| Embedding and reranking provider adapters           | `packages/api/src/adapters/retrieval/`                                       |
+| Composition root                                    | `packages/api/src/composition/retrieval.ts`                                  |
+| Agent retrieval tool                                | `apps/harness/agent/tools/`                                                  |
 
 Provider SDKs stay in the adapters. Domain code depends on ports, never on an SDK, a vector client, or an embedding API.
 
@@ -166,7 +168,7 @@ independent of Neo4j, PostgreSQL, and the approval gate.
 ### Do not
 
 - Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.
-- Do not add a canonical knowledge graph or a graph-retrieval system without recorded owner and domain approval. Measured against the same corpus, GraphRAG matched a plain hybrid pipeline at roughly 14x the per-query cost. The implemented graph-compatible chunking profile is evidence preparation only and is not graph retrieval.
+- Do not add a canonical knowledge graph or a graph-retrieval system without recorded owner and domain approval. Measured against the same corpus, GraphRAG matched a plain hybrid pipeline at roughly 14x the per-query cost. The implemented graph-compatible chunking profile is evidence preparation only; the optional graph arm reads published evidence and is not a GraphRAG projection.
 - Do not add multi-agent retrieval loops before the golden set exists. They multiply cost and latency and hide which stage is failing.
 - Do not treat the model as the access-control layer, the injection scanner, or the citation validator. Those are code responsibilities.
 - Do not evaluate a retrieval change by reading a handful of answers.

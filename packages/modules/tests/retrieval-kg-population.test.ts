@@ -2,7 +2,9 @@ import { describe, expect, it } from "bun:test";
 import {
   GRAPH_ONTOLOGY_VERSION,
   GRAPH_POPULATION_MODEL_VERSION,
+  GRAPH_PUBLISHED_RECORD,
   graphEvidenceId,
+  isPublishedGraphRecord,
   validateGraphPopulationApproval,
   type GraphPopulationApproval,
 } from "@repo/modules/retrieval";
@@ -129,6 +131,58 @@ describe("graph population approval gate", () => {
     const result = validate({ ...approval(), expiresAt: "2026-11-01T00:00:00.000Z" });
     expect(result.approved).toBe(false);
     expect(result.issues.join(" ")).toContain("expired");
+  });
+});
+
+describe("graph publication gate", () => {
+  it("accepts only the full published triple", () => {
+    expect(isPublishedGraphRecord(GRAPH_PUBLISHED_RECORD)).toBe(true);
+  });
+
+  it("rejects the candidate states the importer currently writes", () => {
+    expect(
+      isPublishedGraphRecord({
+        publicationState: undefined,
+        reviewState: "approved_candidate",
+        observationState: "quarantined",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects a record missing any one lifecycle field", () => {
+    expect(
+      isPublishedGraphRecord({
+        reviewState: "approved",
+        observationState: "promoted",
+      }),
+    ).toBe(false);
+    expect(
+      isPublishedGraphRecord({
+        publicationState: "published",
+        observationState: "promoted",
+      }),
+    ).toBe(false);
+    expect(
+      isPublishedGraphRecord({
+        publicationState: "published",
+        reviewState: "approved",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects superseded, retracted, and rejected records", () => {
+    expect(
+      isPublishedGraphRecord({ ...GRAPH_PUBLISHED_RECORD, publicationState: "superseded" }),
+    ).toBe(false);
+    expect(
+      isPublishedGraphRecord({ ...GRAPH_PUBLISHED_RECORD, publicationState: "retracted" }),
+    ).toBe(false);
+    expect(isPublishedGraphRecord({ ...GRAPH_PUBLISHED_RECORD, reviewState: "rejected" })).toBe(
+      false,
+    );
+    expect(
+      isPublishedGraphRecord({ ...GRAPH_PUBLISHED_RECORD, observationState: "reviewed" }),
+    ).toBe(false);
   });
 });
 

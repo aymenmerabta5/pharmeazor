@@ -64,6 +64,8 @@ export function toRetrievalWireResponse(
       rerank: result.diagnostics.rerank,
       denseCandidates: result.diagnostics.denseCandidates,
       lexicalCandidates: result.diagnostics.lexicalCandidates,
+      graph: result.diagnostics.graph,
+      graphCandidates: result.diagnostics.graphCandidates,
       fusedCandidates: result.diagnostics.fusedCandidates,
       rerankedCandidates: result.diagnostics.rerankedCandidates,
       returnedChunks: result.diagnostics.returnedChunks,

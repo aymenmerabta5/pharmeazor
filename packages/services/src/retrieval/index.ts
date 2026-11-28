@@ -1,6 +1,7 @@
 import "server-only";
 
 export type {
+  GraphRetrievalStatus,
   RankedCandidate,
   RegistryLookupInput,
   RegistryPage,
@@ -75,6 +76,8 @@ export {
 export type {
   DenseSearchInput,
   EmbeddingPort,
+  GraphRetrievalInput,
+  GraphRetrievalPort,
   LexicalSearchInput,
   RerankInput,
   RerankPort,

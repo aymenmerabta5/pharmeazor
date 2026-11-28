@@ -6,9 +6,11 @@ import {
 } from "@repo/services/retrieval";
 import { readRetrievalRuntimeConfig } from "../adapters/retrieval/config";
 import { createHttpEmbeddingAdapter } from "../adapters/retrieval/embedding";
+import { createNeo4jGraphRetrieval } from "../adapters/retrieval/graph";
 import { postgresRetrievalIndex } from "../adapters/retrieval/postgres";
 import { postgresRegistry } from "../adapters/retrieval/registry";
 import { createHttpRerankerAdapter } from "../adapters/retrieval/reranker";
+import { HttpNeo4jClient } from "../adapters/retrieval/neo4j-http";
 
 /**
  * Server composition root for retrieval.
@@ -19,11 +21,31 @@ import { createHttpRerankerAdapter } from "../adapters/retrieval/reranker";
  */
 export function createRetrievalServiceFromEnv(): RetrievalService {
   const config = readRetrievalRuntimeConfig();
+  const graph = config.graph
+    ? createNeo4jGraphRetrieval({
+        client: new HttpNeo4jClient({
+          url: config.graph.url,
+          user: config.graph.user,
+          password: config.graph.password,
+          database: config.graph.database,
+          timeoutMs: config.graph.timeoutMs,
+        }),
+        model: config.embedding.model,
+        limits: {
+          entityLimit: config.graph.entityLimit,
+          neighborLimit: config.graph.neighborLimit,
+          evidenceLimit: config.graph.evidenceLimit,
+        },
+        candidateLimit: config.graph.candidateLimit,
+        chunkLimit: config.graph.chunkLimit,
+      })
+    : null;
   return createRetrievalService({
     index: postgresRetrievalIndex,
     embedding: createHttpEmbeddingAdapter(config.embedding),
     reranker: config.reranker ? createHttpRerankerAdapter(config.reranker) : null,
     aliases: postgresRetrievalIndex,
+    graph,
     requireRerank: config.requireRerank,
     warn: (message) => console.warn(`[retrieval] ${message}`),
   });

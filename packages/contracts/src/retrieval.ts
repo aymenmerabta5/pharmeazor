@@ -92,6 +92,10 @@ export interface RetrievalWireDiagnostics {
   readonly rerank: string;
   readonly denseCandidates: number;
   readonly lexicalCandidates: number;
+  /** `applied`, `disabled`, or `failed`; a failed graph arm still returns hybrid results. */
+  readonly graph: string;
+  /** Graph candidates before fusion, after deduplication. */
+  readonly graphCandidates: number;
   readonly fusedCandidates: number;
   readonly rerankedCandidates: number;
   readonly returnedChunks: number;
@@ -246,8 +250,14 @@ function parseOverlaps(value: unknown): RetrievalWireOverlap[] {
 function parseChunk(entry: unknown, index: number): RetrievalWireChunk {
   const chunk = asRecord(entry);
   if (!chunk) throw new Error(`Retrieval response chunk ${index} is not an object`);
-  const citation = asRecord(chunk.citation);
-  if (!citation) throw new Error(`Retrieval response chunk ${index} has no citation`);
+  // The application emits the rendered label as a string (the chunk id is a
+  // sibling field). Older harness fixtures used `{ label }`; accept both so a
+  // mixed-version rollout cannot turn every non-empty search into a parse
+  // failure.
+  const citationLabel =
+    typeof chunk.citation === "string"
+      ? requireString(chunk.citation, `chunks[${index}].citation`)
+      : requireString(asRecord(chunk.citation)?.label, `chunks[${index}].citation.label`);
   const authorityLevel = requireNumber(chunk.authorityLevel, `chunks[${index}].authorityLevel`);
   const authority = asRecord(chunk.authority);
   const content = requireString(chunk.content, `chunks[${index}].content`);
@@ -260,7 +270,7 @@ function parseChunk(entry: unknown, index: number): RetrievalWireChunk {
 
   return {
     chunkId: requireString(chunk.chunkId, `chunks[${index}].chunkId`),
-    citation: requireString(citation.label, `chunks[${index}].citation.label`),
+    citation: citationLabel,
     title: requireString(chunk.title, `chunks[${index}].title`),
     sectionHeading: requireString(chunk.sectionHeading, `chunks[${index}].sectionHeading`),
     sectionPath: requireString(chunk.sectionPath, `chunks[${index}].sectionPath`),
@@ -335,6 +345,8 @@ export function parseRetrievalSearchResponse(payload: unknown): RetrievalWireRes
       rerank: optionalString(diagnostics.rerank) ?? "unknown",
       denseCandidates: requireNumber(diagnostics.denseCandidates ?? 0, "denseCandidates"),
       lexicalCandidates: requireNumber(diagnostics.lexicalCandidates ?? 0, "lexicalCandidates"),
+      graph: optionalString(diagnostics.graph) ?? "disabled",
+      graphCandidates: requireNumber(diagnostics.graphCandidates ?? 0, "graphCandidates"),
       fusedCandidates: requireNumber(diagnostics.fusedCandidates ?? 0, "fusedCandidates"),
       rerankedCandidates: requireNumber(diagnostics.rerankedCandidates ?? 0, "rerankedCandidates"),
       returnedChunks: requireNumber(diagnostics.returnedChunks ?? 0, "returnedChunks"),

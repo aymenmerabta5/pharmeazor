@@ -1,6 +1,6 @@
 # Neo4j graph population
 
-- **Status:** importer and local Neo4j 5 Compose service implemented, approval-gated, and **not started or executed against a real Neo4j instance** in this repository.
+- **Status:** importer and local Neo4j 5 Compose service implemented, approval-gated, and **not started or executed against a real Neo4j instance** in this repository. An optional, disabled-by-default retrieval read path is implemented and returns nothing until a publication stage exists.
 - **Ontology:** `GRAPH_ONTOLOGY.md` version 0.1 — still a draft.
 - **Candidate taxonomies:** entity, relationship, and entity-link taxonomies remain temporary and unapproved by Person 1.
 - **Approval gate:** no graph data may be published without a recorded `status: "approved"` artifact matching the exact upstream checksums.
@@ -180,7 +180,35 @@ counts, status, start/finish times, and failure information.
   checks that every entity has evidence, and checks the evidence-link count.
 - The import run is marked `failed` if a batch or validation fails.
 
-## 9. Commands
+## 9. Published read path (optional retrieval arm)
+
+`packages/api/src/adapters/retrieval/graph.ts` implements an optional third
+retrieval arm over Neo4j. It is disabled by default and is not part of the
+importer: it only reads.
+
+- It serves text evidence attached to `GraphEntity` nodes only when the entity,
+  any expanded relationship, and the neighbour all carry
+  `publicationState: "published"`, `reviewState: "approved"`, and
+  `observationState: "promoted"`.
+- The Cypher predicate and `isPublishedGraphRecord` enforce the same gate. A
+  candidate, quarantined, superseded, or retracted record is never served.
+- Evidence bridges to the hybrid index by `artifactId` plus the exact `quote`
+  contained in `retrieval_chunks.content`; `legacyChunkId` is never a join key.
+- The bridge applies the caller's retrieval filters, the active embedding model,
+  and `injection_risk = false` in SQL before ranking.
+- Any graph failure degrades to the hybrid result. Graph candidates are fused as
+  a third RRF list, capped at 30, and a graph-only candidate survives when both
+  hybrid arms are empty.
+
+The importer writes `reviewState: "approved_candidate"` and
+`observationState: "quarantined"` and no `publicationState`. Because no
+publication stage exists in this repository, the read arm returns no candidates
+today. That is the intended safe state: do not add a publication state by hand,
+and do not treat an approved import plan as published graph data. Enabling the
+arm without published data changes nothing; it does not make candidates
+retrievable.
+
+## 10. Commands
 
 ```bash
 bun run retrieval:graph:import -- --validate-only
@@ -190,7 +218,7 @@ bun run retrieval:graph:import -- --apply --approval <approval.json>
 
 The approval file is never optional for `--plan` or `--apply`.
 
-## 10. Local Neo4j service
+## 11. Local Neo4j service
 
 `docker-compose.yml` defines a separate `neo4j` service using the pinned Neo4j
 5.26.34 Community image. It does not replace or modify the PostgreSQL service.
@@ -240,7 +268,7 @@ docker compose --env-file .env.local stop neo4j
 operation. Starting the service does not publish candidates; the approval-gated
 importer must be run separately.
 
-## 11. Observed validation result
+## 12. Observed validation result
 
 Full validation on the current artifacts, without approval:
 
@@ -274,18 +302,20 @@ The low number of resolvable relationships is expected: many relationship
 endpoints are structured observations that remain ambiguous or unresolved in the
 entity-link artifact. They must not be published.
 
-## 12. Implementation surfaces
+## 13. Implementation surfaces
 
-| Concern                                             | Location                                                                                                                                     |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Approval contract, mapping validation, evidence IDs | `packages/modules/src/retrieval/kg/population/graph-population.ts`                                                                           |
-| Artifact readers and plan builder                   | `packages/api/src/workers/retrieval/graph-population.ts`                                                                                     |
-| Neo4j HTTP adapter                                  | `packages/api/src/workers/retrieval/neo4j-http.ts`                                                                                           |
-| Import executor and post-validation                 | `packages/api/src/workers/retrieval/graph-import.ts`                                                                                         |
-| CLI                                                 | `packages/api/src/workers/retrieval/import-graph.ts`                                                                                         |
-| Tests                                               | `packages/modules/tests/retrieval-kg-population.test.ts`, `packages/api/tests/graph-import.test.ts`, `packages/api/tests/neo4j-http.test.ts` |
+| Concern                                             | Location                                                                                                                                                                                                                                      |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Approval contract, mapping validation, evidence IDs | `packages/modules/src/retrieval/kg/population/graph-population.ts`                                                                                                                                                                            |
+| Artifact readers and plan builder                   | `packages/api/src/workers/retrieval/graph-population.ts`                                                                                                                                                                                      |
+| Neo4j HTTP adapter                                  | `packages/api/src/adapters/retrieval/neo4j-http.ts`                                                                                                                                                                                           |
+| Import executor and post-validation                 | `packages/api/src/workers/retrieval/graph-import.ts`                                                                                                                                                                                          |
+| CLI                                                 | `packages/api/src/workers/retrieval/import-graph.ts`                                                                                                                                                                                          |
+| Publication gate                                    | `packages/modules/src/retrieval/kg/population/graph-publication.ts`                                                                                                                                                                           |
+| Graph retrieval reader and exact-quote bridge       | `packages/api/src/adapters/retrieval/graph.ts`, `graph-evidence.ts`, `graph-bridge.ts`                                                                                                                                                        |
+| Tests                                               | `packages/modules/tests/retrieval-kg-population.test.ts`, `packages/api/tests/graph-import.test.ts`, `packages/api/tests/neo4j-http.test.ts`, `packages/api/tests/retrieval-graph.test.ts`, `packages/services/tests/retrieval-graph.test.ts` |
 
-## 13. Remaining limitations
+## 14. Remaining limitations
 
 - No Person 1/domain approval exists, so the current corpus has not been
   published and no real Neo4j import has run.
@@ -300,4 +330,9 @@ entity-link artifact. They must not be published.
   cannot own an outgoing `SUPPORTED_BY` edge.
 - The Compose service is defined but was not started; no real Neo4j data exists
   yet.
-- No GraphRAG projection or retrieval endpoint is implemented.
+- No publication stage exists: the importer never writes `publicationState`, so
+  the optional graph retrieval arm returns no candidates until records are
+  promoted by a separate reviewed process.
+- No GraphRAG projection exists. The optional graph arm reads published evidence
+  directly from Neo4j and bridges exact quotes to hybrid chunks; it does not
+  project the graph into PostgreSQL.

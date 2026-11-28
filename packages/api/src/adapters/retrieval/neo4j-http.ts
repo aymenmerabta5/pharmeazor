@@ -1,3 +1,12 @@
+/**
+ * Minimal Neo4j HTTP transactional client.
+ *
+ * It deliberately uses the public HTTP transaction endpoint rather than adding
+ * a driver dependency. Credentials are sent only in the Authorization header
+ * and are never logged. It lives with the other provider adapters so both the
+ * offline importer worker and the optional retrieval read arm depend on it
+ * without an adapter importing a worker.
+ */
 export interface Neo4jStatement {
   readonly statement: string;
   readonly parameters?: Readonly<Record<string, unknown>>;
@@ -21,6 +30,12 @@ export interface Neo4jHttpConfig {
   readonly user: string;
   readonly password: string;
   readonly database?: string;
+  /**
+   * Per-transaction timeout. Retrieval sets a short budget so a slow graph
+   * cannot hold the hybrid result hostage; the importer leaves it unset for
+   * large batches.
+   */
+  readonly timeoutMs?: number;
   readonly fetchImpl?: typeof fetch;
 }
 
@@ -36,16 +51,10 @@ export class Neo4jHttpError extends Error {
   }
 }
 
-/**
- * Minimal Neo4j HTTP transactional client.
- *
- * It deliberately uses the public HTTP transaction endpoint rather than adding
- * a driver dependency. Credentials are sent only in the Authorization header
- * and are never logged.
- */
 export class HttpNeo4jClient implements Neo4jClient {
   private readonly endpoint: string;
   private readonly authorization: string;
+  private readonly timeoutMs: number | null;
   private readonly fetchImpl: typeof fetch;
 
   constructor(config: Neo4jHttpConfig) {
@@ -62,6 +71,10 @@ export class HttpNeo4jClient implements Neo4jClient {
     }
     this.endpoint = `${url}/db/${database}/tx/commit`;
     this.authorization = `Basic ${Buffer.from(`${config.user}:${config.password}`, "utf8").toString("base64")}`;
+    this.timeoutMs =
+      config.timeoutMs !== undefined && Number.isFinite(config.timeoutMs) && config.timeoutMs > 0
+        ? config.timeoutMs
+        : null;
     this.fetchImpl = config.fetchImpl ?? fetch;
   }
 
@@ -74,6 +87,7 @@ export class HttpNeo4jClient implements Neo4jClient {
         accept: "application/json",
         authorization: this.authorization,
       },
+      ...(this.timeoutMs !== null ? { signal: AbortSignal.timeout(this.timeoutMs) } : {}),
       body: JSON.stringify({
         statements: statements.map((entry) => ({
           statement: entry.statement,

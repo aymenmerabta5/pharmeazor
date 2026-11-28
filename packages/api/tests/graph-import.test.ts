@@ -9,7 +9,7 @@ import {
   validateGraphPopulation,
 } from "../src/workers/retrieval/graph-population";
 import { importGraphPlan } from "../src/workers/retrieval/graph-import";
-import type { Neo4jClient, Neo4jStatement } from "../src/workers/retrieval/neo4j-http";
+import type { Neo4jClient, Neo4jStatement } from "../src/adapters/retrieval/neo4j-http";
 import { runEntityExtraction } from "../src/workers/retrieval/entity-export";
 import { runEntityLinkExtraction } from "../src/workers/retrieval/entity-link-export";
 import { runGraphChunkExport } from "../src/workers/retrieval/graph-export";

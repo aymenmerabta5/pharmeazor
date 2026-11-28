@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { buildCitationStamp, formatRetrievalDate } from "@repo/contracts";
+import {
+  buildCitationStamp,
+  formatRetrievalDate,
+  parseRetrievalSearchResponse,
+} from "@repo/contracts";
 import type { RetrievalResult, RetrievedChunk } from "@repo/services/retrieval";
 
 import { toRetrievalWireResponse } from "../src/retrieval/wire";
@@ -65,6 +69,8 @@ function result(overrides: Partial<RetrievalResult> = {}): RetrievalResult {
       rerankerModel: "BAAI/bge-reranker-v2-m3",
       denseCandidates: 50,
       lexicalCandidates: 50,
+      graph: "applied",
+      graphCandidates: 3,
       fusedCandidates: 50,
       rerankedCandidates: 50,
       returnedChunks: 1,
@@ -109,7 +115,7 @@ describe("retrieval wire mapping", () => {
     );
   });
 
-  it("passes the alias diagnostics through to the agent", () => {
+  it("passes the alias and graph diagnostics through to the agent", () => {
     const wire = toRetrievalWireResponse(result(), {
       expandedTerms: ["paracetamol"],
       ambiguousAliases: ["COPARAMOL"],
@@ -117,6 +123,60 @@ describe("retrieval wire mapping", () => {
 
     expect(wire.diagnostics.expandedTerms).toEqual(["paracetamol"]);
     expect(wire.diagnostics.ambiguousAliases).toEqual(["COPARAMOL"]);
+    expect(wire.diagnostics.graph).toBe("applied");
+    expect(wire.diagnostics.graphCandidates).toBe(3);
+  });
+
+  it("defaults missing graph diagnostics for an older producer payload", () => {
+    const wire = toRetrievalWireResponse(result());
+    const legacy = {
+      ...wire,
+      diagnostics: {
+        embeddingModel: wire.diagnostics.embeddingModel,
+        rerankerModel: wire.diagnostics.rerankerModel,
+        rerank: wire.diagnostics.rerank,
+        denseCandidates: wire.diagnostics.denseCandidates,
+        lexicalCandidates: wire.diagnostics.lexicalCandidates,
+        fusedCandidates: wire.diagnostics.fusedCandidates,
+        rerankedCandidates: wire.diagnostics.rerankedCandidates,
+        returnedChunks: wire.diagnostics.returnedChunks,
+        droppedForInjection: wire.diagnostics.droppedForInjection,
+        elapsedMs: wire.diagnostics.elapsedMs,
+        expandedTerms: wire.diagnostics.expandedTerms,
+        ambiguousAliases: wire.diagnostics.ambiguousAliases,
+      },
+    };
+
+    const parsed = parseRetrievalSearchResponse(legacy);
+    expect(parsed.diagnostics.graph).toBe("disabled");
+    expect(parsed.diagnostics.graphCandidates).toBe(0);
+  });
+
+  it("round-trips the real producer payload through the harness parser", () => {
+    const wire = toRetrievalWireResponse(result());
+    const parsed = parseRetrievalSearchResponse(wire);
+
+    expect(parsed.chunks).toHaveLength(1);
+    expect(parsed.chunks[0]?.chunkId).toBe("MED001__SRC_ANPP_RCP__DOC005__smpc#indications-0#0");
+    expect(parsed.chunks[0]?.citation).toBe("ANPP SmPC — indications");
+    expect(parsed.chunks[0]?.citationStamp).toBe(
+      "ANPP SmPC · published 2021-11-29 · extracted 2026-11-21",
+    );
+  });
+
+  it("accepts the legacy object citation shape", () => {
+    const wire = toRetrievalWireResponse(result());
+    const legacy = {
+      ...wire,
+      chunks: wire.chunks.map((chunk) => ({
+        ...chunk,
+        citation: { chunkId: chunk.chunkId, label: chunk.citation },
+      })),
+    };
+
+    expect(parseRetrievalSearchResponse(legacy).chunks[0]?.citation).toBe(
+      "ANPP SmPC — indications",
+    );
   });
 
   it("treats an unparseable date as unknown rather than guessing", () => {

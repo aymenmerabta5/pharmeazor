@@ -22,6 +22,12 @@ export const RETRIEVAL_LIMITS = {
   maxLimit: 12,
   denseCandidates: 50,
   lexicalCandidates: 50,
+  /**
+   * The graph arm is a precision-oriented expansion, not a second full-text
+   * search. A small candidate set keeps its contribution from flooding fusion
+   * when a broad entity matches many documents.
+   */
+  graphCandidates: 30,
   fusionCandidates: 50,
   rerankCandidates: 50,
   rrfK: 60,

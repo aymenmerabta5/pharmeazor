@@ -31,9 +31,28 @@ export interface RerankerRuntimeConfig {
   readonly batchSize: number;
 }
 
+export interface GraphRuntimeConfig {
+  readonly url: string;
+  readonly user: string;
+  readonly password: string;
+  readonly database: string;
+  readonly timeoutMs: number;
+  readonly entityLimit: number;
+  readonly neighborLimit: number;
+  readonly evidenceLimit: number;
+  readonly chunkLimit: number;
+  readonly candidateLimit: number;
+}
+
 export interface RetrievalRuntimeConfig {
   readonly embedding: EmbeddingRuntimeConfig;
   readonly reranker: RerankerRuntimeConfig | null;
+  /**
+   * Null unless `RETRIEVAL_GRAPH_ENABLED=true`. The graph arm is optional and
+   * disabled by default; enabling it without a Neo4j target is a configuration
+   * error, not a silent no-op.
+   */
+  readonly graph: GraphRuntimeConfig | null;
   readonly requireRerank: boolean;
 }
 
@@ -51,6 +70,70 @@ function positiveInteger(value: string | undefined, fallback: number, name: stri
     throw new RetrievalError("RETRIEVAL_NOT_CONFIGURED", `${name} must be a positive integer`);
   }
   return parsed;
+}
+
+function readGraphRuntimeConfig(env: NodeJS.ProcessEnv): GraphRuntimeConfig {
+  const url = trimmed(env.NEO4J_HTTP_URL);
+  const user = trimmed(env.NEO4J_USER);
+  const password = env.NEO4J_PASSWORD;
+  if (!url || !user || !password) {
+    throw new RetrievalError(
+      "RETRIEVAL_NOT_CONFIGURED",
+      "RETRIEVAL_GRAPH_ENABLED is true but NEO4J_HTTP_URL, NEO4J_USER, and NEO4J_PASSWORD are not all set",
+    );
+  }
+  if (!/^https?:\/\//i.test(url)) {
+    throw new RetrievalError("RETRIEVAL_NOT_CONFIGURED", "NEO4J_HTTP_URL must be an http(s) URL");
+  }
+  if (
+    /REPLACE_WITH|CHANGE_ME/iu.test(url) ||
+    /REPLACE_WITH|CHANGE_ME/iu.test(user) ||
+    /REPLACE_WITH|CHANGE_ME/iu.test(password)
+  ) {
+    throw new RetrievalError(
+      "RETRIEVAL_NOT_CONFIGURED",
+      "NEO4J_HTTP_URL, NEO4J_USER, and NEO4J_PASSWORD still contain placeholder values",
+    );
+  }
+  const database = trimmed(env.NEO4J_DATABASE) ?? "neo4j";
+  if (!/^[A-Za-z0-9_.-]+$/u.test(database)) {
+    throw new RetrievalError(
+      "RETRIEVAL_NOT_CONFIGURED",
+      "NEO4J_DATABASE contains unsupported characters",
+    );
+  }
+  return {
+    url: url.replace(/\/+$/, ""),
+    user,
+    password,
+    database,
+    timeoutMs: positiveInteger(env.RETRIEVAL_GRAPH_TIMEOUT_MS, 3_000, "RETRIEVAL_GRAPH_TIMEOUT_MS"),
+    entityLimit: positiveInteger(
+      env.RETRIEVAL_GRAPH_ENTITY_LIMIT,
+      24,
+      "RETRIEVAL_GRAPH_ENTITY_LIMIT",
+    ),
+    neighborLimit: positiveInteger(
+      env.RETRIEVAL_GRAPH_NEIGHBOR_LIMIT,
+      48,
+      "RETRIEVAL_GRAPH_NEIGHBOR_LIMIT",
+    ),
+    evidenceLimit: positiveInteger(
+      env.RETRIEVAL_GRAPH_EVIDENCE_LIMIT,
+      160,
+      "RETRIEVAL_GRAPH_EVIDENCE_LIMIT",
+    ),
+    chunkLimit: positiveInteger(
+      env.RETRIEVAL_GRAPH_CHUNK_LIMIT,
+      200,
+      "RETRIEVAL_GRAPH_CHUNK_LIMIT",
+    ),
+    candidateLimit: positiveInteger(
+      env.RETRIEVAL_GRAPH_CANDIDATE_LIMIT,
+      30,
+      "RETRIEVAL_GRAPH_CANDIDATE_LIMIT",
+    ),
+  };
 }
 
 export function readRetrievalRuntimeConfig(
@@ -130,6 +213,10 @@ export function readRetrievalRuntimeConfig(
       ),
     },
     reranker,
+    graph:
+      (trimmed(env.RETRIEVAL_GRAPH_ENABLED) ?? "false").toLowerCase() === "true"
+        ? readGraphRuntimeConfig(env)
+        : null,
     requireRerank: (trimmed(env.RETRIEVAL_REQUIRE_RERANK) ?? "false").toLowerCase() === "true",
   };
 }

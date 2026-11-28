@@ -141,6 +141,17 @@ export {
   type UnresolvedLinkCandidate,
 } from "./kg/extraction/index";
 export {
+  GRAPH_OBSERVATION_STATES,
+  GRAPH_PUBLICATION_STATES,
+  GRAPH_PUBLISHED_RECORD,
+  GRAPH_REVIEW_STATES,
+  isPublishedGraphRecord,
+  type GraphLifecycleFields,
+  type GraphObservationState,
+  type GraphPublicationState,
+  type GraphReviewState,
+} from "./kg/population/index";
+export {
   GRAPH_ENTITY_LABEL,
   GRAPH_ONTOLOGY_VERSION,
   GRAPH_POPULATION_APPROVAL_SCHEMA_VERSION,
