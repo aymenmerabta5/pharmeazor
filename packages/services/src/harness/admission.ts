@@ -27,6 +27,21 @@ export function toAgentPlan(value: string): AgentPlan {
   if ((BILLING_PLAN_IDS as readonly string[]).includes(value)) return value as BillingPlanId;
   throw new Error(`EVE_PLAN_UNKNOWN: ${value} is not a plan in the billing catalog`);
 }
+
+/**
+ * The entitlement an admission is granted under.
+ *
+ * A live subscription always wins, because it is what the customer paid for.
+ * An administrator without one is sponsored by the platform instead of being
+ * sent to the pricing page; everyone else needs a live plan.
+ */
+export function resolveAgentAdmissionPlan(input: {
+  readonly entitledPlanId: string | null;
+  readonly isAdmin: boolean;
+}): AgentPlan | null {
+  if (input.entitledPlanId !== null) return toAgentPlan(input.entitledPlanId);
+  return input.isAdmin ? "sponsored" : null;
+}
 export type AgentAdmissionErrorCode =
   | "EVE_ENTITLEMENT_UNSUPPORTED"
   | "EVE_ENTITLEMENT_REQUIRED"

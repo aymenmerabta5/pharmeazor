@@ -76,6 +76,7 @@
     "prepare": "husky",
     "security:audit": "bun scripts/security-dependencies.cjs audit",
     "security:fix": "bun scripts/security-dependencies.cjs fix",
+    "seed:rbac-demo": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/identity/seed-rbac-demo.ts",
     "start": "bun --env-file=.env.local run start:production",
     "start:eve": "node apps/harness/.output/server/index.mjs",
     "start:production": "bun scripts/start-production.mjs",

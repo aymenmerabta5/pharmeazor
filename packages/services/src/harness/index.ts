@@ -26,5 +26,6 @@ export {
   isValidEveAdmissionLeaseId,
   isValidEveRuntimeEventId,
   isValidEveRuntimeEventType,
+  resolveAgentAdmissionPlan,
   toAgentPlan,
 } from "./admission";

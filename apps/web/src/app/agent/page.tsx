@@ -2,8 +2,10 @@ import type * as React from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { isAdminRole } from "@repo/auth/roles";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { AgentPage } from "@/features/agent/page";
+import { canOpenAgent } from "@/lib/agent-access";
 import { isLiveSubscription, normalizeBillingSubscriptions } from "@/lib/billing-catalog";
 
 /**
@@ -11,8 +13,10 @@ import { isLiveSubscription, normalizeBillingSubscriptions } from "@/lib/billing
  *
  * Access is decided on the server: a visitor without a session signs in, a
  * signed-in visitor without a live subscription chooses a plan, and only then
- * does the Eve-backed workspace mount. The proxy still rejects a missing
- * cookie before this page runs; this guard covers the subscription.
+ * does the Eve-backed workspace mount. An administrator is exempt from the
+ * subscription requirement because the admission layer sponsors that role.
+ * The proxy still rejects a missing cookie before this page runs; this guard
+ * covers the subscription.
  */
 async function AgentData({ question }: { question?: string }): Promise<React.JSX.Element> {
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
@@ -20,11 +24,12 @@ async function AgentData({ question }: { question?: string }): Promise<React.JSX
   if (!me.user) redirect("/auth/sign-in");
   if (!application.principal?.emailVerified) redirect("/auth/verify-email");
 
+  const isAdmin = isAdminRole(application.principal.role);
   const snapshot = await application.billing.subscriptions();
   const live = normalizeBillingSubscriptions(snapshot.subscriptions).some((subscription) =>
     isLiveSubscription(subscription),
   );
-  if (!live) redirect("/pricing");
+  if (!canOpenAgent({ hasLiveSubscription: live, isAdmin })) redirect("/pricing");
 
   return <AgentPage initialQuestion={question} />;
 }

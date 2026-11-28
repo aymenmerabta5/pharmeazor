@@ -1,6 +1,13 @@
 export interface AgentSessionActor {
   readonly authSessionId: string;
   readonly emailVerified: boolean;
+  /**
+   * Resolved from the authoritative user row at the request boundary.
+   *
+   * Admission treats an administrator as sponsored: the platform owner and
+   * support staff must be able to operate the assistant without buying a plan.
+   */
+  readonly isAdmin: boolean;
   readonly organizationId: string | null;
   readonly teamId: string | null;
   readonly userId: string;

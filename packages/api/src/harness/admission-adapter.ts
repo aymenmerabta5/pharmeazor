@@ -11,7 +11,7 @@ import {
   EVE_MAX_OPERATIONS_PER_WINDOW,
   EVE_OPERATION_RATE_WINDOW_MS,
   isTerminalEveRuntimeEvent,
-  toAgentPlan,
+  resolveAgentAdmissionPlan,
   type AgentAdmissionPort,
   type AgentRuntimeAdmissionPort,
 } from "@repo/services/harness";
@@ -45,10 +45,13 @@ export const agentAdmissionPort = {
           ),
         )
         .limit(1);
-      if (!entitled[0]) {
+      const plan = resolveAgentAdmissionPlan({
+        entitledPlanId: entitled[0]?.planId ?? null,
+        isAdmin: input.actor.isAdmin,
+      });
+      if (plan === null) {
         return { ok: false as const, code: "EVE_ENTITLEMENT_REQUIRED" as const };
       }
-      const plan = toAgentPlan(entitled[0].planId);
 
       await transaction
         .delete(eveAgentAdmissions)

@@ -44,8 +44,7 @@ export const roles = {
   viewer,
 } as const;
 export type AccessRole = keyof typeof roles;
-export const ADMIN_ROLE_NAMES = ["admin", "superAdmin"] as const;
-export type AdminRole = (typeof ADMIN_ROLE_NAMES)[number];
-export function isAdminRole(role: unknown): role is AdminRole {
-  return role === "admin" || role === "superAdmin";
-}
+
+// The role vocabulary is dependency-free so a caller that only needs the
+// administrator predicate does not bundle the access-control plugin.
+export { ADMIN_ROLE_NAMES, isAdminRole, type AdminRole } from "./roles";

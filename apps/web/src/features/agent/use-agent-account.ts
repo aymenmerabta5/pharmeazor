@@ -1,14 +1,23 @@
 "use client";
 import { useAuth } from "@/hooks/use-auth";
 import { useBilling } from "@/hooks/use-billing";
-import { accountInitials, isLiveAgentSubscription, planDisplayName, planTierOf } from "./model";
+import {
+  accountInitials,
+  isAdminAccount,
+  isLiveAgentSubscription,
+  planDisplayName,
+  planTierOf,
+} from "./model";
 
 /** Account chrome for the agent rail and plan badge. */
 export function useAgentAccount() {
   const auth = useAuth();
   const billing = useBilling();
   const live = billing.subscriptions.find((subscription) => isLiveAgentSubscription(subscription));
-  const planId = live?.planId ?? null;
+  // The admission layer sponsors administrators, so their badge reflects the
+  // entitlement that actually opened the surface rather than "free".
+  const isAdmin = isAdminAccount(auth.user?.role);
+  const planId = live?.planId ?? (isAdmin ? "sponsored" : null);
   const email = auth.user?.email ?? null;
   return {
     initials: accountInitials(auth.user),

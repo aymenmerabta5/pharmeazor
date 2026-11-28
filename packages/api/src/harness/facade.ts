@@ -1,6 +1,7 @@
 // @allow-long 370: authenticated Eve proxy keeps admission, bounded requests, ownership claims, and streaming in one security boundary
 import "server-only";
 import { Buffer } from "node:buffer";
+import { isAdminRole } from "@repo/auth/roles";
 import { agentAdmissionPort } from "./admission-adapter";
 import { reconcileExpiredEveAdmissions } from "./admission-reconcile";
 import { agentSessionOwnershipPort } from "./ownership-adapter";
@@ -113,6 +114,7 @@ function asOwnershipActor(actor: AuthenticatedEveActor): AgentSessionActor {
   return {
     authSessionId: actor.authSessionId,
     emailVerified: actor.emailVerified,
+    isAdmin: isAdminRole(actor.role),
     organizationId: actor.organizationId,
     teamId: actor.teamId,
     userId: actor.userId,

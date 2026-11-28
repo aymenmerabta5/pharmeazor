@@ -24,6 +24,23 @@ export function planDisplayName(planId: string | null | undefined): string | nul
   if (PLAN_TIER_NAMES[tier]) return PLAN_TIER_NAMES[tier];
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+/**
+ * The entitlement that opens the assistant.
+ *
+ * A live subscription is the ordinary path. An administrator is sponsored by
+ * the platform, matching the server admission policy, so the mobile surface
+ * does not send that role to the upgrade card.
+ */
+export function resolveAgentEntitlement(input: {
+  readonly isAdmin: boolean;
+  readonly livePlanId: string | null;
+}): { readonly planId: string | null; readonly subscribed: boolean } {
+  if (input.livePlanId) return { planId: input.livePlanId, subscribed: true };
+  return input.isAdmin
+    ? { planId: "sponsored", subscribed: true }
+    : { planId: null, subscribed: false };
+}
 export function conversationReducer(
   messages: readonly ChatMessage[],
   event: ConversationEvent,

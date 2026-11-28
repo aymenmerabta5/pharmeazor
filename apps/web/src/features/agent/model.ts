@@ -63,6 +63,19 @@ const PLAN_TIER_NAMES: Readonly<Record<string, string>> = {
   pro: "Pro",
 };
 
+/**
+ * The roles the server sponsors.
+ *
+ * Feature presentation may not import the auth package, so this mirrors
+ * `isAdminRole` from `@repo/auth/roles`. The server remains the authority: the
+ * badge only reflects a decision the admission layer already made.
+ */
+const ADMIN_ROLES: readonly string[] = ["admin", "superAdmin"];
+
+export function isAdminAccount(role: string | null | undefined): boolean {
+  return role !== null && role !== undefined && ADMIN_ROLES.includes(role);
+}
+
 /** The tier behind a plan id, whether it is billed monthly or yearly. */
 export function planTierOf(planId: string | null | undefined): "basic" | "standard" | "pro" | null {
   const value = planId?.trim();
