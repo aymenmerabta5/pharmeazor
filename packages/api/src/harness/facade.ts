@@ -443,6 +443,17 @@ export async function handleEveFacadeRequest(request: Request): Promise<Response
       return browserResponse(upstream, source);
     }
 
+    if (decision.route.kind === "follow" && upstream.ok && decision.route.sessionId !== null) {
+      // Activity moves the conversation to the top of the owner's history.
+      await agentSessionOwnershipPort
+        .touch({
+          actor: ownershipActor,
+          eveSessionId: decision.route.sessionId,
+          touchedAt: new Date(),
+        })
+        .catch(() => undefined);
+    }
+
     if (decision.route.kind === "end" && upstream.ok && decision.route.sessionId !== null) {
       try {
         const retired = await agentSessionOwnershipPort.retire({

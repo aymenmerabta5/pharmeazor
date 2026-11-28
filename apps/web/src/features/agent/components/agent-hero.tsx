@@ -16,7 +16,7 @@ export function AgentHero({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <section className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-6">
-        <div className="my-auto flex w-full max-w-[760px] flex-col items-center">
+        <div className="agent-column my-auto flex w-full max-w-[760px] flex-col items-center">
           <AgentBrandMark className="size-14 rounded-2xl" />
           <h1 className="mt-8 max-w-[760px] text-center text-[1.8rem] font-bold leading-[1.14] tracking-[-0.035em] text-foreground sm:text-[2.7rem] sm:leading-[1.12]">
             {t("homeTitle")}

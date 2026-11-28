@@ -40,6 +40,8 @@ export interface AgentSessionOwnershipPort {
   authorize(input: AuthorizeAgentSessionInput): Promise<boolean>;
   claim(input: ClaimAgentSessionInput): Promise<AgentSessionClaimResult>;
   retire(input: AuthorizeAgentSessionInput & { readonly retiredAt: Date }): Promise<boolean>;
+  /** Records activity so the owner's conversation list stays newest-first. */
+  touch(input: AuthorizeAgentSessionInput & { readonly touchedAt: Date }): Promise<void>;
 }
 
 const EVE_SESSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;

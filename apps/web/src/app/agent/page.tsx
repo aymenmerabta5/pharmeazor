@@ -2,6 +2,7 @@ import type * as React from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { getAgentConversation, listAgentConversations } from "@repo/api/harness";
 import { isAdminRole } from "@repo/auth/roles";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { AgentPage } from "@/features/agent/page";
@@ -18,8 +19,18 @@ import { isLiveSubscription, normalizeBillingSubscriptions } from "@/lib/billing
  * subscription requirement because the admission layer sponsors that role.
  * The proxy still rejects a missing cookie before this page runs; this guard
  * covers the subscription.
+ *
+ * The saved conversation list and the durable session cursor also load here,
+ * so a refresh restores the transcript the user was reading instead of
+ * starting an empty chat.
  */
-async function AgentData({ question }: { question?: string }): Promise<React.JSX.Element> {
+async function AgentData({
+  question,
+  conversationId,
+}: {
+  question?: string;
+  conversationId?: string;
+}): Promise<React.JSX.Element> {
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
   const me = await application.me();
   if (!me.user) redirect("/auth/sign-in");
@@ -32,7 +43,25 @@ async function AgentData({ question }: { question?: string }): Promise<React.JSX
   );
   if (!canOpenAgent({ hasLiveSubscription: live, isAdmin })) redirect("/pricing");
 
-  return <AgentPage initialQuestion={question} />;
+  const owner = {
+    organizationId: application.principal.activeOrganizationId,
+    teamId: application.principal.activeTeamId,
+    userId: me.user.id,
+  };
+  const [conversations, active] = await Promise.all([
+    listAgentConversations(owner),
+    conversationId ? getAgentConversation(owner, conversationId) : Promise.resolve(null),
+  ]);
+  if (conversationId && !active) redirect("/agent");
+
+  return (
+    <AgentPage
+      key={active?.id ?? "new"}
+      initialQuestion={question}
+      initialConversations={conversations}
+      initialSession={active ? { sessionId: active.id, streamIndex: 0 } : null}
+    />
+  );
 }
 
 function AgentLoading(): React.JSX.Element {
@@ -46,9 +75,10 @@ export default async function AgentRoute({
 }): Promise<React.JSX.Element> {
   const params = await searchParams;
   const question = typeof params.q === "string" ? params.q : undefined;
+  const conversationId = typeof params.c === "string" ? params.c : undefined;
   return (
     <Suspense fallback={<AgentLoading />}>
-      <AgentData question={question} />
+      <AgentData question={question} conversationId={conversationId} />
     </Suspense>
   );
 }

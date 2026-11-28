@@ -97,6 +97,36 @@
     0 22px 45px -30px oklch(0.35 0.04 118 / 0.45);
 }
 
+/*
+ * Center the reading column in the window, not in the pane beside the
+ * navigation. The sidebar then sits inside the left margin, so a wide screen
+ * does not push the conversation toward the right edge. The max() keeps the
+ * column clear of the navigation on narrower screens.
+ *
+ * 686px = 272px sidebar + 24px pane padding + half of the 780px column.
+ * The rail and no-navigation variants subtract their smaller widths.
+ */
+.agent-column {
+  margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+  .agent-shell[data-agent-nav="sidebar"] .agent-column {
+    margin-inline-start: max(0px, calc(50vw - 686px));
+    margin-inline-end: auto;
+  }
+
+  .agent-shell[data-agent-nav="rail"] .agent-column {
+    margin-inline-start: max(0px, calc(50vw - 486px));
+    margin-inline-end: auto;
+  }
+
+  .agent-shell[data-agent-nav="none"] .agent-column {
+    margin-inline-start: max(0px, calc(50vw - 414px));
+    margin-inline-end: auto;
+  }
+}
+
 .dark .agent-composer {
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.3),

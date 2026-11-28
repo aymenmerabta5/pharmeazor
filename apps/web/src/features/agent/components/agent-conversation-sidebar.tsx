@@ -8,13 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useSurfaceTranslations } from "@/lib/translations";
 import type { useAgentAccount } from "../use-agent-account";
 import type { useAgentConversation } from "../use-agent-conversation";
-import { messageText, userMessages } from "../model";
 import { AgentBrandMark } from "./agent-brand-mark";
-
-function shortQuestion(text: string): string {
-  const normalized = text.replace(/\s+/g, " ").trim();
-  return normalized.length > 48 ? normalized.slice(0, 47).trimEnd() + "…" : normalized;
-}
+import { AgentConversationLink } from "./agent-conversation-link";
 
 export function AgentConversationSidebar({
   conversation,
@@ -24,8 +19,7 @@ export function AgentConversationSidebar({
   account: ReturnType<typeof useAgentAccount>;
 }): React.JSX.Element {
   const t = useSurfaceTranslations("agent");
-  const questions = userMessages(conversation.messages);
-  const current = questions[questions.length - 1]?.id;
+  const { activeId, conversations, groups } = conversation.history;
   const planLabel = account.planPending
     ? t("loadingAccount")
     : account.planName
@@ -48,34 +42,53 @@ export function AgentConversationSidebar({
         <Plus className="size-4" aria-hidden /> {t("newQuestion")}
       </Button>
       <div className="mt-7 min-h-0 flex-1 overflow-y-auto">
-        <p className="px-3 text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {t("today")}
-        </p>
-        <nav aria-label={t("today")} className="mt-2 flex flex-col gap-0.5">
-          {questions.map((message) => {
-            const selected = message.id === current;
-            const label = selected
-              ? (conversation.title ?? shortQuestion(messageText(message)))
-              : shortQuestion(messageText(message));
-            return (
-              <a
-                key={message.id}
-                href={"#" + message.id}
-                aria-current={selected ? "true" : undefined}
-                className={
-                  "block truncate rounded-lg px-3 py-2.5 text-sm leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 " +
-                  (selected
-                    ? "bg-secondary font-medium text-secondary-foreground"
-                    : "text-foreground/80 hover:bg-accent/50 hover:text-foreground")
-                }
-              >
-                {label}
-              </a>
-            );
-          })}
-        </nav>
+        {conversations.length === 0 ? (
+          <div className="px-3">
+            <p className="text-sm font-medium">{t("historyEmpty")}</p>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
+              {t("historyEmptyDescription")}
+            </p>
+          </div>
+        ) : (
+          <>
+            {groups.today.length > 0 ? (
+              <>
+                <p className="px-3 text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("today")}
+                </p>
+                <nav aria-label={t("today")} className="mt-2 flex flex-col gap-0.5">
+                  {groups.today.map((item) => (
+                    <AgentConversationLink
+                      key={item.id}
+                      conversation={item}
+                      selected={item.id === activeId}
+                      label={item.title ?? t("conversationTitle")}
+                    />
+                  ))}
+                </nav>
+              </>
+            ) : null}
+            {groups.earlier.length > 0 ? (
+              <>
+                <p className="mt-5 px-3 text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("earlier")}
+                </p>
+                <nav aria-label={t("earlier")} className="mt-2 flex flex-col gap-0.5">
+                  {groups.earlier.map((item) => (
+                    <AgentConversationLink
+                      key={item.id}
+                      conversation={item}
+                      selected={item.id === activeId}
+                      label={item.title ?? t("conversationTitle")}
+                    />
+                  ))}
+                </nav>
+              </>
+            ) : null}
+          </>
+        )}
       </div>
-      {account.planTier !== "pro" ? (
+      {account.planTier !== "pro" && account.planId !== "sponsored" ? (
         <div className="mt-4 rounded-2xl border border-border/80 bg-card p-4 shadow-control">
           <p className="text-base font-semibold tracking-tight">{t("upgradeTitle")}</p>
           <p className="mt-2 text-sm leading-5 text-muted-foreground">{t("upgradeDescription")}</p>

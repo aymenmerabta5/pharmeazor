@@ -52,6 +52,19 @@ function permitsLocalFallback(): boolean {
   return !hostedVercel && (nodeEnvironment === "development" || nodeEnvironment === "test");
 }
 
+/**
+ * Local development has no shared capacity to protect, and the dev server
+ * re-renders the same route repeatedly while files change. Enforcing the
+ * request budget there only produces spurious 429s, so the policy is skipped
+ * for the local runtime. Tests and every hosted deployment keep enforcing it.
+ */
+function skipsRateLimit(): boolean {
+  const nodeEnvironment = Reflect.get(process.env, "NODE_ENV");
+  const vercel = Reflect.get(process.env, "VERCEL");
+  const hostedVercel = typeof vercel === "string" && vercel.length > 0 && vercel !== "0";
+  return !hostedVercel && nodeEnvironment === "development";
+}
+
 function sharedRedis(): { endpoint: URL; token: string } | null {
   const rawUrl = process.env.UPSTASH_REDIS_REST_URL ?? "";
   const rawToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
@@ -196,6 +209,7 @@ async function checkShared(
 
 export async function rateLimit(key: string, limit = 60, windowMs = 60_000): Promise<void> {
   validateInput(key, limit, windowMs);
+  if (skipsRateLimit()) return;
   const redis = sharedRedis();
   if (redis) {
     await checkShared(redis, key, limit, windowMs);

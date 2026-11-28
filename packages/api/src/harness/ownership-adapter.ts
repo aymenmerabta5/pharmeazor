@@ -127,4 +127,24 @@ export const agentSessionOwnershipPort: AgentSessionOwnershipPort = {
       .returning({ eveSessionId: eveAgentSessions.eveSessionId });
     return updated[0] !== undefined;
   },
+
+  async touch(input) {
+    if (!(await agentSessionOwnershipPort.authorize(input))) return;
+    await db
+      .update(eveAgentSessions)
+      .set({ updatedAt: input.touchedAt })
+      .where(
+        and(
+          eq(eveAgentSessions.eveSessionId, input.eveSessionId),
+          eq(eveAgentSessions.userId, input.actor.userId),
+          input.actor.organizationId === null
+            ? isNull(eveAgentSessions.organizationId)
+            : eq(eveAgentSessions.organizationId, input.actor.organizationId),
+          input.actor.teamId === null
+            ? isNull(eveAgentSessions.teamId)
+            : eq(eveAgentSessions.teamId, input.actor.teamId),
+          isNull(eveAgentSessions.retiredAt),
+        ),
+      );
+  },
 };

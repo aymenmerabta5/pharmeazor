@@ -137,6 +137,12 @@ services:
     profiles: ["retrieval"]
     restart: unless-stopped
     stop_grace_period: 30s
+    # WSL exposes the NVIDIA adapter after a non-CUDA device. Without pinning
+    # the first visible device, TEI selects device 1, hangs at backend startup
+    # and can fail with CUDA_ERROR_OUT_OF_MEMORY. Inside the container, 0 is
+    # the GPU reserved above, whatever its host index is.
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
     command: ["--model-id", "/data", "--port", "80"]
     volumes:
       - "${RETRIEVAL_EMBEDDING_MODEL_DIR:-./tooling/embedding-lab/models/bge-m3}:/data:ro"
@@ -162,6 +168,8 @@ services:
     profiles: ["retrieval"]
     restart: unless-stopped
     stop_grace_period: 30s
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
     command: ["--model-id", "/data", "--port", "80"]
     volumes:
       - "${RETRIEVAL_RERANKER_MODEL_DIR:-./tooling/embedding-lab/models/bge-reranker-v2-m3}:/data:ro"

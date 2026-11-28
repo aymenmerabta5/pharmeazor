@@ -33,7 +33,7 @@ export function AgentChat({
   }
   return (
     <section className="flex min-h-0 flex-1 flex-col px-4 sm:px-6">
-      <div className="mx-auto flex min-h-0 w-full max-w-[780px] flex-1 flex-col">
+      <div className="agent-column flex min-h-0 w-full max-w-[780px] flex-1 flex-col">
         <header className="flex h-16 shrink-0 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <AgentBrandMark className="size-8 rounded-lg lg:hidden" />

@@ -7,7 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** The assistant surface while the conversation and account load. */
 export function AgentSkeleton(): React.JSX.Element {
   return (
-    <PageSkeleton className="agent-shell flex h-dvh overflow-hidden bg-background text-foreground">
+    <PageSkeleton
+      className="agent-shell flex h-dvh overflow-hidden bg-background text-foreground"
+      data-agent-nav="rail"
+    >
       <aside className="sticky top-0 flex h-dvh w-16 shrink-0 flex-col items-center border-e border-border/70 bg-sidebar pb-10 pt-4 lg:w-[72px]">
         <Skeleton className="size-10 rounded-[14px]" />
         <div className="mt-6 flex flex-col items-center gap-2">
@@ -28,7 +31,7 @@ export function AgentSkeleton(): React.JSX.Element {
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-6">
-          <div className="my-auto flex w-full max-w-[760px] flex-col items-center">
+          <div className="agent-column my-auto flex w-full max-w-[760px] flex-col items-center">
             <Skeleton className="size-14 rounded-2xl" />
             <Skeleton className="mt-8 h-12 w-full max-w-[560px]" />
             <Skeleton className="mt-3 h-12 w-full max-w-[420px]" />

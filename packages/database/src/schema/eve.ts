@@ -16,13 +16,17 @@ export const eveAgentSessions = pgTable(
     // login session is revoked or deleted. It is deliberately not a foreign
     // key: logout must never be blocked by durable agent history.
     createdByAuthSessionId: text("created_by_auth_session_id").notNull(),
+    // Generated from the first prompt. Null until the title workflow runs.
+    title: text("title"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
     retiredAt: timestamp("retired_at", { withTimezone: true }),
   },
   (table) => [
     index("eve_agent_sessions_owner_idx").on(table.userId, table.organizationId, table.teamId),
     index("eve_agent_sessions_auth_session_idx").on(table.createdByAuthSessionId),
     index("eve_agent_sessions_retired_idx").on(table.retiredAt),
+    index("eve_agent_sessions_user_updated_idx").on(table.userId, table.updatedAt),
   ],
 );
 

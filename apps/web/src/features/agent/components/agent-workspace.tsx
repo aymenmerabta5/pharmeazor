@@ -18,15 +18,22 @@ export function AgentWorkspace({
   account: ReturnType<typeof useAgentAccount>;
   rail: ReturnType<typeof useAgentRail>;
 }): React.JSX.Element {
+  const showChat = conversation.history.hasSession || conversation.messages.length > 0;
+  // Saved history keeps the full sidebar visible even while a fresh question
+  // starts on the hero, matching the conversation list the user expects.
+  const showSidebar = showChat || conversation.history.conversations.length > 0;
   return (
-    <div className="agent-shell flex h-dvh overflow-hidden bg-background text-foreground">
-      {conversation.messages.length > 0 ? (
+    <div
+      className="agent-shell flex h-dvh overflow-hidden bg-background text-foreground"
+      data-agent-nav={showSidebar ? "sidebar" : rail.collapsed ? "none" : "rail"}
+    >
+      {showSidebar ? (
         <AgentConversationSidebar conversation={conversation} account={account} />
       ) : rail.collapsed ? null : (
         <AgentRail conversation={conversation} account={account} onCollapse={rail.toggle} />
       )}
       <main className="flex h-dvh min-w-0 flex-1 flex-col">
-        {conversation.messages.length > 0 ? (
+        {showChat ? (
           <AgentChat conversation={conversation} />
         ) : (
           <>

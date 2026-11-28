@@ -61,7 +61,14 @@ function decisionForMethod(
 export function classifyEveFacadeRequest(request: Request): EveRouteDecision {
   const url = new URL(request.url);
   if (!url.pathname.startsWith(FACADE_PREFIX + "/")) return { ok: false, status: 404 };
-  const facadePath = url.pathname.slice(FACADE_PREFIX.length);
+  // The Eve client always appends its framework prefix (`/eve/v1`) to the
+  // configured base URL. The browser points that base at the canonical
+  // `/api/agent/harness/v1` facade, so accept the resulting
+  // `/api/agent/harness/v1/eve/v1/*` request and normalize it back to the
+  // facade's public shape before classifying it.
+  const facadePath = url.pathname
+    .slice(FACADE_PREFIX.length)
+    .replace(/^\/harness\/v1\/eve\/v1(?=\/|$)/, "/harness/v1");
   const segments = facadePath.split("/").filter(Boolean);
   if (segments[0] !== FACADE_AGENT_SEGMENT || segments[1] !== "v1")
     return { ok: false, status: 404 };

@@ -41,6 +41,49 @@ export interface AgentAccountIdentity {
   readonly email?: string | null;
 }
 
+/** One saved conversation, keyed by its durable Eve session id. */
+export interface AgentConversationSummary {
+  readonly id: string;
+  readonly title: string | null;
+  readonly updatedAt: string;
+}
+
+export interface AgentConversationGroups {
+  readonly today: AgentConversationSummary[];
+  readonly earlier: AgentConversationSummary[];
+}
+
+const FALLBACK_TITLE_LENGTH = 64;
+
+/** A usable label before the model title lands, or when it cannot be generated. */
+export function fallbackConversationTitle(
+  prompt: string,
+  maxLength = FALLBACK_TITLE_LENGTH,
+): string {
+  const text = prompt.replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trimEnd()}…` : text;
+}
+
+/** Split the newest-first history the way the sidebar renders it. */
+export function groupAgentConversations(
+  conversations: readonly AgentConversationSummary[],
+  now = Date.now(),
+): AgentConversationGroups {
+  const today = new Date(now);
+  const groups: AgentConversationGroups = { today: [], earlier: [] };
+  for (const conversation of conversations) {
+    const updated = new Date(conversation.updatedAt);
+    const sameDay =
+      Number.isFinite(updated.getTime()) &&
+      updated.getFullYear() === today.getFullYear() &&
+      updated.getMonth() === today.getMonth() &&
+      updated.getDate() === today.getDate();
+    (sameDay ? groups.today : groups.earlier).push(conversation);
+  }
+  return groups;
+}
+
 /** Two-letter initials for the account avatar, with a brand fallback. */
 export function accountInitials(user: AgentAccountIdentity | null | undefined): string {
   const name = user?.name?.trim();
