@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createRequestApplicationForRequest } from "@repo/services/application";
-import { QueryAuthStatus } from "@/components/query-auth-boundary";
+import { BillingSkeleton } from "@/features/account-billing/components/billing-skeleton";
 import { RequestOwnedSnapshot } from "@/components/request-owned-snapshot";
 import { AccountBillingScreen } from "@/features/account-billing/account-billing-screen";
 import { accountBillingSnapshot } from "@/features/account-billing/model";
@@ -33,7 +33,7 @@ async function BillingData(): Promise<React.JSX.Element> {
     teamId: principal.activeTeamId,
   };
   return (
-    <RequestOwnedSnapshot scope={scope}>
+    <RequestOwnedSnapshot scope={scope} fallback={<BillingSkeleton />}>
       <AccountBillingScreen
         snapshot={accountBillingSnapshot({
           subscriptions: snapshot?.subscriptions ?? [],
@@ -49,7 +49,7 @@ export default function BillingSettingsPage(): React.JSX.Element {
   return (
     <>
       <RequestLocalizedMetadataBoundary />
-      <Suspense fallback={<QueryAuthStatus />}>
+      <Suspense fallback={<BillingSkeleton />}>
         <BillingData />
       </Suspense>
     </>

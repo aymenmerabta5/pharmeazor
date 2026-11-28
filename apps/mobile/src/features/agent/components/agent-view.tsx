@@ -1,5 +1,5 @@
 import type * as React from "react";
-import { ActivityIndicator, type ScrollView, View } from "react-native";
+import { type ScrollView, View } from "react-native";
 import { Link } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { AgentAccountBar } from "./agent-account-bar";
 import { AgentConversation } from "./agent-conversation";
 import { AgentEmpty } from "./agent-empty";
 import { AgentPlanError } from "./agent-plan-error";
+import { AgentSkeleton } from "./agent-skeleton";
 import { AgentUpgrade } from "./agent-upgrade";
 import type { NamespaceTranslate } from "@/lib/i18n";
 
@@ -56,15 +57,7 @@ export function AgentView({
   onSuggestion,
   t,
 }: AgentViewProps): React.JSX.Element {
-  if (isPending || (isAuthenticated && planPending))
-    return (
-      <View className="flex-1 items-center justify-center gap-3 bg-background">
-        <ActivityIndicator />
-        {isAuthenticated ? (
-          <Text className="text-sm text-muted-foreground">{t("checkingPlan")}</Text>
-        ) : null}
-      </View>
-    );
+  if (isPending || (isAuthenticated && planPending)) return <AgentSkeleton />;
   if (!isAuthenticated) {
     return (
       <View className="flex-1 justify-center bg-background p-6">

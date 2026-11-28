@@ -4,6 +4,7 @@ import { Text } from "@/components/ui/text";
 import { usePlatformI18n, useTranslations } from "@/lib/i18n";
 import { HomeHero } from "./components/home-hero";
 import { HomePrompt } from "./components/home-prompt";
+import { HomeSkeleton } from "./components/home-skeleton";
 import { HomeSuggestions } from "./components/home-suggestions";
 import { HomeTools } from "./components/home-tools";
 import { useHomeIdentity } from "./queries";
@@ -28,8 +29,10 @@ const TOOL_KEYS = [
 export function HomeScreen(): React.JSX.Element {
   const t = useTranslations("welcome");
   const { direction } = usePlatformI18n();
-  const { user } = useHomeIdentity();
+  const { user, isPending } = useHomeIdentity();
   const { form, ask } = useHomePrompt();
+
+  if (isPending) return <HomeSkeleton />;
 
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
   const suggestions = SUGGESTION_KEYS.map((key) => ({

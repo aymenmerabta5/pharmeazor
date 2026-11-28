@@ -8,6 +8,7 @@ import {
   type QueryAuthScope,
 } from "@/lib/query-client";
 import { QueryAuthStatus, useQueryAuthSession } from "@/components/query-auth-boundary";
+import { RouteSkeleton } from "@/features/system/route-skeleton";
 
 const refreshed = new WeakMap<object, number>();
 const subscribeToHydration = () => () => undefined;
@@ -16,9 +17,11 @@ const serverSnapshot = () => false;
 
 export function RequestOwnedSnapshot({
   scope,
+  fallback,
   children,
 }: {
   scope: QueryAuthScope;
+  fallback?: React.ReactNode;
   children: React.ReactNode;
 }): React.JSX.Element {
   const router = useRouter();
@@ -54,12 +57,10 @@ export function RequestOwnedSnapshot({
     retry();
   }, [hydrated, auth, matches, generation, queryClient, retry]);
   if (hydrated && (!auth || auth.isPending || auth.error || !matches)) {
-    return (
-      <QueryAuthStatus
-        error={Boolean(auth?.error || refreshError || !auth)}
-        retry={auth?.error ? auth.retry : retry}
-      />
-    );
+    if (auth?.error || refreshError || !auth) {
+      return <QueryAuthStatus error retry={auth?.error ? auth.retry : retry} />;
+    }
+    return <>{fallback ?? <RouteSkeleton />}</>;
   }
   return <React.Fragment key={owner + ":" + generation}>{children}</React.Fragment>;
 }

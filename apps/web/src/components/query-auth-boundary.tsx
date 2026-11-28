@@ -6,6 +6,7 @@ import { currentQueryAuthGeneration, type QueryAuthScope } from "@/lib/query-cli
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RouteSkeleton } from "@/features/system/route-skeleton";
 import { useSurfaceTranslations as useMessages } from "@/lib/translations";
 import { orpcClient } from "@/lib/orpc";
 import { useCanonicalQueryAuthScope } from "@/lib/query-auth-scope";
@@ -86,8 +87,10 @@ export function QueryAuthCacheBoundary({
   const generation = currentQueryAuthGeneration(queryClient);
   return (
     <QueryAuthContext.Provider value={state}>
-      {hydrated && (state.isPending || state.error) ? (
-        <QueryAuthStatus error={Boolean(state.error)} retry={state.retry} />
+      {hydrated && state.error ? (
+        <QueryAuthStatus error retry={state.retry} />
+      ) : hydrated && state.isPending ? (
+        <RouteSkeleton />
       ) : (
         <React.Fragment key={generation}>{children}</React.Fragment>
       )}

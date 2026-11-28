@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Suspense } from "react";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { PricingPage } from "@/features/pricing/page";
+import { PricingSkeleton } from "@/features/pricing/components/pricing-skeleton";
 import {
   isLiveSubscription,
   normalizeBillingPlans,
@@ -31,19 +32,7 @@ async function PricingData(): Promise<React.JSX.Element> {
 }
 
 function PricingLoading(): React.JSX.Element {
-  return (
-    <div className="ph-surface" aria-busy="true">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-5 py-16">
-        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-        <div className="h-10 w-full max-w-md animate-pulse rounded bg-muted" />
-        <div className="grid gap-5 pt-6 sm:grid-cols-3">
-          {[0, 1, 2].map((index) => (
-            <div key={index} className="h-80 animate-pulse rounded-xl bg-muted" />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return <PricingSkeleton />;
 }
 
 export default function PricingRoute(): React.JSX.Element {

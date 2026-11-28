@@ -69,8 +69,16 @@ export function useCanonicalQueryAuthScope<T>(
 
   React.useLayoutEffect(() => {
     if (sessionPending) {
-      if (observed.current?.client !== queryClient || !observed.current.pending)
-        invalidateQueryAuthScope(queryClient);
+      // Better Auth reports `isPending` for every anonymous refetch because its
+      // session data is `null`, including the focus refetch it runs when the
+      // window becomes visible again. A refetch keeps the previous identity, so
+      // only reset the cache when this client has not settled that identity
+      // yet. Resetting on every refetch remounts the subtree and wipes input
+      // and captcha state on a plain window switch.
+      const pendingObserved = observed.current?.client === queryClient && observed.current.pending;
+      const identitySettled =
+        accepted.current?.client === queryClient && accepted.current.signature === signature;
+      if (!pendingObserved && !identitySettled) invalidateQueryAuthScope(queryClient);
     } else observeQueryAuthIdentity(queryClient, identity);
     observed.current = { client: queryClient, pending: sessionPending };
   }, [queryClient, identity, signature, sessionPending]);
@@ -137,8 +145,11 @@ export function useCanonicalQueryAuthScope<T>(
   }, [queryClient, identity, signature, sessionPending, generation, readCurrentRequest]);
 
   const retry = React.useCallback(() => requestQueryAuthScopeRefresh(queryClient), [queryClient]);
+  // A resolution stays valid while the same identity refetches in the
+  // background. `sessionPending` alone cannot tell that refresh apart from the
+  // first load of an anonymous session, and treating it as unsettled replaced
+  // the page with the loading status on every window focus.
   const settled =
-    !sessionPending &&
     resolution?.client === queryClient &&
     resolution.signature === signature &&
     resolution.generation === generation;

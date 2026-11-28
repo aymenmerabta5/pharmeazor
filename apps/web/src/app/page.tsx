@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { isAdminRole } from "@repo/auth/roles";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { HomePage } from "@/features/home/page";
+import { LandingSkeleton } from "@/features/home/components/landing-skeleton";
 import { canOpenAgent } from "@/lib/agent-access";
 import { isLiveSubscription, normalizeBillingSubscriptions } from "@/lib/billing-catalog";
 import { RequestLocalizedMetadataBoundary } from "@/lib/request-localized-metadata";
@@ -34,19 +35,7 @@ async function LandingData(): Promise<React.JSX.Element> {
 }
 
 function LandingLoading(): React.JSX.Element {
-  return (
-    <div className="ph-surface" aria-busy="true">
-      <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-5 py-16">
-        <div className="h-4 w-28 animate-pulse rounded bg-muted" />
-        <div className="h-16 w-full max-w-2xl animate-pulse rounded bg-muted" />
-        <div className="h-5 w-full max-w-xl animate-pulse rounded bg-muted" />
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div className="h-80 animate-pulse rounded-2xl bg-muted" />
-          <div className="h-80 animate-pulse rounded-2xl bg-muted" />
-        </div>
-      </div>
-    </div>
-  );
+  return <LandingSkeleton />;
 }
 
 export default function Page(): React.JSX.Element {

@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createRequestApplicationForRequest } from "@repo/services/application";
-import { QueryAuthStatus } from "@/components/query-auth-boundary";
 import { RequestOwnedSnapshot } from "@/components/request-owned-snapshot";
+import { AdminQueueSkeleton } from "@/features/manual-payments/components/admin-queue-skeleton";
 import { ManualAdminQueue } from "@/features/manual-payments/admin-queue";
 import { RequestLocalizedMetadataBoundary } from "@/lib/request-localized-metadata";
 
@@ -25,7 +25,7 @@ async function PaymentsData(): Promise<React.JSX.Element> {
     teamId: principal.activeTeamId,
   };
   return (
-    <RequestOwnedSnapshot scope={scope}>
+    <RequestOwnedSnapshot scope={scope} fallback={<AdminQueueSkeleton />}>
       <main className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:px-10">
         <ManualAdminQueue />
       </main>
@@ -37,7 +37,7 @@ export default function AdminPaymentsPage(): React.JSX.Element {
   return (
     <>
       <RequestLocalizedMetadataBoundary />
-      <Suspense fallback={<QueryAuthStatus />}>
+      <Suspense fallback={<AdminQueueSkeleton />}>
         <PaymentsData />
       </Suspense>
     </>

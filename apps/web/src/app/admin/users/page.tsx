@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { AdminUsersFeature } from "@/features/admin-users";
+import { AdminUsersSkeleton } from "@/features/admin-users/components/admin-users-skeleton";
 import { DEFAULT_ADMIN_USERS_FILTERS } from "@/features/admin-users/types";
 import { RequestOwnedSnapshot } from "@/components/request-owned-snapshot";
-import { QueryAuthStatus } from "@/components/query-auth-boundary";
 
 async function AdminUsersData(): Promise<React.JSX.Element> {
   const application = await createRequestApplicationForRequest(new Headers(await headers()));
@@ -24,7 +24,7 @@ async function AdminUsersData(): Promise<React.JSX.Element> {
     users: data.users.map((user) => ({ ...user, identityId: user.id })),
   };
   return (
-    <RequestOwnedSnapshot scope={scope}>
+    <RequestOwnedSnapshot scope={scope} fallback={<AdminUsersSkeleton />}>
       <AdminUsersFeature initialData={initialData} />
     </RequestOwnedSnapshot>
   );
@@ -32,7 +32,7 @@ async function AdminUsersData(): Promise<React.JSX.Element> {
 
 export default function AdminUsersPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<QueryAuthStatus />}>
+    <Suspense fallback={<AdminUsersSkeleton />}>
       <AdminUsersData />
     </Suspense>
   );

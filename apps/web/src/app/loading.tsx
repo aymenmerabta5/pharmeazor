@@ -1,1 +1,1 @@
-export { LoadingScreen as default } from "@/features/system/loading";
+export { RouteSkeleton as default } from "@/features/system/route-skeleton";

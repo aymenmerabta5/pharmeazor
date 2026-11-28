@@ -1,5 +1,5 @@
 import * as React from "react";
-import { View, ScrollView, ActivityIndicator } from "react-native";
+import { View, ScrollView } from "react-native";
 import { Link } from "expo-router";
 import { useDashboardIdentity } from "./queries";
 import { authUserRole } from "./model";
@@ -9,19 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "@/lib/i18n";
+import { DashboardSkeleton } from "./components/dashboard-skeleton";
 
 export function DashboardScreen(): React.JSX.Element {
   const t = useTranslations("dashboard");
   const navigationT = useTranslations("navigation");
   const { user, isPending } = useDashboardIdentity();
 
-  if (isPending) {
-    return (
-      <View className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (isPending) return <DashboardSkeleton />;
 
   if (!user) {
     return (
