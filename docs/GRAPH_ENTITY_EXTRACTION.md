@@ -208,10 +208,14 @@ A full dry run on the current 488-document graph artifact produced:
 
 - 53,379 text units scanned;
 - 196,897 candidate mentions;
-- 90,267 structured observations;
+- 90,265 structured observations after repeated-substance deduplication;
 - 0 extraction diagnostics;
 - 115 inherited graph overlap omissions;
 - no oversized units.
+
+The exporter skips a repeated structured observation ID within one artifact.
+The earlier 2026-11-27 artifact contained 90,267 observations; the two duplicate
+`PARACETAMOL` observations from combination rows are now suppressed.
 
 All 51 taxonomy kinds are represented in the manifest counts, including zeros.
 Only `document` and `document_section` remain unobserved as mention kinds because

@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "bun:test";
+import { splitSubstances } from "@repo/modules/retrieval";
 import { runGraphChunkExport } from "../src/workers/retrieval/graph-export";
 import { runEntityExtraction } from "../src/workers/retrieval/entity-export";
 
@@ -170,6 +171,39 @@ describe("candidate-only entity export", () => {
     expect(stored.filesWritten).toBe(true);
     expect(stored.checksums.entityMentions).toBe(report.checksums.entityMentions);
     expect(stored.counts).toEqual(report.counts);
+  });
+
+  it("deduplicates repeated substances within one structured row", async () => {
+    expect(splitSubstances("paracetamol/paracetamol")).toHaveLength(2);
+    const { root, manifest, graph, metadata, structured, output } = await fixture();
+    const nameMapPath = join(metadata, "name_map.csv");
+    await writeFile(
+      nameMapPath,
+      `${await readFile(nameMapPath, "utf8")}\nMED002,paracetamol/paracetamol,PARACETAMOL,N02BE01,Antalgiques,DOLIPRANE,algerian_official,500MG,COMPRIME,LABORATOIRE TEST,03 B 062,504/04 B 062/17,SANTE_MSP`,
+      "utf8",
+    );
+    const report = await runEntityExtraction({
+      graphDir: graph,
+      sourceRoot: root,
+      sourceManifestPath: manifest,
+      metadataDir: metadata,
+      structuredDir: structured,
+      outputDir: output,
+    });
+
+    const observations = (await readFile(join(output, "structured-observations.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { observationId: string; rawValue: string });
+    const ids = observations.map((observation) => observation.observationId);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(report.counts.structuredObservations).toBe(observations.length);
+    const repeatedSubstances = observations.filter(
+      (observation) => observation.rawValue === "paracetamol",
+    );
+    expect(new Set(repeatedSubstances.map((observation) => observation.observationId)).size).toBe(
+      repeatedSubstances.length,
+    );
   });
 
   it("validates a dry run without creating the output directory", async () => {

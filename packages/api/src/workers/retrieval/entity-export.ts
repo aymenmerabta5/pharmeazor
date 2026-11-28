@@ -317,8 +317,11 @@ export async function runEntityExtraction(
       buildSourceObservations(sources, runId),
       buildManifestObservations(sourceRows, runId),
     ];
+    const seenObservations = new Set<string>();
     for (const group of observationGroups) {
       for (const observation of group) {
+        if (seenObservations.has(observation.observationId)) continue;
+        seenObservations.add(observation.observationId);
         await observationSink.write(observation);
         incrementKind(observationsByKind, observation.candidateKind);
       }

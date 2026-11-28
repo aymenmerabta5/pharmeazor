@@ -191,9 +191,9 @@ A full run on the observed 2026-11-27 snapshot produced:
 | Item                            |  Result |
 | ------------------------------- | ------: |
 | Mentions scanned                | 196,897 |
-| Structured observations scanned |  90,267 |
+| Structured observations scanned |  90,265 |
 | Structured rows scanned         |  12,705 |
-| Linkable records                | 188,002 |
+| Linkable records                | 188,000 |
 | Confident clusters              |   4,390 |
 | Confident members               | 113,381 |
 | Ambiguous clusters              |   2,125 |
@@ -205,14 +205,15 @@ A full run on the observed 2026-11-27 snapshot produced:
 
 Final checksums:
 
-- `confident-matches.jsonl`: `860e5bd01a82b10fadd30f46ded395820bf55ceb4b72a61175228a59373b3df8`
-- `ambiguous-matches.jsonl`: `b2d912d540b316d1d3cec399edf9c025eb4b0278cc4e8e05509f32e62c65873e`
-- `unresolved-candidates.jsonl`: `28c22c168e6085ba6cda45c74d57b8d31a8eda136c22b13c4a5a0e32f2da77a8`
+- `confident-matches.jsonl`: `841cfc84450bbbfc7881732e2d0127a6611e537da2a64954dfc070eb01953a23`
+- `ambiguous-matches.jsonl`: `f768b3d92fda428d234667c8f3c45c991555003c5222eb3b311f3608502ea420`
+- `unresolved-candidates.jsonl`: `f276e2058d2476ab373537fdd4030404c143b9de272907e37360a890b650f100`
 - `diagnostics.jsonl`: empty SHA-256 `e3b0c442...`
 - `taxonomy.json`: `7c886e00ddd1f0757a0e5ca1bbae5fe3ad77dfe2d619e15c30231a9ce2a53d88`
 
 The artifact is generated and ignored by Git. Counts are candidate counts, not
-clinical validation.
+clinical validation. This snapshot includes repeated-substance deduplication:
+90,265 observations and 188,000 linkable records.
 
 ## 10. Evaluation without an LLM judge
 

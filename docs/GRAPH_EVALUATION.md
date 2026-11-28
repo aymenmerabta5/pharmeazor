@@ -293,14 +293,14 @@ hybrid index.
 
 ## 9. Observed validation run
 
-On 2026-11-28 the framework was run against the generated artifacts with the
-empty gold scaffold and `--limit 25`:
+On 2026-11-28 the framework was run against regenerated artifacts with the empty
+gold scaffold and `--limit 25`:
 
 | Item                                    |   Value |
 | --------------------------------------- | ------: |
 | Text units                              |      25 |
 | Mentions                                |     328 |
-| Structured observations                 |  90,267 |
+| Structured observations                 |  90,265 |
 | Relationships in scope                  |  63,278 |
 | Confident clusters                      |   1,098 |
 | Ambiguous clusters                      |     739 |
@@ -309,18 +309,16 @@ empty gold scaffold and `--limit 25`:
 | Text relationships dropped by the limit |   2,346 |
 | Clusters dropped by the limit           |   4,678 |
 
-Validation found two duplicate observation IDs in the current entity artifact:
-`obs_704fb4d4c40c4c2f1eb678223cb81d93` (nomenclature row 5103) and
-`obs_4e8b9f7a85eacb99eb82cb4e6a12a017` (row 5112). Both are `substance`
-observations for `PARACETAMOL` emitted twice from a combination row that names
-the substance twice. The evaluator reports `observation_id_duplicate`,
-`observation_duplicate`, and `observation_match_key_duplicate`, so the run
-status is `invalid_artifacts` until the entity exporter deduplicates repeated
-substances within a row. This is a real artifact defect surfaced by the
-evaluation, not a gold-label or taxonomy decision.
+The run finished with `status: "insufficient_gold_labels"`, `ok: true`, 0 errors,
+and 0 warnings. The only diagnostic is the expected `evaluation_scope_limited`
+info entry.
 
-No scored metrics are reported for this run: the committed gold scaffold is
-empty, so all metric objects are `available: false`.
+The earlier pre-dedupe run found two duplicate observation IDs:
+`obs_704fb4d4c40c4c2f1eb678223cb81d93` (nomenclature row 5103) and
+`obs_4e8b9f7a85eacb99eb82cb4e6a12a017` (row 5112). The entity exporter now skips
+repeated observation IDs, and the regenerated artifact no longer produces those
+errors. No scored metrics are reported for this run: the committed gold scaffold
+is empty, so all metric objects are `available: false`.
 
 ## 10. Implementation surfaces
 
@@ -356,7 +354,5 @@ empty, so all metric objects are `available: false`.
 - A full-corpus run retains all text-unit content for quote validation. Use
   `--limit` on constrained machines and do not compare a limited run with a
   full-corpus baseline.
-- The current artifact contains duplicate structured observations (section 9);
-  evaluation correctly fails validation until the entity exporter is fixed.
 - No Neo4j population, graph retrieval, or canonical entity resolution is
   evaluated here.

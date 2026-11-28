@@ -350,7 +350,7 @@ export function validateGoldDataset(
       });
       continue;
     }
-    if (!sameEvidenceBoundary(annotation.subject, annotation.object)) {
+    if (!sameEvidenceBoundary(annotation.subject, annotation.object, unitsBySnapshot)) {
       issues.push({
         code: "gold_relationship_endpoints_not_co_located",
         severity: "error",
@@ -474,51 +474,13 @@ function validateGoldRef(
   context: string,
 ): RawEvaluationIssue[] {
   if (ref.kind === "text_span") {
-    const unit = findUnitForGoldSpan(
-      unitsBySnapshot,
-      ref.documentSnapshotId,
-      ref.documentStart,
-      ref.documentEnd,
-    );
+    const unit = resolveGoldTextUnit(ref, unitsBySnapshot);
     if (!unit) {
       return [
         {
           code: "gold_text_span_unresolved",
           severity: "error",
-          message: `${context} does not resolve to a graph text unit`,
-          sampleId: context,
-        },
-      ];
-    }
-    if (unit.documentId !== ref.documentId) {
-      return [
-        {
-          code: "gold_text_document_mismatch",
-          severity: "error",
-          message: `${context} names document ${ref.documentId} but the span belongs to ${unit.documentId}`,
-          sampleId: context,
-        },
-      ];
-    }
-    const localStart = ref.documentStart - unit.sourceSpan.start;
-    const localEnd = ref.documentEnd - unit.sourceSpan.start;
-    if (localStart < unit.uniqueLocalSpan.start || localEnd > unit.uniqueLocalSpan.end) {
-      return [
-        {
-          code: "gold_text_span_not_unique",
-          severity: "error",
-          message: `${context} falls outside the unit's unique source region`,
-          sampleId: context,
-        },
-      ];
-    }
-    const quote = unit.content.slice(localStart, localEnd);
-    if (quote !== ref.quote) {
-      return [
-        {
-          code: "gold_text_quote_mismatch",
-          severity: "error",
-          message: `${context} quote does not match the graph source text`,
+          message: `${context} does not resolve to a unique raw span with the exact quote`,
           sampleId: context,
         },
       ];
@@ -575,10 +537,16 @@ function scopeForGoldRef(
   return null;
 }
 
-function sameEvidenceBoundary(left: GoldEntityRef, right: GoldEntityRef): boolean {
+function sameEvidenceBoundary(
+  left: GoldEntityRef,
+  right: GoldEntityRef,
+  unitsBySnapshot: ReadonlyMap<string, readonly EvaluationTextUnit[]>,
+): boolean {
   if (left.kind !== right.kind) return false;
   if (left.kind === "text_span" && right.kind === "text_span") {
-    return left.documentSnapshotId === right.documentSnapshotId;
+    const leftUnit = resolveGoldTextUnit(left, unitsBySnapshot);
+    const rightUnit = resolveGoldTextUnit(right, unitsBySnapshot);
+    return leftUnit !== null && rightUnit !== null && leftUnit.textUnitId === rightUnit.textUnitId;
   }
   if (left.kind === "structured_row" && right.kind === "structured_row") {
     return (
@@ -597,16 +565,22 @@ function sameEvidenceBoundary(left: GoldEntityRef, right: GoldEntityRef): boolea
   return false;
 }
 
-function findUnitForGoldSpan(
+function resolveGoldTextUnit(
+  ref: Extract<GoldEntityRef, { readonly kind: "text_span" }>,
   unitsBySnapshot: ReadonlyMap<string, readonly EvaluationTextUnit[]>,
-  documentSnapshotId: string,
-  documentStart: number,
-  documentEnd: number,
 ): EvaluationTextUnit | null {
-  for (const unit of unitsBySnapshot.get(documentSnapshotId) ?? []) {
-    if (documentStart >= unit.sourceSpan.start && documentEnd <= unit.sourceSpan.end) {
-      return unit;
+  for (const unit of unitsBySnapshot.get(ref.documentSnapshotId) ?? []) {
+    if (unit.documentId !== ref.documentId) continue;
+    if (ref.documentStart < unit.sourceSpan.start || ref.documentEnd > unit.sourceSpan.end) {
+      continue;
     }
+    const localStart = ref.documentStart - unit.sourceSpan.start;
+    const localEnd = ref.documentEnd - unit.sourceSpan.start;
+    if (localStart < unit.uniqueLocalSpan.start || localEnd > unit.uniqueLocalSpan.end) {
+      continue;
+    }
+    if (unit.content.slice(localStart, localEnd) !== ref.quote) continue;
+    return unit;
   }
   return null;
 }

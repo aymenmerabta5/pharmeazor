@@ -192,20 +192,20 @@ A full run on the observed 2026-11-27 snapshot produced:
 
 - 65,624 candidate relationships;
 - 63,276 structured-row relationships and 2,348 text relationships;
-- 196,897 mentions, 90,267 observations, 33,860 mention-bearing text units, and
+- 196,897 mentions, 90,265 observations, 33,860 mention-bearing text units, and
   12,705 structured row groups scanned;
 - 0 extraction diagnostics;
 - 257 documents with text relationships.
 
 Final checksums:
 
-- `relationship-candidates.jsonl`: `60ebd3c35d234c33e1d3e00dc824bd16e5fab59330a0446f39e1e83b3b64d881`
+- `relationship-candidates.jsonl`: `889de9b6a9b121ac139a9c591a2b6bfc11c39737cc48f2c287dad753e7c8a74a`
 - `diagnostics.jsonl`: empty SHA-256 `e3b0c442...`
 - `taxonomy.json`: `dbcbb93b8be1ca7bbabd46042f3634a98c64e0adfe937b52a4705d663ad89512`
 
 The artifact is generated and ignored by Git. These are candidate counts, not
 clinical validation. `product_has_storage_condition` remains unobserved in this
-snapshot.
+snapshot, which includes repeated-substance deduplication.
 
 ## 9. Evaluation without an LLM judge
 

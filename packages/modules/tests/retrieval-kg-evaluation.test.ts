@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   ENTITY_LINK_TAXONOMY_VERSION,
   ENTITY_MENTION_TAXONOMY_VERSION,
+  GRAPH_OFFSET_ENCODING,
   MENTION_KIND_DEFINITIONS,
   RELATIONSHIP_TAXONOMY_VERSION,
   buildMentionLexicon,
@@ -23,6 +24,7 @@ import {
   type EvaluationEntityCluster,
   type EvaluationMention,
   type EvaluationObservation,
+  type EvaluationTextUnit,
   type GoldDataset,
   type KnowledgeGraphEvaluationInput,
   type MentionLexiconSeed,
@@ -615,5 +617,132 @@ describe("artifact validation", () => {
     });
 
     expect(evaluateKnowledgeGraph(input)).toEqual(evaluateKnowledgeGraph(input));
+  });
+});
+
+function overlapUnit(
+  textUnitId: string,
+  content: string,
+  sourceStart: number,
+  sourceEnd: number,
+  uniqueEnd: number,
+): EvaluationTextUnit {
+  return {
+    textUnitId,
+    artifactId: "ART_EVAL",
+    documentId: "DOC_EVAL",
+    documentSnapshotId: "snapshot_overlap",
+    sectionId: "sec",
+    sectionCode: "indications",
+    sectionHeading: "Indications",
+    sectionPath: ["Indications"],
+    content,
+    rawContentSha256: sha256(content),
+    documentContentSha256: sha256("document"),
+    sourceSpan: { start: sourceStart, end: sourceEnd },
+    uniqueLocalSpan: { start: 0, end: uniqueEnd },
+    offsetEncoding: GRAPH_OFFSET_ENCODING,
+  };
+}
+
+describe("gold annotation validation", () => {
+  const units = [
+    overlapUnit("u_first", "abcdefghij", 0, 10, 5),
+    overlapUnit("u_second", "fghijk", 5, 11, 6),
+  ];
+
+  it("accepts a gold span in the unique region of the later overlapping unit", () => {
+    const gold = goldDataset({
+      manifest: {
+        ...goldDataset().manifest,
+        documents: [
+          {
+            documentId: "DOC_EVAL",
+            documentSnapshotId: "snapshot_overlap",
+            artifactId: "ART_EVAL",
+            entityScope: "exhaustive",
+            relationshipScope: "not_annotated",
+            note: null,
+          },
+        ],
+      },
+      entityMentions: [
+        {
+          goldId: "E-OVERLAP",
+          entity: {
+            kind: "text_span",
+            documentSnapshotId: "snapshot_overlap",
+            documentId: "DOC_EVAL",
+            documentStart: 5,
+            documentEnd: 10,
+            quote: "fghij",
+            candidateKind: "brand_term",
+          },
+          note: null,
+        },
+      ],
+    });
+    const evaluation = evaluateKnowledgeGraph(baseInput({ textUnits: units, gold }));
+
+    expect(evaluation.validation.ok).toBe(true);
+    expect(evaluation.metrics.entityMentions.available).toBe(true);
+    expect(evaluation.metrics.entityMentions.strict.falseNegatives).toBe(1);
+    expect(
+      evaluation.validation.diagnostics.some(
+        (diagnostic) => diagnostic.code === "gold_text_span_unresolved",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a gold relationship whose text endpoints belong to different units", () => {
+    const gold = goldDataset({
+      manifest: {
+        ...goldDataset().manifest,
+        documents: [
+          {
+            documentId: "DOC_EVAL",
+            documentSnapshotId: "snapshot_overlap",
+            artifactId: "ART_EVAL",
+            entityScope: "not_annotated",
+            relationshipScope: "exhaustive",
+            note: null,
+          },
+        ],
+      },
+      relationships: [
+        {
+          goldId: "R-CROSS-UNIT",
+          relationshipKind: "product_has_dose_form",
+          subject: {
+            kind: "text_span",
+            documentSnapshotId: "snapshot_overlap",
+            documentId: "DOC_EVAL",
+            documentStart: 0,
+            documentEnd: 5,
+            quote: "abcde",
+            candidateKind: "brand_term",
+          },
+          object: {
+            kind: "text_span",
+            documentSnapshotId: "snapshot_overlap",
+            documentId: "DOC_EVAL",
+            documentStart: 5,
+            documentEnd: 10,
+            quote: "fghij",
+            candidateKind: "dose_form",
+          },
+          note: null,
+        },
+      ],
+    });
+    const evaluation = evaluateKnowledgeGraph(baseInput({ textUnits: units, gold }));
+
+    expect(evaluation.validation.ok).toBe(false);
+    expect(
+      evaluation.validation.diagnostics.some(
+        (diagnostic) => diagnostic.code === "gold_relationship_endpoints_not_co_located",
+      ),
+    ).toBe(true);
+    expect(evaluation.metrics.relationships.available).toBe(false);
   });
 });
