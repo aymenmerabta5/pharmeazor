@@ -24,7 +24,6 @@ import {
   SettingsBodySkeleton,
   SettingsRouteSkeleton,
 } from "@/features/settings/components/settings-skeleton";
-import { StorageSkeleton } from "@/features/storage/components/storage-skeleton";
 import { MaintenanceSkeleton } from "./maintenance-skeleton";
 import { LoadingScreen } from "./loading";
 
@@ -42,7 +41,6 @@ export function RouteSkeleton(): React.JSX.Element {
   if (pathname === "/dashboard") return <DashboardSkeleton />;
   if (pathname === "/agent") return <AgentSkeleton />;
   if (pathname === "/pricing") return <PricingSkeleton />;
-  if (pathname === "/storage") return <StorageSkeleton />;
   if (pathname === "/maintenance") return <MaintenanceSkeleton />;
   if (pathname === "/2fa") return <TwoFactorSkeleton />;
   if (pathname === "/settings")

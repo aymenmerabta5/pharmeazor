@@ -89,16 +89,6 @@ export function DashboardScreen(): React.JSX.Element {
             </CardHeader>
             <CardContent>
               <View className="gap-2">
-                <Link href="/storage" asChild>
-                  <Button variant="outline">
-                    <Text>{navigationT("storage")}</Text>
-                  </Button>
-                </Link>
-                <Link href="/pdf" asChild>
-                  <Button variant="outline">
-                    <Text>{navigationT("pdf")}</Text>
-                  </Button>
-                </Link>
                 <Link href="/agent" asChild>
                   <Button variant="outline">
                     <Text>{navigationT("agent")}</Text>

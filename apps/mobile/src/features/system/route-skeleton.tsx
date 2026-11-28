@@ -11,10 +11,8 @@ import { DashboardSkeleton } from "@/features/dashboard/components/dashboard-ske
 import { HomeSkeleton } from "@/features/home/components/home-skeleton";
 import { WorkspaceSkeleton } from "@/features/identity-workspace/components/workspace-skeleton";
 import { MarketingSkeleton } from "@/features/marketing/components/marketing-skeleton";
-import { PdfSkeleton } from "@/features/pdf/components/pdf-skeleton";
 import { ProfileSkeleton } from "@/features/profile/components/profile-skeleton";
 import { SettingsSkeleton } from "@/features/settings/components/settings-skeleton";
-import { StorageSkeleton } from "@/features/storage/components/storage-skeleton";
 import { WalletSkeleton } from "@/features/wallet/components/wallet-skeleton";
 import { useRequestedPathname } from "./use-requested-pathname";
 
@@ -34,8 +32,6 @@ function PageSkeleton({ pathname }: { pathname: string }): React.JSX.Element {
   if (pathname === "/workspace") return <WorkspaceSkeleton />;
   if (pathname === "/admin") return <AdminSkeleton />;
   if (pathname === "/billing") return <BillingSkeleton />;
-  if (pathname === "/storage") return <StorageSkeleton />;
-  if (pathname === "/pdf") return <PdfSkeleton />;
   return <NotFoundSkeleton />;
 }
 

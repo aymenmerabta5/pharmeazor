@@ -1,6 +1,21 @@
 @import "@repo/ui/styles/adapters/next/v1.css";
 
 /*
+ * Streamdown ships its renderers as prebuilt modules. Tailwind needs to scan
+ * those modules so the Markdown surface (tables, code blocks, controls) gets
+ * the utilities it relies on.
+ */
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/code/dist/*.js";
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/*
  * Agent surface skin.
  *
  * The assistant is a focused, warm workspace: cream paper, olive controls and
@@ -95,6 +110,21 @@
   box-shadow:
     0 1px 2px oklch(0.35 0.04 118 / 0.04),
     0 22px 45px -30px oklch(0.35 0.04 118 / 0.45);
+}
+
+/*
+ * The transcript still scrolls, but the rail is visual noise on a full-width
+ * reading surface. Keyboard and wheel scrolling keep working.
+ */
+.agent-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.agent-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /*

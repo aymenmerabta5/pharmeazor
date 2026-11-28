@@ -45,20 +45,6 @@ export function ProfileScreen(): React.JSX.Element {
       monogram: "D",
       href: "/dashboard",
     },
-    {
-      key: "pdf",
-      label: t("pdf"),
-      description: t("pdfDescription"),
-      monogram: "PDF",
-      href: "/pdf",
-    },
-    {
-      key: "storage",
-      label: t("storage"),
-      description: t("storageDescription"),
-      monogram: "F",
-      href: "/storage",
-    },
   ];
   if (role === "admin" || role === "superAdmin") {
     links.push({

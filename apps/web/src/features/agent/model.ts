@@ -178,18 +178,59 @@ function sourceHost(url: string): string {
 
 /** Extract the links an answer cites, without inventing provenance. */
 export function extractSources(text: string): AgentSource[] {
+  // A URL shown as a code sample is not a citation.
+  const prose = text.replace(/(```|~~~)[\s\S]*?\1/g, "").replace(/`[^`\n]*`/g, "");
   const sources = new Map<string, AgentSource>();
-  for (const match of text.matchAll(markdownLinkPattern)) {
+  for (const match of prose.matchAll(markdownLinkPattern)) {
     const url = match[2];
     if (!url || sources.has(url)) continue;
     const label = match[1]?.trim() || sourceHost(url);
     sources.set(url, { key: url, label, url, host: sourceHost(url) });
   }
-  for (const url of text.match(bareUrlPattern) ?? []) {
+  for (const url of prose.match(bareUrlPattern) ?? []) {
     if (sources.has(url)) continue;
     sources.set(url, { key: url, label: sourceHost(url), url, host: sourceHost(url) });
   }
   return [...sources.values()].slice(0, 8);
+}
+
+function stripInlineMarkdown(value: string): string {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/`+([^`]+)`+/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(\*|_)(.+?)\1/g, "$2")
+    .replace(/~~(.+?)~~/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Split Markdown into blank-line-delimited blocks without cutting a fenced
+ * code block that happens to contain a blank line.
+ */
+function markdownBlocks(text: string): string[] {
+  const blocks: string[] = [];
+  let current: string[] = [];
+  let fence: string | null = null;
+  for (const line of text.split("\n")) {
+    const marker = line.match(/^\s*(`{3,}|~{3,})/)?.[1] ?? null;
+    if (marker) {
+      if (fence === null) fence = marker;
+      else if (line.trimStart().startsWith(fence)) fence = null;
+    }
+    if (line.trim() === "" && fence === null) {
+      if (current.length > 0) {
+        blocks.push(current.join("\n"));
+        current = [];
+      }
+      continue;
+    }
+    current.push(line);
+  }
+  if (current.length > 0) blocks.push(current.join("\n"));
+  return blocks;
 }
 
 /** Hide raw Markdown links and bare URLs; the source list carries those links. */
@@ -197,21 +238,50 @@ export function answerDisplayText(text: string): string {
   return text
     .replace(markdownLinkPattern, "$1")
     .replace(bareUrlPattern, "")
+    .replace(/^#{1,6}[ \t]+/gm, "")
+    .replace(/^[ \t]*>[ \t]?/gm, "")
+    .replace(/`+([^`\n]+)`+/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(\*|_)(.+?)\1/g, "$2")
+    .replace(/~~(.+?)~~/g, "$1")
     .replace(/[ \t]+\n/g, "\n")
     .trim();
 }
 
-/** Split an answer into the headline sentence and the supporting text. */
+/**
+ * Split an answer into a plain-text lead and the Markdown that follows it.
+ *
+ * The lead keeps the large editorial headline the answer card is designed
+ * around. Everything after it is rendered as Markdown, so tables, lists,
+ * fenced code and links survive intact.
+ */
 export function answerSections(text: string): { headline: string; body: string } {
-  const display = answerDisplayText(text);
-  if (!display) return { headline: "", body: "" };
-  const firstParagraph = display.split(/\n{2,}/)[0]?.trim() ?? display;
-  const sentence = firstParagraph.match(/^(.{1,120}?[.!?])(?:\s|$)/)?.[1];
-  const headline =
-    sentence ??
-    (firstParagraph.length > 120 ? firstParagraph.slice(0, 117).trimEnd() + "…" : firstParagraph);
-  const body = display.startsWith(headline) ? display.slice(headline.length).trim() : display;
-  return { headline, body };
+  const raw = text.trim();
+  if (!raw) return { headline: "", body: "" };
+  const blocks = markdownBlocks(raw);
+  const first = blocks[0] ?? raw;
+
+  const heading = first.match(/^(#{1,6})[ \t]+([^\n]+)/);
+  if (heading) {
+    const restOfFirst = first.slice(heading[0].length).trim();
+    return {
+      headline: stripInlineMarkdown(heading[2] ?? ""),
+      body: [restOfFirst, ...blocks.slice(1)].filter(Boolean).join("\n\n").trim(),
+    };
+  }
+
+  if (/^(?:`{3,}|~{3,}|\||>|<|[-*+][ \t]|\d+[.)][ \t])/.test(first)) {
+    return { headline: "", body: raw };
+  }
+
+  const sentence = first.match(/^([\s\S]{1,120}?[.!?])(?:\s|$)/);
+  const lead = sentence?.[1] ?? first.replace(/\s+/g, " ").trim();
+  const headlineSource = lead.length > 120 ? `${lead.slice(0, 117).trimEnd()}…` : lead;
+  const restOfFirst = sentence ? first.slice(sentence[0].length).trim() : "";
+  return {
+    headline: stripInlineMarkdown(headlineSource),
+    body: [restOfFirst, ...blocks.slice(1)].filter(Boolean).join("\n\n").trim(),
+  };
 }
 
 export function userMessages(messages: readonly AgentMessageLike[]): AgentMessageLike[] {

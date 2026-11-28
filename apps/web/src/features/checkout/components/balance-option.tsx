@@ -67,7 +67,11 @@ export function CheckoutBalanceOption({
             <p className="text-sm leading-6">
               {t("balanceShort", { amount: money(balance.shortfallMinor) })}
             </p>
-            <Button variant="outline" render={<Link href="/settings/billing#topup" />}>
+            <Button
+              variant="outline"
+              render={<Link href="/settings/billing#topup" />}
+              nativeButton={false}
+            >
               {t("topUpBalance")}
             </Button>
           </div>

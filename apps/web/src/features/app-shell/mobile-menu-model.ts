@@ -49,8 +49,6 @@ export function mobileMenuDestinations({
   const workspace = [
     link("/dashboard", header("dashboard"), "subtree"),
     link("/agent", header("agent"), "subtree"),
-    link("/storage", header("storage"), "subtree"),
-    link("/pdf", header("pdf"), "subtree"),
     link("/settings/billing", header("billing"), "exact"),
     link("/profile", header("profile"), "subtree"),
     link("/settings", header("settings"), "subtree"),

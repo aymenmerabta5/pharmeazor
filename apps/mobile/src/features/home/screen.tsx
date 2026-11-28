@@ -15,8 +15,6 @@ const SUGGESTION_KEYS = ["interactions", "equivalents", "dosage", "safety"] as c
 const TOOL_KEYS = [
   { key: "wallet", label: "openWallet", href: "/wallet" },
   { key: "assistant", label: "openAssistant", href: "/assistant" },
-  { key: "pdf", label: "openPdf", href: "/pdf" },
-  { key: "storage", label: "openStorage", href: "/storage" },
 ] as const;
 
 /**

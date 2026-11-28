@@ -65,7 +65,7 @@ export function SubscriptionCard({
               </Alert>
             ) : null}
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" render={<Link href="/pricing" />}>
+              <Button variant="outline" render={<Link href="/pricing" />} nativeButton={false}>
                 {t("managePlan")}
               </Button>
               {view.canPortal ? (
@@ -84,7 +84,7 @@ export function SubscriptionCard({
               <p className="text-sm font-medium">{t("planNoneTitle")}</p>
               <p className="text-sm leading-6 text-muted-foreground">{t("planNoneDescription")}</p>
             </div>
-            <Button className="w-fit" render={<Link href="/pricing" />}>
+            <Button className="w-fit" render={<Link href="/pricing" />} nativeButton={false}>
               {t("browsePlans")}
             </Button>
           </div>

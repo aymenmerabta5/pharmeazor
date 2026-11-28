@@ -2,16 +2,7 @@
 
 import type * as React from "react";
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Bot,
-  FolderOpen,
-  CreditCard,
-  FileText,
-  Settings2,
-  ShieldCheck,
-  UserRound,
-} from "lucide-react";
+import { LayoutDashboard, Bot, CreditCard, Settings2, ShieldCheck, UserRound } from "lucide-react";
 import { useSurfaceTranslations } from "@/lib/translations";
 import type { WorkspaceIdentity } from "./workspace-identity";
 import { WorkspaceIdentityStatus } from "./workspace-identity-status";
@@ -21,9 +12,7 @@ import { WORKSPACE_NAVIGATION, isCurrentPath } from "@/features/app-shell/naviga
 const ICONS = {
   dashboard: LayoutDashboard,
   agent: Bot,
-  storage: FolderOpen,
   billing: CreditCard,
-  pdf: FileText,
   profile: UserRound,
   settings: Settings2,
   admin: ShieldCheck,

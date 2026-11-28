@@ -50,8 +50,6 @@ export function useAppMenu() {
         link("/dashboard", header("dashboard")),
         link("/agent", header("agent")),
         link("/wallet", tabs("wallet")),
-        link("/storage", header("storage")),
-        link("/pdf", header("pdf")),
       ]
     : [];
 

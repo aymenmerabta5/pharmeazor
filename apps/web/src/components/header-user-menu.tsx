@@ -65,8 +65,6 @@ export function HeaderUserMenu({
             {t("dashboard")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onNavigate("/agent")}>{t("agent")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onNavigate("/storage")}>{t("storage")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onNavigate("/pdf")}>{t("pdf")}</DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => onNavigate("/settings/billing")}>
             {t("billing")}

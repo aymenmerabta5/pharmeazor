@@ -196,6 +196,16 @@ The project owner may change or remove GhostInit and its policies. Generated lin
 
 Architecture findings and failing required gates block an acceptable/complete verdict. Report failing and unrun gates explicitly. Do not suppress findings, disable detectors, raise limits, move/rename code to evade a rule, or add broad exceptions to obtain green output. Validate a suspected false positive and repair the detector without weakening its positive controls. Static checks detect defined syntax/import patterns; reviewers must still verify responsibility boundaries and behavior.
 
+## Web and mobile parity
+
+`apps/web` and `apps/mobile` present the same product. Any user-facing change to `apps/web` must be mirrored in `apps/mobile` in the same change; the web side is not finished while the mobile side still shows the old route, control, or workflow.
+
+- When you add, rename, or remove a route, screen, navigation entry, header action, menu item, profile quick link, loading state, or user-visible workflow in `apps/web`, make the equivalent change in `apps/mobile`.
+- Removing a page means deleting its route file, feature module, navigation entries, quick links, stack registration, and route skeleton on both surfaces. Never leave either app pointing at a route or feature the other one deleted.
+- Keep destination sets, labels, and shared copy aligned. Translation catalogs are generator-owned; change them through the generator instead of editing one app's copy by hand.
+- Skip the mobile side only when the change is inherently platform-specific, such as a DOM-only primitive, a browser API, a CSS cursor or hover rule, a Base UI accessibility fix, or a native-only capability. State the reason in the pull request or final report.
+- Verify both apps with their own format, typecheck, lint, test, and build gates before reporting the work complete.
+
 ## Dependency security
 
 `bun run install:verified` and `bun run install:bootstrap` automatically apply compatible security fixes that satisfy the release-age and integrity policy, then verify the installed graph. `ghostinit upgrade` also repairs dependencies unless `--no-install` is explicit.

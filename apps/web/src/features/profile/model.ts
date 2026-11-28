@@ -12,8 +12,6 @@ export const PROFILE_QUICK_LINKS = [
   { key: "dashboard", href: "/dashboard" },
   { key: "agent", href: "/agent" },
   { key: "billing", href: "/settings/billing" },
-  { key: "storage", href: "/storage" },
-  { key: "pdf", href: "/pdf" },
   { key: "settings", href: "/settings" },
   { key: "workspace", href: "/settings/workspace" },
 ] as const;

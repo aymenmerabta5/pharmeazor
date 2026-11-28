@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "registry": "https://registry.npmjs.org",
   "minimumReleaseAgeSeconds": 604800,
-  "auditedAt": "2026-11-25T11:27:45.616Z",
-  "lockSha256": "ed9219cbbb574502af646fda6e5f66152223cbd4c4c2c4ec1f033f32dd0f935b",
+  "auditedAt": "2026-11-28T13:14:24.671Z",
+  "lockSha256": "08734fd5884d7a2a86bce8f79f187a1093cd806f140fa6cda163ecacf4e4ae52",
   "releases": [
     {
       "package": "@ai-sdk/gateway",
@@ -2898,6 +2898,54 @@
       "integrity": "sha512-oELmoyA6ML9jDRMV3kgcMQFKxUfBU0yFVn6yTctVaLT5ygXnxH52I3TZEgV9EhXJC68/uFvE5Daj1/25c0Xa/A=="
     },
     {
+      "package": "@shikijs/core",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:35:36.956Z",
+      "integrity": "sha512-bfd4OKgvoyXYiYmMRuleA656P4V7M/Du9lcTl38Ngm6KszMj7bq4J1IGZwSYR4c95Tv5UQALtYNWUwaI9UT3xw=="
+    },
+    {
+      "package": "@shikijs/engine-javascript",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:34:22.264Z",
+      "integrity": "sha512-K0oqxFoL+kEMdz89mHLFO15Tsbv3kFZ6WR1cXZKMvLSc+oqaM00A6pyga1qSeXB22dP0tTiSApRcGBaKWsEccg=="
+    },
+    {
+      "package": "@shikijs/engine-oniguruma",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:35:30.239Z",
+      "integrity": "sha512-aggd6Q7SuJOXNnsUbfG2XesxBJKBMAw/PDTUo9PyRjMaaJJ2dNrI+q0C+25ARXAK9yLHAlwxc9oRT2u68YKZ7w=="
+    },
+    {
+      "package": "@shikijs/langs",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:34:34.037Z",
+      "integrity": "sha512-1yMEX3oCVV54LUq/ovfpRkDQoYDkcvjSWFFa/YLUDMiSoRzMi2uxLJYbv41ahT8Lu9lFMaa7hecd3Q39trqUyg=="
+    },
+    {
+      "package": "@shikijs/primitive",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:34:26.601Z",
+      "integrity": "sha512-c54+TQEo9ToqgfL/AU8FpjnV09+GA9Oa7M5ROkkXteZfp5XzpAJGXjjvZQFQioJOwm/w/6Z3lIzQstAkl8coag=="
+    },
+    {
+      "package": "@shikijs/themes",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:33:50.305Z",
+      "integrity": "sha512-qHAVAs80RiGD+IRuH9G+JPDOEc9A/kHsng4EzCUCwB9bLzW6Z0y9WETh2YyCcADJBmfrIaJ1Jp7KBNP6FHkgtQ=="
+    },
+    {
+      "package": "@shikijs/types",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:33:26.188Z",
+      "integrity": "sha512-+ENG1adsKt/X7cRYw1Nl7BEpBmPOjmQ7bR/eGmHuMlT8gtOFf3KEi5l31DJYyAWhW6Y6bjP1plU7FmaxWGENFw=="
+    },
+    {
+      "package": "@shikijs/vscode-textmate",
+      "version": "10.1.0",
+      "publishedAt": "2026-10-20T01:40:31.903Z",
+      "integrity": "sha512-cVBuhDQjBZaNMTwBquYfPydrUP+E3hE6oYGasx8h6ZrODIM7/r+gxLDXdd66oszbrggZHEntdE6j+5gYIVyMWQ=="
+    },
+    {
       "package": "@simplewebauthn/browser",
       "version": "13.3.0",
       "publishedAt": "2026-03-10T05:55:51.036Z",
@@ -2974,6 +3022,12 @@
       "version": "0.3.0",
       "publishedAt": "2024-11-27T23:21:14.935Z",
       "integrity": "sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g=="
+    },
+    {
+      "package": "@streamdown/code",
+      "version": "2.0.1",
+      "publishedAt": "2026-11-17T13:12:59.027Z",
+      "integrity": "sha512-7CVujSN7++vwC7ipvWYpMf8WFZjaNtDHd6RGnC0yNsbRQ11nOkfpr+fZOhJmI+kxWk+K9F5Bcjm4b5jLEbsnDQ=="
     },
     {
       "package": "@swc/core",
@@ -3420,10 +3474,34 @@
       "integrity": "sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw=="
     },
     {
+      "package": "@types/debug",
+      "version": "4.1.13",
+      "publishedAt": "2026-03-19T06:47:23.938Z",
+      "integrity": "sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw=="
+    },
+    {
+      "package": "@types/estree",
+      "version": "1.0.11",
+      "publishedAt": "2026-11-25T04:05:12.263Z",
+      "integrity": "sha512-YBdNe5JcjYR0sPhJW1QIeRCmI11YhYvaRuGCs9+WCeTTb+Yhb2BE2XMe5/wAqF10FK5g3+q1PDhQABfT7aX0gg=="
+    },
+    {
+      "package": "@types/estree-jsx",
+      "version": "1.0.5",
+      "publishedAt": "2024-02-23T02:11:41.791Z",
+      "integrity": "sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg=="
+    },
+    {
       "package": "@types/hammerjs",
       "version": "2.0.46",
       "publishedAt": "2024-10-07T22:09:53.557Z",
       "integrity": "sha512-ynRvcq6wvqexJ9brDMS4BnBLzmr0e14d6ZJTEShTBWKymQiHwlAyGu0ZPEFI2Fh1U53F7tN9ufClWM5KvqkKOw=="
+    },
+    {
+      "package": "@types/hast",
+      "version": "3.0.5",
+      "publishedAt": "2026-07-09T11:00:14.068Z",
+      "integrity": "sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g=="
     },
     {
       "package": "@types/istanbul-lib-coverage",
@@ -3442,6 +3520,18 @@
       "version": "3.0.4",
       "publishedAt": "2023-11-07T08:11:26.604Z",
       "integrity": "sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ=="
+    },
+    {
+      "package": "@types/mdast",
+      "version": "4.0.4",
+      "publishedAt": "2024-05-14T07:35:37.616Z",
+      "integrity": "sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA=="
+    },
+    {
+      "package": "@types/ms",
+      "version": "2.1.0",
+      "publishedAt": "2025-01-16T21:02:46.181Z",
+      "integrity": "sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA=="
     },
     {
       "package": "@types/node",
@@ -3496,6 +3586,18 @@
       "version": "2.0.7",
       "publishedAt": "2023-11-21T01:13:25.434Z",
       "integrity": "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="
+    },
+    {
+      "package": "@types/unist",
+      "version": "2.0.11",
+      "publishedAt": "2024-08-15T02:19:24.090Z",
+      "integrity": "sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA=="
+    },
+    {
+      "package": "@types/unist",
+      "version": "3.0.3",
+      "publishedAt": "2024-08-15T02:19:16.553Z",
+      "integrity": "sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q=="
     },
     {
       "package": "@types/use-sync-external-store",
@@ -3882,6 +3984,12 @@
       "integrity": "sha512-CNz//B1Ixu+A8SGhwtr86dnhIzPTJ84btxKBsdS9X4HRVYHTq3Lge6S5BArY43KCBlr5nz71bN0WGmfsxZZrqw=="
     },
     {
+      "package": "bail",
+      "version": "2.0.2",
+      "publishedAt": "2021-11-07T08:39:23.227Z",
+      "integrity": "sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw=="
+    },
+    {
       "package": "balanced-match",
       "version": "4.0.4",
       "publishedAt": "2026-02-22T11:38:25.951Z",
@@ -4014,6 +4122,12 @@
       "integrity": "sha512-wTB+9tIbLro/BCXwLuNV1meHE4L9dS6dArMDwgYfNBPMYScqClHyGunhkCSDtHhe/69Xl0sHlKgBVZ+fNsYtWA=="
     },
     {
+      "package": "ccount",
+      "version": "2.0.1",
+      "publishedAt": "2021-10-28T09:38:13.774Z",
+      "integrity": "sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg=="
+    },
+    {
       "package": "chalk",
       "version": "2.4.2",
       "publishedAt": "2019-01-05T15:45:52.349Z",
@@ -4024,6 +4138,30 @@
       "version": "4.1.2",
       "publishedAt": "2021-07-30T12:02:52.839Z",
       "integrity": "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="
+    },
+    {
+      "package": "character-entities",
+      "version": "2.0.2",
+      "publishedAt": "2022-06-22T14:01:06.906Z",
+      "integrity": "sha512-shx7oQ0Awen/BRIdkjkvz54PnEEI/EjwXDSIZp86/KKdbafHh1Df/RYGBhn4hbe2+uKC9FnT5UCEdyPz3ai9hQ=="
+    },
+    {
+      "package": "character-entities-html4",
+      "version": "2.1.0",
+      "publishedAt": "2021-10-29T14:28:35.375Z",
+      "integrity": "sha512-1v7fgQRj6hnSwFpq1Eu0ynr/CDEw0rXo2B61qXrLNdHZmPKgb7fqS1a2JwF0rISo9q77jDI8VMEHoApn8qDoZA=="
+    },
+    {
+      "package": "character-entities-legacy",
+      "version": "3.0.0",
+      "publishedAt": "2021-10-29T12:50:20.435Z",
+      "integrity": "sha512-RpPp0asT/6ufRm//AJVwpViZbGM/MkjQFxJccQRHmISF/22NBtsHqAWmL+/pmkPWoIUJdWyeVleTl1wydHATVQ=="
+    },
+    {
+      "package": "character-reference-invalid",
+      "version": "2.0.1",
+      "publishedAt": "2021-10-27T16:35:51.866Z",
+      "integrity": "sha512-iBZ4F4wRbyORVsu0jPV7gXkOsGYjGHPmAyv+HiHG8gi5PtC9KI2j1+v8/tlibRvjoWX027ypmG/n0HtO5t7unw=="
     },
     {
       "package": "chokidar",
@@ -4162,6 +4300,12 @@
       "version": "2.1.4",
       "publishedAt": "2025-11-15T16:35:04.631Z",
       "integrity": "sha512-Bb6Cq8oq0IjDOe8wJmi4JeNn763Xs9cfrBcaylK1tPypWzyoy2G3l90v9k64kjphl/ZJjPIShFztenRomi8WTg=="
+    },
+    {
+      "package": "comma-separated-tokens",
+      "version": "2.0.3",
+      "publishedAt": "2022-11-14T09:09:04.761Z",
+      "integrity": "sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg=="
     },
     {
       "package": "commander",
@@ -4398,6 +4542,12 @@
       "integrity": "sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg=="
     },
     {
+      "package": "decode-named-character-reference",
+      "version": "1.3.0",
+      "publishedAt": "2026-01-19T19:53:01.619Z",
+      "integrity": "sha512-GtpQYB283KrPp6nRw50q3U9/VfOutZOe103qlN7BPP6Ad27xYnOIWv4lPzo8HCAL+mMZofJ9KEy30fq6MfaK6Q=="
+    },
+    {
       "package": "decode-uri-component",
       "version": "0.5.1",
       "publishedAt": "2026-10-23T12:48:46.830Z",
@@ -4434,6 +4584,12 @@
       "integrity": "sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw=="
     },
     {
+      "package": "dequal",
+      "version": "2.0.3",
+      "publishedAt": "2022-07-11T23:29:04.965Z",
+      "integrity": "sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA=="
+    },
+    {
       "package": "destroy",
       "version": "1.2.0",
       "publishedAt": "2022-03-20T19:03:12.452Z",
@@ -4450,6 +4606,12 @@
       "version": "1.1.0",
       "publishedAt": "2021-03-18T00:59:32.365Z",
       "integrity": "sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ=="
+    },
+    {
+      "package": "devlop",
+      "version": "1.1.0",
+      "publishedAt": "2023-06-29T15:17:11.346Z",
+      "integrity": "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="
     },
     {
       "package": "dfa",
@@ -4584,6 +4746,12 @@
       "integrity": "sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA=="
     },
     {
+      "package": "entities",
+      "version": "9.0.0",
+      "publishedAt": "2026-10-29T00:08:15.446Z",
+      "integrity": "sha512-oJFNDJg3kTPwAD1cNn2+WmUq4wFoo09npc3Ydf1D7ED4smRiWrsKnaLxykrTWgyGEcusc87P5dxlAleol9kpkg=="
+    },
+    {
       "package": "env-paths",
       "version": "3.0.0",
       "publishedAt": "2021-08-27T20:16:10.424Z",
@@ -4660,6 +4828,12 @@
       "version": "5.0.0",
       "publishedAt": "2021-04-17T15:45:50.334Z",
       "integrity": "sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw=="
+    },
+    {
+      "package": "estree-util-is-identifier-name",
+      "version": "3.0.0",
+      "publishedAt": "2023-07-19T10:26:42.216Z",
+      "integrity": "sha512-hFtqIDZTIUZ9BXLb8y4pYGyk6+wekIivNVTcmvk8NoOh+VeRn5y6cEHzbURrWbfp1fIqdVipilzj+lfaadNZmg=="
     },
     {
       "package": "etag",
@@ -4834,6 +5008,12 @@
       "version": "3.1.3",
       "publishedAt": "2025-10-10T23:10:07.816Z",
       "integrity": "sha512-ZgEeZXj30q+I0EN+CbSSpIyPaJ5HVQD18Z1m+u1FXbAeT94mr1zw50q4q6jiiC447Nl/YTcIYSAftiGqetwXCA=="
+    },
+    {
+      "package": "extend",
+      "version": "3.0.2",
+      "publishedAt": "2018-07-19T20:28:11.447Z",
+      "integrity": "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g=="
     },
     {
       "package": "fast-deep-equal",
@@ -5064,6 +5244,60 @@
       "integrity": "sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A=="
     },
     {
+      "package": "hast-util-from-parse5",
+      "version": "8.0.4",
+      "publishedAt": "2026-10-29T20:17:27.845Z",
+      "integrity": "sha512-Yq7XlXor0Cpb71sI2E0zpv8QxQ5a6rfhDEETk4bcgrFX2SvJAY2PHocWwFtL6U9qyfiyByW3wZ6sZEfP2kW81g=="
+    },
+    {
+      "package": "hast-util-parse-selector",
+      "version": "4.0.0",
+      "publishedAt": "2023-08-01T11:57:16.332Z",
+      "integrity": "sha512-wkQCkSYoOGCRKERFWcxMVMOcYE2K1AaNLU8DXS9arxnLOUEWbOXKXiJUNzEpqZ3JOKpnha3jkFrumEjVliDe7A=="
+    },
+    {
+      "package": "hast-util-raw",
+      "version": "9.2.1",
+      "publishedAt": "2026-11-18T15:43:40.175Z",
+      "integrity": "sha512-8P0PLAr5C7xCRb+tkhUTV4v6OSNcnccKwjBkH/r19R5CkVCgTWlv4vmTkxFH1CVCA2UJOvOPQdBBMC3c6qnuOg=="
+    },
+    {
+      "package": "hast-util-sanitize",
+      "version": "5.0.2",
+      "publishedAt": "2024-10-25T13:36:27.148Z",
+      "integrity": "sha512-3yTWghByc50aGS7JlGhk61SPenfE/p1oaFeNwkOOyrscaOkMGrcW9+Cy/QAIOBpZxP1yqDIzFMR0+Np0i0+usg=="
+    },
+    {
+      "package": "hast-util-to-html",
+      "version": "9.0.7",
+      "publishedAt": "2026-11-18T16:25:07.155Z",
+      "integrity": "sha512-HYNDA3qdnzUPitY/LcQm1nWs8z0cWFNH1Nz09jdI/tXifAqF7h3+jrLl4S/b9Mi4VSjn0Dsn54ctuTV6zhBthA=="
+    },
+    {
+      "package": "hast-util-to-jsx-runtime",
+      "version": "2.3.7",
+      "publishedAt": "2026-10-30T09:55:07.705Z",
+      "integrity": "sha512-F7DNV2NMcTxA4GqPVHnXzX+mpoPHAIY9rJAVH3CZ1FdBZOcBUEjUuvMkMpHVs/sicEtznh9tMGj5WUR9S4E2rg=="
+    },
+    {
+      "package": "hast-util-to-parse5",
+      "version": "8.0.1",
+      "publishedAt": "2025-12-04T16:34:30.916Z",
+      "integrity": "sha512-MlWT6Pjt4CG9lFCjiz4BH7l9wmrMkfkJYCxFwKQic8+RTZgWPuWxwAfjJElsXkex7DJjfSJsQIt931ilUgmwdA=="
+    },
+    {
+      "package": "hast-util-whitespace",
+      "version": "3.0.0",
+      "publishedAt": "2023-07-31T15:52:12.042Z",
+      "integrity": "sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw=="
+    },
+    {
+      "package": "hastscript",
+      "version": "9.0.3",
+      "publishedAt": "2026-10-30T09:32:56.635Z",
+      "integrity": "sha512-1ALZXSmCGmW3h8AMz4R4+QKSKFi7sNgXLVwmwB8FYVtl1CwQ3WDkSAEY/d5tp1g/vbQgq2s1WlHgfO3jbw1TsA=="
+    },
+    {
       "package": "hermes-compiler",
       "version": "250829098.0.17",
       "publishedAt": "2026-08-21T10:58:29.501Z",
@@ -5122,6 +5356,18 @@
       "version": "10.0.1",
       "publishedAt": "2026-08-19T17:28:48.390Z",
       "integrity": "sha512-GiVhRI1BatGARSCmlXWNCjDT0cWrwBWoeduLoV0WSKAgaV/wa+hUWy5LiQLUs4UwiUrE52ZCMfBGiKD87TDPrg=="
+    },
+    {
+      "package": "html-url-attributes",
+      "version": "3.0.1",
+      "publishedAt": "2024-09-27T11:49:16.930Z",
+      "integrity": "sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ=="
+    },
+    {
+      "package": "html-void-elements",
+      "version": "3.0.0",
+      "publishedAt": "2023-05-19T10:17:19.335Z",
+      "integrity": "sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg=="
     },
     {
       "package": "html5parser",
@@ -5196,6 +5442,12 @@
       "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ=="
     },
     {
+      "package": "inline-style-parser",
+      "version": "0.2.9",
+      "publishedAt": "2026-07-06T05:20:11.679Z",
+      "integrity": "sha512-IttN8BqKLxzUrnTqHI+/hwAJQItBAUjdoHERCDv+oOuX48VP6bzW8+QjOXSfoevzq3YrYAwX1uLHp8TqO9yIeg=="
+    },
+    {
       "package": "inline-style-prefixer",
       "version": "7.0.1",
       "publishedAt": "2024-07-04T12:38:39.696Z",
@@ -5220,6 +5472,18 @@
       "integrity": "sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA=="
     },
     {
+      "package": "is-alphabetical",
+      "version": "2.0.1",
+      "publishedAt": "2021-11-04T06:50:31.635Z",
+      "integrity": "sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ=="
+    },
+    {
+      "package": "is-alphanumerical",
+      "version": "2.0.1",
+      "publishedAt": "2021-11-04T07:00:42.686Z",
+      "integrity": "sha512-hmbYhX/9MUMF5uh7tOXyK/n0ZvWpad5caBA17GsC6vyuCqaWliRG5K1qS9inmUhEMaOBIW7/whAnSwveW/LtZw=="
+    },
+    {
       "package": "is-arrayish",
       "version": "0.3.4",
       "publishedAt": "2025-09-13T16:44:23.359Z",
@@ -5230,6 +5494,12 @@
       "version": "2.18.0",
       "publishedAt": "2026-11-03T17:45:46.799Z",
       "integrity": "sha512-qyax9fgaKOEC4qK8WZn7Q4IcoZC9RC1O1fFxRcRTq/oMMkWT/uXpqpXa12kzWR409zAt1drYN9N9BO26UmBCmw=="
+    },
+    {
+      "package": "is-decimal",
+      "version": "2.0.1",
+      "publishedAt": "2021-11-04T06:55:58.815Z",
+      "integrity": "sha512-AAB9hiomQs5DXWcRB1rqsxGUstbRroFOPPVAomNk/3XHR5JyEZChOyTWe2oayKnsSsr/kcGqF+z6yuH6HHpN0A=="
     },
     {
       "package": "is-docker",
@@ -5256,6 +5526,12 @@
       "integrity": "sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg=="
     },
     {
+      "package": "is-hexadecimal",
+      "version": "2.0.1",
+      "publishedAt": "2021-11-04T07:17:07.036Z",
+      "integrity": "sha512-DgZQp241c8oO6cA1SbTEWiXeoxV42vlcJxgH+B3hi1AiqqKruZR3ZGF8In3fj4+/y/7rHvlOZLZtgJ/4ttYGZg=="
+    },
+    {
       "package": "is-number",
       "version": "7.0.0",
       "publishedAt": "2018-07-04T15:08:58.238Z",
@@ -5266,6 +5542,12 @@
       "version": "2.1.0",
       "publishedAt": "2020-01-21T10:34:34.331Z",
       "integrity": "sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA=="
+    },
+    {
+      "package": "is-plain-obj",
+      "version": "4.1.0",
+      "publishedAt": "2022-06-15T15:47:13.746Z",
+      "integrity": "sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg=="
     },
     {
       "package": "is-stream",
@@ -5688,6 +5970,12 @@
       "integrity": "sha512-ja1E3yCr9i/0hmBVaM0bfwDjnGy8I/s6PP4DFp+yP+a+mrHO4Rm7DtmnqROTUkHIkqffC84YY7AeqX6oFk0WFg=="
     },
     {
+      "package": "longest-streak",
+      "version": "3.1.0",
+      "publishedAt": "2022-11-15T12:13:29.629Z",
+      "integrity": "sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g=="
+    },
+    {
       "package": "loose-envify",
       "version": "1.4.0",
       "publishedAt": "2018-07-10T11:09:45.917Z",
@@ -5736,16 +6024,118 @@
       "integrity": "sha512-JmqCvUhmt43madlpFzG4BQzG2Z3m6tvQDNKdClZnO3VbIudJYmxsT0FNJMeiB2+JTSlTQTSbU8QdesVmwJcmLg=="
     },
     {
+      "package": "markdown-table",
+      "version": "3.1.0",
+      "publishedAt": "2026-11-03T19:42:56.330Z",
+      "integrity": "sha512-xpeSCdM+B+6P3ncfgaB7FoDbtJ30xAe6Z18TGT7AgXJsHqCElCICZovQqdRMm7kHgpTyYv36EupqewoFFSB8vw=="
+    },
+    {
       "package": "marked",
       "version": "15.0.12",
       "publishedAt": "2025-05-20T05:03:10.728Z",
       "integrity": "sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA=="
     },
     {
+      "package": "marked",
+      "version": "18.3.0",
+      "publishedAt": "2026-11-24T02:52:39.598Z",
+      "integrity": "sha512-ed8zmPXlBb3UfGXN5iHMQyMhFpdqLgoV5umUXx/Q1R+FW3q8VpqpyoKUwlENL9appo2UMvNLURDVaT3AMOryGA=="
+    },
+    {
       "package": "marky",
       "version": "1.3.0",
       "publishedAt": "2025-04-13T19:45:08.934Z",
       "integrity": "sha512-ocnPZQLNpvbedwTy9kNrQEsknEfgvcLMvOtz3sFeWApDq1MXH1TqkCIx58xlpESsfwQOnuBO9beyQuNGzVvuhQ=="
+    },
+    {
+      "package": "mdast-util-find-and-replace",
+      "version": "3.0.5",
+      "publishedAt": "2026-11-20T09:55:41.325Z",
+      "integrity": "sha512-of3wZLEBWpK8mSYy8wmKnwyxfUKjhCkXxGLz45DVBqfcahTP37LscCK+0oAZh+ReZ5OunPDkB2zdGMIxrojLhw=="
+    },
+    {
+      "package": "mdast-util-from-markdown",
+      "version": "2.1.0",
+      "publishedAt": "2026-10-03T13:54:10.858Z",
+      "integrity": "sha512-KRLgmPaP2H1ul2bpoJkOS+9pAcDAAj9Nu1mqLnh8NLeJG5tlvj42TH80PIGBpROWlRXLk0lDrWNuZCFy/tsB4A=="
+    },
+    {
+      "package": "mdast-util-gfm",
+      "version": "3.1.0",
+      "publishedAt": "2025-02-10T12:33:52.269Z",
+      "integrity": "sha512-0ulfdQOM3ysHhCJ1p06l0b0VKlhU0wuQs3thxZQagjcjPrlFRqY215uZGHHJan9GEAXd9MbfPjFJz+qMkVR6zQ=="
+    },
+    {
+      "package": "mdast-util-gfm-autolink-literal",
+      "version": "2.1.2",
+      "publishedAt": "2026-11-20T12:22:44.048Z",
+      "integrity": "sha512-rAlbZBGZfv2YRr6lSFGHTN305KkNawOYRRlbldFyPHnTlHJZwlGdzVwyIDvr3fxbhRbmJOSZc06c8H5Fgfu8Ng=="
+    },
+    {
+      "package": "mdast-util-gfm-footnote",
+      "version": "2.1.0",
+      "publishedAt": "2025-02-10T11:52:23.193Z",
+      "integrity": "sha512-sqpDWlsHn7Ac9GNZQMeUzPQSMzR6Wv0WKRNvQRg0KqHh02fpTz69Qc1QSseNX29bhz1ROIyNyxExfawVKTm1GQ=="
+    },
+    {
+      "package": "mdast-util-gfm-strikethrough",
+      "version": "2.0.1",
+      "publishedAt": "2026-09-27T14:32:45.456Z",
+      "integrity": "sha512-OuJHqvr455pwu2OaOrir7dbzqs4jlWKOtlu9L6GjcIjjQwNyw02VntQsr/Ek6/A13vgnXfUhBekWRUP1OkNivw=="
+    },
+    {
+      "package": "mdast-util-gfm-table",
+      "version": "2.0.1",
+      "publishedAt": "2026-11-03T20:05:09.360Z",
+      "integrity": "sha512-fiIjPrAy4kz68/eFbPHhsiWDGHhqUSVoU1XsfLM5DsEPXw7MxgiVVyulUggFRckVWeT1KXQXkg5vm3kv4oMSOA=="
+    },
+    {
+      "package": "mdast-util-gfm-task-list-item",
+      "version": "2.0.1",
+      "publishedAt": "2026-11-06T12:06:37.571Z",
+      "integrity": "sha512-jXVO1hvB2hs82g1esi7I9nIJDqiijbQLIyH2jDUb5s7jIAZMr/79h0VHSq7XHKTqpLARRm+DDNjduB7S9+6XZA=="
+    },
+    {
+      "package": "mdast-util-mdx-expression",
+      "version": "2.0.1",
+      "publishedAt": "2024-09-13T10:36:30.801Z",
+      "integrity": "sha512-J6f+9hUp+ldTZqKRSg7Vw5V6MqjATc+3E4gf3CFNcuZNWD8XdyI6zQ8GqH7f8169MM6P7hMBRDVGnn7oHB9kXQ=="
+    },
+    {
+      "package": "mdast-util-mdx-jsx",
+      "version": "3.2.2",
+      "publishedAt": "2026-11-20T10:16:15.101Z",
+      "integrity": "sha512-/0FHaZMv2fSjIL3z/NYmXnQTSdzYyamPpI1BXpSCngTUqpSvMNIlERa26ABz+Z6UFQbrh3I5Yhzp448WZsPfMA=="
+    },
+    {
+      "package": "mdast-util-mdxjs-esm",
+      "version": "2.0.1",
+      "publishedAt": "2023-08-08T10:13:47.344Z",
+      "integrity": "sha512-EcmOpxsZ96CvlP03NghtH1EsLtr0n9Tm4lPUJUBccV9RwUOneqSycg19n5HGzCf+10LozMRSObtVr3ee1WoHtg=="
+    },
+    {
+      "package": "mdast-util-phrasing",
+      "version": "4.1.0",
+      "publishedAt": "2024-02-01T10:26:42.249Z",
+      "integrity": "sha512-TqICwyvJJpBwvGAMZjj4J2n0X8QWp21b9l0o7eXyVJ25YNWYbJDVIyD1bZXE6WtV6RmKJVYmQAKWa0zWOABz2w=="
+    },
+    {
+      "package": "mdast-util-to-hast",
+      "version": "13.2.2",
+      "publishedAt": "2026-11-13T12:35:32.398Z",
+      "integrity": "sha512-l2pnmOuqs+SGLVpTVXnRLQu5v1AzvDe181404fbXzzqObVxrAnnVxapAP27pUwzLBL/ABIkgUhGlPVU7QSvIFg=="
+    },
+    {
+      "package": "mdast-util-to-markdown",
+      "version": "2.2.5",
+      "publishedAt": "2026-11-27T12:03:04.981Z",
+      "integrity": "sha512-mxOMQQ8NgisvTarkSUqZwi6GmzNo490V932DpEK/0+OETIeVJBzq4QuMt45fqqcsF5EYMlJENjSSAZxh89VJsg=="
+    },
+    {
+      "package": "mdast-util-to-string",
+      "version": "4.0.0",
+      "publishedAt": "2023-07-07T16:19:50.488Z",
+      "integrity": "sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg=="
     },
     {
       "package": "mdn-data",
@@ -5962,6 +6352,180 @@
       "version": "0.87.3",
       "publishedAt": "2026-11-04T21:56:18.572Z",
       "integrity": "sha512-XchqDAB4g1tImWOuEqHOvSMqIA4ZS1vNy38r8+vU+RvPDz9kva0oYa1S06/RDlYT0xqogQekBNA1n7/rWWzWFw=="
+    },
+    {
+      "package": "micromark",
+      "version": "4.0.3",
+      "publishedAt": "2026-09-26T15:43:36.558Z",
+      "integrity": "sha512-oGYfQzHSG5dOMovQcJ3fyTmZlWAWpi0XA0sJwJs+i6OT88o1+Jtw/8z0CmdowSLxGhhFK89rQ/oXph/wN02PNw=="
+    },
+    {
+      "package": "micromark-core-commonmark",
+      "version": "2.0.4",
+      "publishedAt": "2026-09-26T15:42:42.893Z",
+      "integrity": "sha512-wxEeE8v8XVvOrxn1TZj74qYhAtTQsSqufHVS3uNVyT1MupXxhyaHk8/9xDNPh9BmL77QNDgWTkZ3RsYHB2ry7w=="
+    },
+    {
+      "package": "micromark-extension-gfm",
+      "version": "3.0.0",
+      "publishedAt": "2023-06-26T17:08:15.954Z",
+      "integrity": "sha512-vsKArQsicm7t0z2GugkCKtZehqUm31oeGBV/KVSorWSy8ZlNAv7ytjFhvaryUiCUJYqs+NoE6AFhpQvBTM6Q4w=="
+    },
+    {
+      "package": "micromark-extension-gfm-autolink-literal",
+      "version": "2.1.0",
+      "publishedAt": "2024-07-05T12:07:39.754Z",
+      "integrity": "sha512-oOg7knzhicgQ3t4QCjCWgTmfNhvQbDDnJeVu9v81r7NltNCVmhPy1fJRX27pISafdjL+SVc4d3l48Gb6pbRypw=="
+    },
+    {
+      "package": "micromark-extension-gfm-footnote",
+      "version": "2.1.0",
+      "publishedAt": "2024-07-05T12:22:49.339Z",
+      "integrity": "sha512-/yPhxI1ntnDNsiHtzLKYnE3vf9JZ6cAisqVDauhp4CEHxlb4uoOTxOCJ+9s51bIB8U1N1FJ1RXOKTIlD5B/gqw=="
+    },
+    {
+      "package": "micromark-extension-gfm-strikethrough",
+      "version": "2.1.0",
+      "publishedAt": "2024-07-05T09:35:26.227Z",
+      "integrity": "sha512-ADVjpOOkjz1hhkZLlBiYA9cR2Anf8F4HqZUO6e5eDcPQd0Txw5fxLzzxnEkSkfnD0wziSGiv7sYhk/ktvbf1uw=="
+    },
+    {
+      "package": "micromark-extension-gfm-table",
+      "version": "2.1.2",
+      "publishedAt": "2026-09-11T14:20:25.808Z",
+      "integrity": "sha512-pRzm4kDTu0MjlmBkxmS9yYhw60nncfcEwu9NNdPFSQEFXS95ZKyIIyTSHu/o3ReBUrLKYEq+7YaXCRn/bPB4MA=="
+    },
+    {
+      "package": "micromark-extension-gfm-tagfilter",
+      "version": "2.0.0",
+      "publishedAt": "2023-06-23T11:00:35.241Z",
+      "integrity": "sha512-xHlTOmuCSotIA8TW1mDIM6X2O1SiX5P9IuDtqGonFhEK0qgRI4yeC6vMxEV2dgyr2TiD+2PQ10o+cOhdVAcwfg=="
+    },
+    {
+      "package": "micromark-extension-gfm-task-list-item",
+      "version": "2.1.0",
+      "publishedAt": "2024-07-05T09:49:50.922Z",
+      "integrity": "sha512-qIBZhqxqI6fjLDYFTBIa4eivDMnP+OZqsNwmQ3xNLE4Cxwc+zfQEfbs6tzAo2Hjq+bh6q5F+Z8/cksrLFYWQQw=="
+    },
+    {
+      "package": "micromark-factory-destination",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:16:55.545Z",
+      "integrity": "sha512-Xe6rDdJlkmbFRExpTOmRj9N3MaWmbAgdpSrBQvCFqhezUn4AHqJHbaEnfbVYYiexVSs//tqOdY/DxhjdCiJnIA=="
+    },
+    {
+      "package": "micromark-factory-label",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:16:59.169Z",
+      "integrity": "sha512-VFMekyQExqIW7xIChcXn4ok29YE3rnuyveW3wZQWWqF4Nv9Wk5rgJ99KzPvHjkmPXF93FXIbBp6YdW3t71/7Vg=="
+    },
+    {
+      "package": "micromark-factory-space",
+      "version": "2.1.0",
+      "publishedAt": "2026-09-26T15:42:21.608Z",
+      "integrity": "sha512-fS8hnLIjnjvdQIj39Geug8wWsR0HrYZ43KShKxNfwT7t2LOHo/LbWZEzEaSOjwtjdCsjoE6syHhonEzW0zv0+Q=="
+    },
+    {
+      "package": "micromark-factory-title",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:06.622Z",
+      "integrity": "sha512-5bZ+3CjhAd9eChYTHsjy6TGxpOFSKgKKJPJxr293jTbfry2KDoWkhBb6TcPVB4NmzaPhMs1Frm9AZH7OD4Cjzw=="
+    },
+    {
+      "package": "micromark-factory-whitespace",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:10.261Z",
+      "integrity": "sha512-Ob0nuZ3PKt/n0hORHyvoD9uZhr+Za8sFoP+OnMcnWK5lngSzALgQYKMr9RJVOWLqQYuyn6ulqGWSXdwf6F80lQ=="
+    },
+    {
+      "package": "micromark-util-character",
+      "version": "2.1.1",
+      "publishedAt": "2024-11-12T11:17:13.750Z",
+      "integrity": "sha512-wv8tdUTJ3thSFFFJKtpYKOYiGP2+v96Hvk4Tu8KpCAsTMs6yi+nVmGh1syvSCsaxz45J6Jbw+9DD6g97+NV67Q=="
+    },
+    {
+      "package": "micromark-util-chunked",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:17.117Z",
+      "integrity": "sha512-QUNFEOPELfmvv+4xiNg2sRYeS/P84pTW0TCgP5zc9FpXetHY0ab7SxKyAQCNCc1eK0459uoLI1y5oO5Vc1dbhA=="
+    },
+    {
+      "package": "micromark-util-classify-character",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:20.461Z",
+      "integrity": "sha512-K0kHzM6afW/MbeWYWLjoHQv1sgg2Q9EccHEDzSkxiP/EaagNzCm7T/WMKZ3rjMbvIpvBiZgwR3dKMygtA4mG1Q=="
+    },
+    {
+      "package": "micromark-util-combine-extensions",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:23.680Z",
+      "integrity": "sha512-OnAnH8Ujmy59JcyZw8JSbK9cGpdVY44NKgSM7E9Eh7DiLS2E9RNQf0dONaGDzEG9yjEl5hcqeIsj4hfRkLH/Bg=="
+    },
+    {
+      "package": "micromark-util-decode-numeric-character-reference",
+      "version": "2.0.2",
+      "publishedAt": "2024-11-12T11:17:27.210Z",
+      "integrity": "sha512-ccUbYk6CwVdkmCQMyr64dXz42EfHGkPQlBj5p7YVGzq8I7CtjXZJrubAYezf7Rp+bjPseiROqe7G6foFd+lEuw=="
+    },
+    {
+      "package": "micromark-util-decode-string",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:30.843Z",
+      "integrity": "sha512-nDV/77Fj6eH1ynwscYTOsbK7rR//Uj0bZXBwJZRfaLEJ1iGBR6kIfNmlNqaqJf649EP0F3NWNdeJi03elllNUQ=="
+    },
+    {
+      "package": "micromark-util-edit-map",
+      "version": "1.0.0",
+      "publishedAt": "2026-09-26T15:38:17.088Z",
+      "integrity": "sha512-Pa2ljlsEL6sVwFaYeyrOLSYbQt73JvGbPOYFq+9AElXiSnfI5Q4465RRZ1sHv7lDjDOnGRDDaqPXqClqWK/q1Q=="
+    },
+    {
+      "package": "micromark-util-encode",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:34.206Z",
+      "integrity": "sha512-c3cVx2y4KqUnwopcO9b/SCdo2O67LwJJ/UyqGfbigahfegL9myoEFoDYZgkT7f36T0bLrM9hZTAaAyH+PCAXjw=="
+    },
+    {
+      "package": "micromark-util-html-tag-name",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:37.806Z",
+      "integrity": "sha512-2cNEiYDhCWKI+Gs9T0Tiysk136SnR13hhO8yW6BGNyhOC4qYFnwF1nKfD3HFAIXA5c45RrIG1ub11GiXeYd1xA=="
+    },
+    {
+      "package": "micromark-util-normalize-identifier",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:41.347Z",
+      "integrity": "sha512-sxPqmo70LyARJs0w2UclACPUUEqltCkJ6PhKdMIDuJ3gSf/Q+/GIe3WKl0Ijb/GyH9lOpUkRAO2wp0GVkLvS9Q=="
+    },
+    {
+      "package": "micromark-util-resolve-all",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:45.019Z",
+      "integrity": "sha512-VdQyxFWFT2/FGJgwQnJYbe1jjQoNTS4RjglmSjTUlpUMa95Htx9NHeYW4rGDJzbjvCsl9eLjMQwGeElsqmzcHg=="
+    },
+    {
+      "package": "micromark-util-sanitize-uri",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:48.745Z",
+      "integrity": "sha512-9N9IomZ/YuGGZZmQec1MbgxtlgougxTodVwDzzEouPKo3qFWvymFHWcnDi2vzV1ff6kas9ucW+o3yzJK9YB1AQ=="
+    },
+    {
+      "package": "micromark-util-subtokenize",
+      "version": "2.1.0",
+      "publishedAt": "2025-02-27T13:48:52.891Z",
+      "integrity": "sha512-XQLu552iSctvnEcgXw6+Sx75GflAPNED1qx7eBJ+wydBb2KCbRZe+NwvIEEMM83uml1+2WSXpBAcp9IUCgCYWA=="
+    },
+    {
+      "package": "micromark-util-symbol",
+      "version": "2.0.1",
+      "publishedAt": "2024-11-12T11:17:55.709Z",
+      "integrity": "sha512-vs5t8Apaud9N28kgCrRUdEed4UJ+wWNvicHLPxCa9ENlYuAY31M0ETy5y1vA33YoNPDFTghEbnh6efaE8h4x0Q=="
+    },
+    {
+      "package": "micromark-util-types",
+      "version": "2.0.3",
+      "publishedAt": "2026-09-26T15:41:21.975Z",
+      "integrity": "sha512-oxB2Ik03hI0gv+VNn9tnh1t1YEe9MDPptViAEgfdf3YQHsn0pzGTgCdlSCJXcwhqm8phaEuM7zeEu3QQzVBrPg=="
     },
     {
       "package": "micromatch",
@@ -6264,6 +6828,18 @@
       "integrity": "sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg=="
     },
     {
+      "package": "oniguruma-parser",
+      "version": "0.12.2",
+      "publishedAt": "2026-04-19T12:52:16.179Z",
+      "integrity": "sha512-6HVa5oIrgMC6aA6WF6XyyqbhRPJrKR02L20+2+zpDtO5QAzGHAUGw5TKQvwi5vctNnRHkJYmjAhRVQF2EKdTQw=="
+    },
+    {
+      "package": "oniguruma-to-es",
+      "version": "4.3.6",
+      "publishedAt": "2026-04-19T13:08:33.973Z",
+      "integrity": "sha512-csuQ9x3Yr0cEIs/Zgx/OEt9iBw9vqIunAPQkx19R/fiMq2oGVTgcMqO/V3Ybqefr1TBvosI6jU539ksaBULJyA=="
+    },
+    {
       "package": "open",
       "version": "7.4.2",
       "publishedAt": "2021-02-16T16:10:37.992Z",
@@ -6330,6 +6906,12 @@
       "integrity": "sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA=="
     },
     {
+      "package": "parse-entities",
+      "version": "4.0.2",
+      "publishedAt": "2024-12-13T11:08:08.736Z",
+      "integrity": "sha512-GG2AQYWoLgL877gQIKeRPGO1xF9+eG1ujIb5soS5gPvLQ1y2o8FL90w2QWNdf9I361Mpp7726c+lj3U0qK1uGw=="
+    },
+    {
       "package": "parse-png",
       "version": "2.1.0",
       "publishedAt": "2019-09-18T13:38:02.885Z",
@@ -6340,6 +6922,12 @@
       "version": "0.1.2",
       "publishedAt": "2016-09-03T22:40:51.190Z",
       "integrity": "sha512-JyPSBnkTJ0AI8GGJLfMXvKq42cj5c006fnLz6fXy6zfoVjJizi8BNTpu8on8ziI1cKy9d9DGNuY17Ce7wuejpQ=="
+    },
+    {
+      "package": "parse5",
+      "version": "8.1.1",
+      "publishedAt": "2026-11-07T21:41:41.804Z",
+      "integrity": "sha512-EcR/6WDcU7b2N3vQSxKALCk9lXGtUMQxXio008OEMBE0kavu/7JLfBEeFPzi43nMqVDSbEn3QCK+BMCc9zO//w=="
     },
     {
       "package": "parseley",
@@ -6636,6 +7224,12 @@
       "integrity": "sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg=="
     },
     {
+      "package": "property-information",
+      "version": "7.2.0",
+      "publishedAt": "2026-06-01T17:35:58.155Z",
+      "integrity": "sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg=="
+    },
+    {
       "package": "pvtsutils",
       "version": "1.3.6",
       "publishedAt": "2024-11-22T12:58:55.915Z",
@@ -6888,6 +7482,24 @@
       "integrity": "sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg=="
     },
     {
+      "package": "regex",
+      "version": "6.1.0",
+      "publishedAt": "2025-12-09T01:33:47.153Z",
+      "integrity": "sha512-6VwtthbV4o/7+OaAF9I5L5V3llLEsoPyq9P1JVXkedTP33c7MfCG0/5NOPcSJn0TzXcG9YUrR0gQSWioew3LDg=="
+    },
+    {
+      "package": "regex-recursion",
+      "version": "6.0.2",
+      "publishedAt": "2025-02-01T00:57:00.191Z",
+      "integrity": "sha512-0YCaSCq2VRIebiaUviZNs0cBz1kg5kVS2UKUfNIx8YVs1cN3AV7NTctO5FOKBA+UT2BPJIWZauYHPqJODG50cg=="
+    },
+    {
+      "package": "regex-utilities",
+      "version": "2.3.0",
+      "publishedAt": "2024-08-31T18:40:34.903Z",
+      "integrity": "sha512-8VhliFJAWRaUiVvREIiW2NXXTmHs4vMNnSzuJVhscgmGav3g9VDxLrQndI3dZZVVdp0ZO/5v0xmX516/7M9cng=="
+    },
+    {
       "package": "regexpu-core",
       "version": "6.5.4",
       "publishedAt": "2026-11-05T03:19:01.515Z",
@@ -6904,6 +7516,54 @@
       "version": "0.14.1",
       "publishedAt": "2026-11-01T17:34:27.627Z",
       "integrity": "sha512-IeYboCLG1KBNRksrZQIZ1SV5KVWZiR0ikFokOcA0n63vLvlaFvCsfxN+fd4aXwL0KW3YD+ByRzIgo9ZAHdbldw=="
+    },
+    {
+      "package": "rehype-harden",
+      "version": "1.1.9",
+      "publishedAt": "2026-11-06T17:55:57.894Z",
+      "integrity": "sha512-MdIR9vx9nPo7dTRC2DLb8Ywdx2oDcIuLAFKGA5CmTidkuxli55iRjfMvXL/Lqw7cRG4qMQj441AXxJ5Yw9nC9w=="
+    },
+    {
+      "package": "rehype-raw",
+      "version": "7.0.0",
+      "publishedAt": "2023-08-26T10:03:47.145Z",
+      "integrity": "sha512-/aE8hCfKlQeA8LmyeyQvQF3eBiLRGNlfBJEvWH7ivp9sBqs7TNqBL5X3v157rM4IFETqDnIOO+z5M/biZbo9Ww=="
+    },
+    {
+      "package": "rehype-sanitize",
+      "version": "6.0.0",
+      "publishedAt": "2023-08-26T11:11:05.469Z",
+      "integrity": "sha512-CsnhKNsyI8Tub6L4sm5ZFsme4puGfc6pYylvXo1AeqaGbjOYyzNv3qZPwvs0oMJ39eryyeOdmxwUIo94IpEhqg=="
+    },
+    {
+      "package": "remark-gfm",
+      "version": "4.0.1",
+      "publishedAt": "2025-02-10T12:43:10.735Z",
+      "integrity": "sha512-1quofZ2RQ9EWdeN34S79+KExV1764+wCUGop5CPL1WGdD0ocPpu91lzPGbwWMECpEpd42kJGQwzRfyov9j4yNg=="
+    },
+    {
+      "package": "remark-parse",
+      "version": "11.0.0",
+      "publishedAt": "2023-09-18T09:42:28.170Z",
+      "integrity": "sha512-FCxlKLNGknS5ba/1lmpYijMUzX2esxW5xQqjWxw2eHFfS2MSdaHVINFmhjo+qN1WhZhNimq0dZATN9pH0IDrpA=="
+    },
+    {
+      "package": "remark-rehype",
+      "version": "11.1.2",
+      "publishedAt": "2025-04-02T13:46:59.156Z",
+      "integrity": "sha512-Dh7l57ianaEoIpzbp0PC9UKAdCSVklD8E5Rpw7ETfbTl3FqcOOgq5q2LVDhgGCkaBv7p24JXikPdvhhmHvKMsw=="
+    },
+    {
+      "package": "remark-stringify",
+      "version": "11.0.0",
+      "publishedAt": "2023-09-18T09:43:14.397Z",
+      "integrity": "sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw=="
+    },
+    {
+      "package": "remend",
+      "version": "1.5.1",
+      "publishedAt": "2026-11-24T16:12:25.269Z",
+      "integrity": "sha512-Mvum2BFoAlLukpqIb5bCzzvjdNQk4w9OasdKEUuVkXTEPlWpiN3pRCbbSgOXWZIxbQFB16YL/s4D7PMnQ3oU5Q=="
     },
     {
       "package": "require-directory",
@@ -7146,6 +7806,12 @@
       "integrity": "sha512-PcByqNyT/38F2kDNi006HAMRJaULuBzq/FOsw3qdZvX/GA9W/jamDaRskgHjubHiftXK5sIFxLNkvrXUwcof6Q=="
     },
     {
+      "package": "shiki",
+      "version": "4.6.0",
+      "publishedAt": "2026-11-02T04:36:18.499Z",
+      "integrity": "sha512-imjLsVHgPuWhvpU3P+zOekvMYqnel7QmKsFC4Sn0fCuAvaaalBsxwKEsrU8Ko5BdFnZA6Go/8a0RzahS634UgA=="
+    },
+    {
       "package": "signal-exit",
       "version": "3.0.7",
       "publishedAt": "2022-02-03T21:05:34.544Z",
@@ -7224,6 +7890,12 @@
       "integrity": "sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w=="
     },
     {
+      "package": "space-separated-tokens",
+      "version": "2.0.2",
+      "publishedAt": "2022-11-14T08:54:14.011Z",
+      "integrity": "sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q=="
+    },
+    {
       "package": "split-on-first",
       "version": "1.1.0",
       "publishedAt": "2019-04-23T09:01:07.066Z",
@@ -7284,6 +7956,12 @@
       "integrity": "sha512-uyQK/mx5QjHun80FLJTfaWE7JtwfRMKBLkMne6udYOmvH0CawotVa7TfgYHzAnpphn4+TweIx1QKMnRIbipmUg=="
     },
     {
+      "package": "streamdown",
+      "version": "2.8.1",
+      "publishedAt": "2026-11-24T16:14:57.379Z",
+      "integrity": "sha512-upkaPZx6gZpQcZWKQdDU/AJxqlMNWykDCwZqr0H8iGk2u/qGgwZoZxAIrSKz/E2wYW2+6XxiTkv+kRPDn7AoHw=="
+    },
+    {
       "package": "strict-uri-encode",
       "version": "2.0.0",
       "publishedAt": "2016-10-11T20:09:00.764Z",
@@ -7294,6 +7972,12 @@
       "version": "4.2.3",
       "publishedAt": "2021-09-23T17:17:21.341Z",
       "integrity": "sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g=="
+    },
+    {
+      "package": "stringify-entities",
+      "version": "4.0.5",
+      "publishedAt": "2026-11-20T13:08:14.825Z",
+      "integrity": "sha512-jNuI2fNNw5ecxrWmgm90R3iH0Kc/94AQwoQWoSUYphWzvmUA2pjFG34H56Z7Z3FkvH3FpYwwewKAa97oQnPFhw=="
     },
     {
       "package": "strip-ansi",
@@ -7342,6 +8026,12 @@
       "version": "1.0.2",
       "publishedAt": "2025-11-01T13:27:10.071Z",
       "integrity": "sha512-zOh9jPYI+xrNOyisSelgym4tolKTJCQd5GBhK0+0xJvcYDcwlOoxF/rnFKQ2KRZknXSG9jWAp66fwP6AxN9STg=="
+    },
+    {
+      "package": "style-to-object",
+      "version": "2.0.2",
+      "publishedAt": "2026-07-06T05:52:19.836Z",
+      "integrity": "sha512-QmbXPUylqU80HAgTOJeEOdbA40W9KtxmjMhQy+tq+b8F2aoh3aQLuy82hh2jm2qsC9hR9eI0+eQidTMydKcqRA=="
     },
     {
       "package": "styled-jsx",
@@ -7506,6 +8196,18 @@
       "integrity": "sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw=="
     },
     {
+      "package": "trim-lines",
+      "version": "3.0.1",
+      "publishedAt": "2022-07-03T12:54:20.493Z",
+      "integrity": "sha512-kRj8B+YHZCc9kQYdWfJB2/oUl9rA99qbowYYBtr4ui4mZyAQ2JpvVBd/6U2YloATfqBhBTSMhTpgBHtU0Mf3Rg=="
+    },
+    {
+      "package": "trough",
+      "version": "2.2.0",
+      "publishedAt": "2024-02-05T15:27:09.053Z",
+      "integrity": "sha512-tmMpK00BjZiUyVyvrBK7knerNgmgvcV/KLVyuma/SC+TQN167GrMRciANTz09+k3zW8L8t60jWO1GpfkZdjTaw=="
+    },
+    {
       "package": "tsconfig-paths",
       "version": "4.2.0",
       "publishedAt": "2023-03-29T20:47:10.433Z",
@@ -7638,6 +8340,42 @@
       "integrity": "sha512-x7bc76x0bm4prf1VLg79uhAzKw8DVboClSN5VxJuQ+LKDOVEW9CdH+VY7SP+vX7xCYQqzzgQpFqz15zeLvAtZQ=="
     },
     {
+      "package": "unified",
+      "version": "11.0.5",
+      "publishedAt": "2024-06-19T12:33:43.464Z",
+      "integrity": "sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA=="
+    },
+    {
+      "package": "unist-util-is",
+      "version": "6.0.1",
+      "publishedAt": "2025-10-16T18:01:47.398Z",
+      "integrity": "sha512-LsiILbtBETkDz8I9p1dQ0uyRUWuaQzd/cuEeS1hoRSyW5E5XGmTzlwY1OrNzzakGowI9Dr/I8HVaw4hTtnxy8g=="
+    },
+    {
+      "package": "unist-util-position",
+      "version": "5.0.0",
+      "publishedAt": "2023-07-07T09:59:34.316Z",
+      "integrity": "sha512-fucsC7HjXvkB5R3kTCO7kUjRdrS0BJt3M/FPxmHMBOm8JQi2BsHAHFsy27E0EolP8rp0NzXsJ+jNPyDWvOJZPA=="
+    },
+    {
+      "package": "unist-util-stringify-position",
+      "version": "4.0.0",
+      "publishedAt": "2023-07-07T10:09:26.763Z",
+      "integrity": "sha512-0ASV06AAoKCDkS2+xw5RXJywruurpbC4JZSm7nr7MOt1ojAzvyyaO+UxZf18j8FCF6kmzCZKcAgN/yu2gm2XgQ=="
+    },
+    {
+      "package": "unist-util-visit",
+      "version": "5.2.0",
+      "publishedAt": "2026-10-24T18:44:36.789Z",
+      "integrity": "sha512-fpsYs/VVoZxfGY9/j3FQpZmN8wdLJaV1Pt38AaJNZu9uKIHcFU3halCdBveEq1HGKO1OEfJY65w1zvoFV1b3qQ=="
+    },
+    {
+      "package": "unist-util-visit-parents",
+      "version": "6.1.0",
+      "publishedAt": "2026-10-24T17:49:56.518Z",
+      "integrity": "sha512-vKXxz6O38sKDj1mtx/k2cWvkkFBuYGx6uGrlzBkVeWCRF/F8sdI0j3Wbkz/5rVNRRuVc8UrgRdbCxNhmYXgP3w=="
+    },
+    {
       "package": "uniwind",
       "version": "1.12.2",
       "publishedAt": "2026-10-05T10:08:24.490Z",
@@ -7710,6 +8448,24 @@
       "integrity": "sha512-ZFkClGpWyI2WUQjdLJ/BaGuV6AVQiJ3uELGk3OYtP+B6yCO7Cmn9vPFXVJkRaGkOJu3m8bQMgtyzNHixULceQA=="
     },
     {
+      "package": "vfile",
+      "version": "6.0.3",
+      "publishedAt": "2024-08-27T09:12:42.377Z",
+      "integrity": "sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q=="
+    },
+    {
+      "package": "vfile-location",
+      "version": "5.0.4",
+      "publishedAt": "2026-11-06T15:23:43.532Z",
+      "integrity": "sha512-vEvxatYZCIpNvzGk2UD+u4I/sZkSKoOsdRCbkOIsN73QpJbriJ1qvvBAL1PeI0y55Leoqf7pORbaSPpG/smmOg=="
+    },
+    {
+      "package": "vfile-message",
+      "version": "4.0.4",
+      "publishedAt": "2026-11-06T16:20:13.499Z",
+      "integrity": "sha512-66ycRswIkNmHH9PHku7ADtv5RVwgIrOcuv3J8Svz6h4qgGRrKVa+9/neuKyJZUXyOpYwLTvS+whZ4R2urHHgQg=="
+    },
+    {
       "package": "victory-vendor",
       "version": "37.4.1",
       "publishedAt": "2026-10-26T19:29:27.530Z",
@@ -7738,6 +8494,12 @@
       "version": "1.0.1",
       "publishedAt": "2016-05-30T03:56:57.274Z",
       "integrity": "sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg=="
+    },
+    {
+      "package": "web-namespaces",
+      "version": "2.0.1",
+      "publishedAt": "2021-11-05T18:13:56.968Z",
+      "integrity": "sha512-bKr1DkiNa2krS7qxNtdrtHAmzuYGFQLiQ13TsorsdT6ULTkPLKuu5+GsFpDlg6JFjUTwX2DyhMPG2be8uPrqsQ=="
     },
     {
       "package": "web-vitals",
@@ -7924,6 +8686,12 @@
       "version": "4.6.7",
       "publishedAt": "2026-10-12T16:29:37.778Z",
       "integrity": "sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg=="
+    },
+    {
+      "package": "zwitch",
+      "version": "2.0.4",
+      "publishedAt": "2022-11-16T09:09:14.038Z",
+      "integrity": "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="
     }
   ]
 }

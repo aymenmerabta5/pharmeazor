@@ -1,9 +1,7 @@
 export type WorkspaceDestination =
   | "/dashboard"
   | "/agent"
-  | "/storage"
   | "/settings/billing"
-  | "/pdf"
   | "/profile"
   | "/settings"
   | "/admin/users";
@@ -11,9 +9,7 @@ export type WorkspaceDestination =
 export const WORKSPACE_NAVIGATION = [
   { path: "/dashboard", label: "dashboard", match: "subtree" },
   { path: "/agent", label: "agent", match: "subtree" },
-  { path: "/storage", label: "storage", match: "subtree" },
   { path: "/settings/billing", label: "billing", match: "exact" },
-  { path: "/pdf", label: "pdf", match: "subtree" },
   { path: "/profile", label: "profile", match: "subtree" },
   { path: "/settings", label: "settings", match: "subtree" },
   { path: "/admin/users", label: "admin", match: "subtree" },

@@ -55,11 +55,6 @@ export function Header(): React.JSX.Element {
               <Text>{t("agent")}</Text>
             </Button>
           </Link>
-          <Link href="/pdf" asChild>
-            <Button variant="ghost" size="sm">
-              <Text>{t("pdf")}</Text>
-            </Button>
-          </Link>
           <Link href="/billing" asChild>
             <Button variant="ghost" size="sm">
               <Text>{t("billing")}</Text>

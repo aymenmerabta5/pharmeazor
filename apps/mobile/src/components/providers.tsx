@@ -65,8 +65,6 @@ function AppNavigation() {
 
             <Stack.Screen name="billing" options={{ title: t("billing") }} />
             <Stack.Screen name="agent" options={{ title: t("agent") }} />
-            <Stack.Screen name="pdf" options={{ title: t("pdf") }} />
-            <Stack.Screen name="storage" options={{ title: t("storage") }} />
           </Stack.Protected>
         </Stack>
       )}

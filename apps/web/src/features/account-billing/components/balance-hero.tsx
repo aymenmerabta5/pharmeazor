@@ -36,8 +36,10 @@ export function BalanceHero({ balanceMinor }: { balanceMinor: number }): React.J
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button render={<Link href="#topup" />}>{t("topUp")}</Button>
-          <Button variant="outline" render={<Link href="/pricing" />}>
+          <Button render={<Link href="#topup" />} nativeButton={false}>
+            {t("topUp")}
+          </Button>
+          <Button variant="outline" render={<Link href="/pricing" />} nativeButton={false}>
             {t("browsePlans")}
             <ArrowUpRight className="size-4" aria-hidden />
           </Button>

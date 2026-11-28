@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { answerDisplayText, answerSections, extractSources } from "../model";
 import { AgentFollowUps } from "./agent-follow-ups";
+import { AgentMarkdown } from "./agent-markdown";
 import { AgentSources } from "./agent-sources";
 
 export function AgentAnswer({
@@ -24,7 +25,7 @@ export function AgentAnswer({
   const t = useSurfaceTranslations("agent");
   const display = answerSections(text);
   const sources = extractSources(text);
-  if (!display.headline) return null;
+  if (!display.headline && !display.body) return null;
 
   const copyAnswer = async (): Promise<void> => {
     try {
@@ -44,19 +45,20 @@ export function AgentAnswer({
         <Plus className="size-4" strokeWidth={2.4} />
       </span>
       <div className="min-w-0 flex-1">
-        <h2
-          dir="auto"
-          className="text-[1.7rem] font-bold leading-[1.15] tracking-[-0.03em] text-foreground sm:text-[1.9rem]"
-        >
-          {display.headline}
-        </h2>
-        {display.body ? (
-          <p
+        {display.headline ? (
+          <h2
             dir="auto"
-            className="mt-4 whitespace-pre-wrap text-[0.95rem] leading-7 text-foreground/90"
+            className="text-[1.7rem] font-bold leading-[1.15] tracking-[-0.03em] text-foreground sm:text-[1.9rem]"
           >
-            {display.body}
-          </p>
+            {display.headline}
+          </h2>
+        ) : null}
+        {display.body ? (
+          <AgentMarkdown
+            text={display.body}
+            streaming={busy && isLast}
+            className={display.headline ? "mt-4" : undefined}
+          />
         ) : null}
         <AgentSources sources={sources} />
         <p className="mt-4 text-xs leading-5 text-muted-foreground">{t("patientContextNote")}</p>

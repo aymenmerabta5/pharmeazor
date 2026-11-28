@@ -56,12 +56,13 @@ export function CheckoutReturnView({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Button render={<Link href={succeeded ? "/" : "/pricing"} />}>
+          <Button render={<Link href={succeeded ? "/" : "/pricing"} />} nativeButton={false}>
             {succeeded ? t("startChatting") : t("backToPricing")}
           </Button>
           <Button
             variant="outline"
             render={<Link href={succeeded ? "/settings/billing" : "/pricing"} />}
+            nativeButton={false}
           >
             {succeeded ? t("viewBilling") : t("backToPricing")}
           </Button>

@@ -34,6 +34,7 @@ export function AgentConversation({
       className="flex-1"
       contentContainerClassName="gap-3 px-4 py-4"
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       {messages.map((message) =>
         message.role === "user" ? (
