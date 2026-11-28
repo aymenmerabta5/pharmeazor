@@ -10,6 +10,7 @@ import {
   FileText,
   Settings2,
   ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import { useSurfaceTranslations } from "@/lib/translations";
 import type { WorkspaceIdentity } from "./workspace-identity";
@@ -23,6 +24,7 @@ const ICONS = {
   storage: FolderOpen,
   billing: CreditCard,
   pdf: FileText,
+  profile: UserRound,
   settings: Settings2,
   admin: ShieldCheck,
 } as const;

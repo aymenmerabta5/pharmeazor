@@ -11,6 +11,7 @@ describe("protected paths", () => {
   it("protects the workspace routes", () => {
     expect(isProtectedPath("/dashboard")).toBe(true);
     expect(isProtectedPath("/admin")).toBe(true);
+    expect(isProtectedPath("/profile")).toBe(true);
     expect(isProtectedPath("/settings")).toBe(true);
     expect(isProtectedPath("/settings/billing")).toBe(true);
     expect(isProtectedPath("/checkout")).toBe(true);

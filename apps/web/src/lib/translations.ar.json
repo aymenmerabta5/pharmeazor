@@ -66,6 +66,7 @@
     "jobs": "المهام",
     "pdf": "PDF",
     "billing": "الفوترة",
+    "profile": "الملف الشخصي",
     "settings": "الإعدادات",
     "admin": "الإدارة",
     "users": "المستخدمون",
@@ -821,6 +822,41 @@
       "quickStartServices": "يوضح ملف README كيفية إعداد الخدمات التي اخترتها."
     }
   },
+  "profile": {
+    "kicker": "الحساب",
+    "title": "الملف الشخصي",
+    "description": "هويتك ومساحة عملك والإعدادات التي تحافظ على أمان حسابك.",
+    "editProfile": "تعديل الملف الشخصي",
+    "quickLinksTitle": "روابط سريعة",
+    "quickLinksDescription": "انتقل إلى الأجزاء التي تستخدمها أكثر في مساحة العمل.",
+    "quickLinks": {
+      "dashboardDescription": "نظرة عامة على مساحة العمل",
+      "agentDescription": "اسأل مساعد الصيدلية",
+      "billingDescription": "الرصيد والخطة والإيصالات",
+      "storageDescription": "الملفات والمرفقات",
+      "pdfDescription": "إنشاء مستند ومشاركته",
+      "settingsDescription": "الملف الشخصي والأمان والجلسات",
+      "workspaceDescription": "الأعضاء والفرق والدعوات",
+      "adminDescription": "إدارة وصول المستخدمين"
+    },
+    "accountTitle": "تفاصيل الحساب",
+    "accountDescription": "الهوية التي تتعرف عليها مساحة العمل هذه.",
+    "nameLabel": "الاسم",
+    "nameNotSet": "الاسم غير محدد",
+    "emailLabel": "البريد الإلكتروني",
+    "roleLabel": "الدور",
+    "emailStatusLabel": "حالة البريد الإلكتروني",
+    "verified": "موثّق",
+    "unverified": "غير موثّق",
+    "signOut": "تسجيل الخروج",
+    "signingOut": "جارٍ تسجيل الخروج...",
+    "signOutDescription": "إنهاء هذه الجلسة على هذا الجهاز.",
+    "roles": {
+      "user": "عضو",
+      "admin": "مسؤول",
+      "superAdmin": "مسؤول أعلى"
+    }
+  },
   "settings": {
     "title": "الإعدادات",
     "description": "أدر الحساب والأمان والجلسات وتفضيلات مساحة العمل.",
@@ -1098,6 +1134,8 @@
     "dashboardDescription": "أدر مساحة عمل pharmeazor.",
     "settingsTitle": "الإعدادات",
     "settingsDescription": "أدر حسابك والأمان والجلسات النشطة.",
+    "profileTitle": "الملف الشخصي",
+    "profileDescription": "هوية حسابك وروابطك السريعة وإعدادات مساحة عملك.",
     "notFoundTitle": "الصفحة غير موجودة",
     "errorTitle": "خطأ في التطبيق",
     "maintenanceTitle": "الصيانة",

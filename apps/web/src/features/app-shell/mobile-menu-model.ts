@@ -52,6 +52,7 @@ export function mobileMenuDestinations({
     link("/storage", header("storage"), "subtree"),
     link("/pdf", header("pdf"), "subtree"),
     link("/settings/billing", header("billing"), "exact"),
+    link("/profile", header("profile"), "subtree"),
     link("/settings", header("settings"), "subtree"),
     ...(identity.user.role === "admin" ? [link("/admin/users", header("admin"), "subtree")] : []),
   ];

@@ -66,6 +66,7 @@
     "jobs": "Tâches",
     "pdf": "PDF",
     "billing": "Facturation",
+    "profile": "Profil",
     "settings": "Paramètres",
     "admin": "Administration",
     "users": "Utilisateurs",
@@ -821,6 +822,41 @@
       "quickStartServices": "Votre README explique comment configurer les services sélectionnés."
     }
   },
+  "profile": {
+    "kicker": "Compte",
+    "title": "Profil",
+    "description": "Votre identité, votre espace de travail et les réglages qui protègent votre compte.",
+    "editProfile": "Modifier le profil",
+    "quickLinksTitle": "Accès rapides",
+    "quickLinksDescription": "Accédez aux parties de l’espace de travail que vous utilisez le plus.",
+    "quickLinks": {
+      "dashboardDescription": "Vue d’ensemble de l’espace de travail",
+      "agentDescription": "Interroger l’assistant pharmacie",
+      "billingDescription": "Solde, formule et reçus",
+      "storageDescription": "Fichiers et pièces jointes",
+      "pdfDescription": "Générer et partager un document",
+      "settingsDescription": "Profil, sécurité et sessions",
+      "workspaceDescription": "Membres, équipes et invitations",
+      "adminDescription": "Gérer l’accès des utilisateurs"
+    },
+    "accountTitle": "Détails du compte",
+    "accountDescription": "L’identité reconnue par cet espace de travail.",
+    "nameLabel": "Nom",
+    "nameNotSet": "Nom non renseigné",
+    "emailLabel": "E-mail",
+    "roleLabel": "Rôle",
+    "emailStatusLabel": "Statut de l’e-mail",
+    "verified": "Vérifié",
+    "unverified": "Non vérifié",
+    "signOut": "Se déconnecter",
+    "signingOut": "Déconnexion...",
+    "signOutDescription": "Mettre fin à cette session sur cet appareil.",
+    "roles": {
+      "user": "Membre",
+      "admin": "Admin",
+      "superAdmin": "Super administrateur"
+    }
+  },
   "settings": {
     "title": "Paramètres",
     "description": "Gérez le compte, la sécurité, les sessions et les préférences de l'espace de travail.",
@@ -1098,6 +1134,8 @@
     "dashboardDescription": "Gérez votre espace de travail pharmeazor.",
     "settingsTitle": "Paramètres",
     "settingsDescription": "Gérez votre compte, la sécurité et les sessions actives.",
+    "profileTitle": "Profil",
+    "profileDescription": "L’identité de votre compte, vos accès rapides et les réglages de votre espace de travail.",
     "notFoundTitle": "Page introuvable",
     "errorTitle": "Erreur de l'application",
     "maintenanceTitle": "Maintenance",

@@ -66,6 +66,7 @@
     "jobs": "Jobs",
     "pdf": "PDF",
     "billing": "Billing",
+    "profile": "Profile",
     "settings": "Settings",
     "admin": "Admin",
     "users": "Users",
@@ -1137,6 +1138,8 @@
     "dashboardDescription": "Manage your Pharmeazor workspace.",
     "settingsTitle": "Settings",
     "settingsDescription": "Manage your account, security, and active sessions.",
+    "profileTitle": "Profile",
+    "profileDescription": "Your account identity, quick links, and workspace settings.",
     "notFoundTitle": "Page not found",
     "errorTitle": "Application error",
     "maintenanceTitle": "Maintenance",
@@ -1415,6 +1418,41 @@
     "railUnavailable": "That payment method is not available right now. Choose another one.",
     "checkoutFailed": "We could not start the checkout. Try again in a moment.",
     "balanceUnavailable": "Your balance could not be read. Refresh the page and try again."
+  },
+  "profile": {
+    "kicker": "Account",
+    "title": "Profile",
+    "description": "Your identity, your workspace, and the settings that keep your account secure.",
+    "editProfile": "Edit profile",
+    "quickLinksTitle": "Quick links",
+    "quickLinksDescription": "Jump to the parts of the workspace you use most.",
+    "quickLinks": {
+      "dashboardDescription": "Workspace overview",
+      "agentDescription": "Ask the pharmacy assistant",
+      "billingDescription": "Balance, plan, and receipts",
+      "storageDescription": "Files and attachments",
+      "pdfDescription": "Generate and share a document",
+      "settingsDescription": "Profile, security, and sessions",
+      "workspaceDescription": "Members, teams, and invitations",
+      "adminDescription": "Manage user access"
+    },
+    "accountTitle": "Account details",
+    "accountDescription": "The identity this workspace recognises.",
+    "nameLabel": "Name",
+    "nameNotSet": "Name not set",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "emailStatusLabel": "Email status",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "signOut": "Sign out",
+    "signingOut": "Signing out...",
+    "signOutDescription": "End this session on this device.",
+    "roles": {
+      "user": "Member",
+      "admin": "Admin",
+      "superAdmin": "Super admin"
+    }
   },
   "home": {
     "navHowItWorks": "How it works",
