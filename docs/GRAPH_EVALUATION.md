@@ -1,9 +1,9 @@
 # Knowledge-graph validation and evaluation
 
-**Status:** implemented as an offline, deterministic evaluation framework.  
-**Taxonomies:** `entity-mention-taxonomy-v0.1`, `relationship-candidate-taxonomy-v0.1`, `entity-link-candidate-taxonomy-v0.1` — all temporary and unapproved.  
-**Gold data:** the committed dataset is an empty manual-annotation scaffold. No labels are shipped and no metric in this repository is a baseline yet.  
-**Review gate:** Person 1 must review the taxonomies and the gold labels before a score can support graph approval or publication.
+- **Status:** implemented as an offline, deterministic evaluation framework.
+- **Taxonomies:** `entity-mention-taxonomy-v0.1`, `relationship-candidate-taxonomy-v0.1`, `entity-link-candidate-taxonomy-v0.1` — all temporary and unapproved.
+- **Gold data:** the committed dataset is an empty manual-annotation scaffold. No labels are shipped and no metric in this repository is a baseline yet.
+- **Review gate:** Person 1 must review the taxonomies and the gold labels before a score can support graph approval or publication.
 
 This stage validates the candidate entity, relationship, and entity-link
 artifacts and scores them where manually labelled gold data exists. It does not
