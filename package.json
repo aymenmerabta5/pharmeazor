@@ -47,6 +47,7 @@
     "retrieval:relationships:export": "bun --conditions=react-server packages/api/src/workers/retrieval/export-relationships.ts",
     "retrieval:links:export": "bun --conditions=react-server packages/api/src/workers/retrieval/export-entity-links.ts",
     "retrieval:graph:import": "bun --conditions=react-server packages/api/src/workers/retrieval/import-graph.ts",
+    "retrieval:graph:evaluate": "bun --conditions=react-server packages/api/src/workers/retrieval/evaluate-graph.ts",
     "retrieval:fetch:vectors": "python tooling/embedding-lab/fetch_artifact.py",
     "retrieval:fetch:vectors:check": "python tooling/embedding-lab/fetch_artifact.py --validate-only",
     "retrieval:import:r2": "bun --conditions=react-server --env-file=.env.local packages/api/src/workers/retrieval/import-r2.ts",

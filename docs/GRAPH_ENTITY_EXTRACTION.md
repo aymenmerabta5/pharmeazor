@@ -229,6 +229,10 @@ No LLM-as-a-Judge is used. The evaluation protocol is deterministic:
 - type coverage by source family and language;
 - human review of the temporary taxonomy and a stratified sample.
 
+The implemented framework in [GRAPH_EVALUATION.md](./GRAPH_EVALUATION.md) scores
+strict span/type matches, relaxed span matches, per-kind metrics, and provenance
+coverage. The committed gold dataset is empty, so no score is a baseline yet.
+
 ## 10. Remaining limitations
 
 - The taxonomy has not been reviewed by Person 1.
@@ -244,4 +248,7 @@ No LLM-as-a-Judge is used. The evaluation protocol is deterministic:
 - Text evidence is embedded in each mention JSONL record. A future database
   staging design must split it into a separate `EvidenceSpan` row without
   changing the source span/hash invariants.
-- No graph evaluation baseline or golden set exists.
+- No graph evaluation baseline or golden set exists. The offline evaluation
+  framework in [GRAPH_EVALUATION.md](./GRAPH_EVALUATION.md) is implemented, but
+  the committed gold dataset is an empty annotation scaffold and no score is a
+  baseline.

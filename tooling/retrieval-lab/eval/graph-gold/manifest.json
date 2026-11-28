@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "kg-gold-v1",
+  "protocolVersion": "kg-gold-v1",
+  "status": "awaiting_manual_annotation",
+  "description": "Manual gold annotations for candidate entity, relationship, and entity-link evaluation. No labels are shipped. Fill the three JSONL files from the review protocol in docs/GRAPH_EVALUATION.md before treating any score as a baseline.",
+  "annotators": [],
+  "documents": [],
+  "structuredRows": []
+}

@@ -227,6 +227,11 @@ No LLM-as-a-Judge is used. The evaluation protocol is deterministic:
   forms, holders, or jurisdictions;
 - false-split review for synonyms and cross-source aliases.
 
+The implemented framework in [GRAPH_EVALUATION.md](./GRAPH_EVALUATION.md) scores
+same-entity and different-entity gold pairs, reports false merges and false
+splits, and excludes gold pairs whose endpoints were never extracted. The
+committed gold dataset is empty, so no score is a baseline yet.
+
 A confident cluster is still a candidate grouping. It must not be served as a
 canonical entity or used for graph answers until reviewed and promoted through a
 separate approved workflow.
@@ -246,4 +251,6 @@ separate approved workflow.
 - No canonical entities, entity resolution, database persistence, Neo4j
   population, or graph retrieval exists.
 - No manually labelled entity-link golden set or graph evaluation baseline
-  exists.
+  exists. The offline evaluation framework in
+  [GRAPH_EVALUATION.md](./GRAPH_EVALUATION.md) is implemented, but the committed
+  gold dataset is an empty annotation scaffold.
