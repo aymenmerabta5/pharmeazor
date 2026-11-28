@@ -219,6 +219,11 @@ No LLM-as-a-Judge is used. The evaluation protocol is deterministic:
 - structured-row provenance coverage;
 - human review of the temporary taxonomy and a stratified sample.
 
+The implemented framework in [GRAPH_EVALUATION.md](./GRAPH_EVALUATION.md) scores
+relationship kind plus both endpoint identities, validates support spans and
+rows, and reports per-kind precision and recall. The committed gold dataset is
+empty, so no score is a baseline yet.
+
 A relationship is a candidate observation, not a clinical assertion. It must not
 be used as an answer until reviewed and promoted by a separate approved
 workflow.
@@ -237,7 +242,9 @@ workflow.
   linking is documented separately in
   [GRAPH_ENTITY_LINKING.md](./GRAPH_ENTITY_LINKING.md).
 - No manually labelled relationship golden set or graph evaluation baseline
-  exists.
+  exists. The offline evaluation framework in
+  [GRAPH_EVALUATION.md](./GRAPH_EVALUATION.md) is implemented, but the committed
+  gold dataset is an empty annotation scaffold.
 - `product_has_storage_condition` was not observed in the current snapshot.
 - The relationship artifact is a large generated JSONL file and is not
   committed.

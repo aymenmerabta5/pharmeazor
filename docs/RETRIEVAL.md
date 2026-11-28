@@ -407,6 +407,9 @@ clusters without creating canonical entities. The approval-gated
 `retrieval:graph:import` worker validates those artifacts and can build or apply
 an ontology-mapped Neo4j plan. Its default validation mode is read-only; `--plan`
 and `--apply` require a recorded approval artifact matching exact checksums.
+`retrieval:graph:evaluate` is independent of Neo4j and the approval gate: it
+validates artifact evidence and computes entity, relationship, and entity-link
+metrics when manually labelled gold data exists. No gold labels are committed.
 None of these commands feeds the hybrid index, alters chunk IDs, resolves
 entities, publishes unapproved relationships, or implements graph retrieval. The
 temporary mention, relationship, and link taxonomies require Person 1 review
@@ -483,6 +486,8 @@ bun run retrieval:relationships:export -- --dry-run   # validate candidate relat
 bun run retrieval:relationships:export                # write candidate-only relationship artifacts
 bun run retrieval:links:export -- --dry-run           # validate candidate entity links; write nothing
 bun run retrieval:links:export                        # write candidate-only link artifacts
+bun run retrieval:graph:evaluate -- --dry-run         # validate artifacts and gold scopes; write nothing
+bun run retrieval:graph:evaluate                      # write a deterministic evaluation report
 bun run retrieval:graph:import -- --validate-only     # validate graph inputs; no Neo4j connection
 bun run retrieval:graph:import -- --plan --approval <approval.json>
 bun run retrieval:graph:import -- --apply --approval <approval.json>

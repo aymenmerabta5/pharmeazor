@@ -151,6 +151,18 @@ current ontology and all candidate taxonomies remain unapproved; do not
 fabricate an approval, and do not treat the example approval template as
 approval. See `docs/GRAPH_POPULATION.md`.
 
+Knowledge-graph validation and evaluation is implemented in
+`packages/modules/src/retrieval/kg/evaluation` with artifact readers and report
+writers in `packages/api/src/workers/retrieval/graph-evaluation*.ts`. It verifies
+artifact identities and checksums, validates evidence spans and provenance,
+detects duplicate/invalid/ambiguous candidates, and computes precision, recall,
+and F1 against manually labelled gold data. The committed gold dataset at
+`tooling/retrieval-lab/eval/graph-gold` is an empty annotation scaffold: no
+labels are shipped, so no scored baseline exists. The evaluator is offline and
+independent of Neo4j, PostgreSQL, and the approval gate.
+`bun run retrieval:graph:evaluate -- --dry-run` writes no files. See
+`docs/GRAPH_EVALUATION.md`.
+
 ### Do not
 
 - Do not ship naive single-query vector search. It fails roughly 40% of retrieval attempts before the model ever sees a chunk.
@@ -158,6 +170,7 @@ approval. See `docs/GRAPH_POPULATION.md`.
 - Do not add multi-agent retrieval loops before the golden set exists. They multiply cost and latency and hide which stage is failing.
 - Do not treat the model as the access-control layer, the injection scanner, or the citation validator. Those are code responsibilities.
 - Do not evaluate a retrieval change by reading a handful of answers.
+- Do not invent graph gold labels, treat the empty scaffold as a baseline, or present a partial-scope score as precision.
 
 ## Frontend Architecture
 

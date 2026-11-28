@@ -163,3 +163,4 @@ export {
   type GraphRelationshipPlan,
 } from "./kg/population/index";
 export { assertNormalized, parseNpy, type NpyDtype, type NpyMatrix } from "./npy";
+export * from "./kg/evaluation/index";
