@@ -1,1 +1,1 @@
-export { LoadingScreen as default } from "@/features/system/loading";
+export { DashboardSkeleton as default } from "@/features/dashboard/components/dashboard-skeleton";

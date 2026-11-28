@@ -1,7 +1,8 @@
 import type * as React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { compactIdentityId } from "../access";
 import type { WorkspaceMembers } from "../use-workspace-members";
@@ -24,7 +25,16 @@ export function MembersCard({
         <CardDescription>{t("membersPolicyDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="gap-3">
-        {loading ? <ActivityIndicator accessibilityLabel={t("members")} /> : null}
+        {loading ? (
+          <View className="gap-3">
+            {[0, 1].map((index) => (
+              <View key={index} className="gap-2 rounded-xl border border-border p-3">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </View>
+            ))}
+          </View>
+        ) : null}
         {model.members.map((member) => (
           <View key={member.id} className="gap-2 rounded-xl border border-border p-3">
             <Text>

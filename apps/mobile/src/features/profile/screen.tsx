@@ -1,8 +1,8 @@
 import type * as React from "react";
-import { ActivityIndicator, View } from "react-native";
 import { useTranslations } from "@/lib/i18n";
 import { useSignOut } from "@/features/app-shell/use-sign-out";
 import { ProfileView, type ProfileLink } from "./components/profile-view";
+import { ProfileSkeleton } from "./components/profile-skeleton";
 import { profileInitials, profileRole } from "./model";
 import { useProfileIdentity } from "./queries";
 
@@ -11,13 +11,7 @@ export function ProfileScreen(): React.JSX.Element {
   const { user, isPending } = useProfileIdentity();
   const { pending: signOutPending, signOut } = useSignOut();
 
-  if (isPending) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (isPending) return <ProfileSkeleton />;
 
   const role = profileRole(user);
   const name = typeof user?.name === "string" && user.name.trim() ? user.name : t("nameNotSet");

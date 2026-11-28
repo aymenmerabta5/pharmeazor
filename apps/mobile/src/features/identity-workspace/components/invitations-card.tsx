@@ -1,8 +1,9 @@
 import type * as React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import type { WorkspaceInvitations } from "../use-workspace-invitations";
 import { useTranslations } from "@/lib/i18n";
@@ -28,7 +29,16 @@ export function InvitationsCard({
         <CardDescription>{t("invitationsDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="gap-3">
-        {loading ? <ActivityIndicator accessibilityLabel={t("invitations")} /> : null}
+        {loading ? (
+          <View className="gap-3">
+            {[0, 1].map((index) => (
+              <View key={index} className="gap-2 rounded-xl border border-border p-3">
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="h-3 w-28" />
+              </View>
+            ))}
+          </View>
+        ) : null}
         {model.canWrite ? (
           <>
             <form.Field name="email">

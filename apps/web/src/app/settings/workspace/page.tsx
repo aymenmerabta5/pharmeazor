@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { RequestOwnedSnapshot } from "@/components/request-owned-snapshot";
-import { QueryAuthStatus } from "@/components/query-auth-boundary";
+import { WorkspaceSkeleton } from "@/features/identity-workspace/components/workspace-skeleton";
 import { IdentityWorkspace } from "@/features/identity-workspace/identity-workspace";
 import type { IdentityWorkspaceInitialData } from "@/features/identity-workspace/types";
 
@@ -21,7 +21,7 @@ async function WorkspaceData(): Promise<React.JSX.Element> {
   };
   const initialData: IdentityWorkspaceInitialData = await application.identity.workspace.snapshot();
   return (
-    <RequestOwnedSnapshot scope={scope}>
+    <RequestOwnedSnapshot scope={scope} fallback={<WorkspaceSkeleton />}>
       <IdentityWorkspace initialData={initialData} />
     </RequestOwnedSnapshot>
   );
@@ -29,7 +29,7 @@ async function WorkspaceData(): Promise<React.JSX.Element> {
 
 export default function WorkspacePage(): React.JSX.Element {
   return (
-    <Suspense fallback={<QueryAuthStatus />}>
+    <Suspense fallback={<WorkspaceSkeleton />}>
       <WorkspaceData />
     </Suspense>
   );

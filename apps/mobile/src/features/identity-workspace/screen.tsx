@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useWorkspaceSelection } from "./use-workspace-selection";
+import { WorkspaceSkeleton } from "./components/workspace-skeleton";
 import { WorkspaceOrganizations } from "./workspace-organizations";
 import { WorkspaceMembers } from "./workspace-members";
 import { WorkspaceTeams } from "./workspace-teams";
@@ -13,6 +14,7 @@ export function WorkspaceScreen(): React.JSX.Element {
   const t = useTranslations("workspace");
   const selection = useWorkspaceSelection();
   const { organizationId, teamId, permissions } = selection.queries;
+  if (permissions.isPending) return <WorkspaceSkeleton />;
   return (
     <ScrollView className="flex-1 bg-background" contentInsetAdjustmentBehavior="automatic">
       <View className="w-full max-w-[960px] self-center gap-5 p-5">
@@ -23,9 +25,6 @@ export function WorkspaceScreen(): React.JSX.Element {
           <Text className="text-3xl font-bold tracking-tight">{t("title")}</Text>
           <Text className="text-sm text-muted-foreground">{t("mobileDescription")}</Text>
         </View>
-        {permissions.isPending ? (
-          <Text accessibilityLiveRegion="polite">{t("checkingPermissions")}</Text>
-        ) : null}
         {permissions.hasError ? (
           <Alert variant="destructive" accessibilityRole="alert">
             <AlertDescription>{t("permissionsUnavailableDescription")}</AlertDescription>

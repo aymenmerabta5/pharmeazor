@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MaintenanceSkeleton } from "@/features/system/maintenance-skeleton";
 import { getSurfaceTranslations } from "@/lib/translations.server";
 
 export async function generateMetadata(): Promise<{ title: string; description: string }> {
@@ -51,17 +51,7 @@ async function MaintenanceContent(): Promise<React.JSX.Element> {
 }
 
 function MaintenanceFallback(): React.JSX.Element {
-  return (
-    <main
-      className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-lg flex-col gap-4 px-5 py-10 sm:px-8 sm:py-14"
-      aria-busy="true"
-    >
-      <Skeleton className="h-3 w-28" />
-      <Skeleton className="h-8 w-56" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-32 w-full" />
-    </main>
-  );
+  return <MaintenanceSkeleton />;
 }
 
 export default function MaintenancePage(): React.JSX.Element {

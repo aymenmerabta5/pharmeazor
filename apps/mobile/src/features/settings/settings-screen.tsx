@@ -1,5 +1,5 @@
 import type * as React from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { Link } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -8,6 +8,7 @@ import { useSurfaceTranslations } from "@/lib/translations";
 import { useSettingsIdentityQuery } from "./queries";
 import { useProfileForm } from "./use-profile-form";
 import { ProfileView } from "./components/profile-view";
+import { SettingsSkeleton } from "./components/settings-skeleton";
 import type { SettingsUser } from "./model";
 import { usePasswordForm } from "./use-password-form";
 import { useTwoFactorSettings } from "./use-two-factor-settings";
@@ -22,12 +23,7 @@ export function SettingsScreen(): React.JSX.Element {
   const t = useSurfaceTranslations("settings");
   const errors = useSurfaceTranslations("errors");
   const common = useSurfaceTranslations("common");
-  if (identity.isPending)
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator />
-      </View>
-    );
+  if (identity.isPending) return <SettingsSkeleton />;
   if (identity.error)
     return (
       <View className="flex-1 items-center justify-center gap-3 p-6">

@@ -1,8 +1,9 @@
 import type * as React from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { compactIdentityId } from "../access";
 import type { WorkspaceTeams } from "../use-workspace-teams";
@@ -24,7 +25,13 @@ export function TeamsCard({
         <CardDescription>{t("teamsDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="gap-3">
-        {loading ? <ActivityIndicator accessibilityLabel={t("teams")} /> : null}
+        {loading ? (
+          <View className="flex-row gap-2">
+            <Skeleton className="h-9 w-24 rounded-lg" />
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-20 rounded-lg" />
+          </View>
+        ) : null}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

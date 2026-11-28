@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { RequestOwnedSnapshot } from "@/components/request-owned-snapshot";
-import { QueryAuthStatus } from "@/components/query-auth-boundary";
+import { SettingsSkeleton } from "@/features/settings/components/settings-skeleton";
 import { ProfileCard } from "@/features/settings/profile-card";
 import { PasswordCard } from "@/features/settings/password-card";
 import { TwoFactorCard } from "@/features/settings/two-factor-card";
@@ -25,7 +25,7 @@ async function SettingsData(): Promise<React.JSX.Element> {
   };
   const initialSessions = await application.identity.sessions.list();
   return (
-    <RequestOwnedSnapshot scope={initialScope}>
+    <RequestOwnedSnapshot scope={initialScope} fallback={<SettingsSkeleton />}>
       <div className="flex min-w-0 flex-col gap-6">
         <ProfileCard initialUser={me.user} />
         <div className="grid items-start gap-6 xl:grid-cols-2">
@@ -42,7 +42,7 @@ async function SettingsData(): Promise<React.JSX.Element> {
 
 export default function SettingsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<QueryAuthStatus />}>
+    <Suspense fallback={<SettingsSkeleton />}>
       <SettingsData />
     </Suspense>
   );

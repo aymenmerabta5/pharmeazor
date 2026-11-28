@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { isAdminRole } from "@repo/auth/roles";
 import { createRequestApplicationForRequest } from "@repo/services/application";
 import { AgentPage } from "@/features/agent/page";
+import { AgentSkeleton } from "@/features/agent/components/agent-skeleton";
 import { canOpenAgent } from "@/lib/agent-access";
 import { isLiveSubscription, normalizeBillingSubscriptions } from "@/lib/billing-catalog";
 
@@ -35,11 +36,7 @@ async function AgentData({ question }: { question?: string }): Promise<React.JSX
 }
 
 function AgentLoading(): React.JSX.Element {
-  return (
-    <div className="agent-shell flex h-dvh items-center justify-center bg-background">
-      <div className="size-10 animate-pulse rounded-xl bg-muted" aria-hidden />
-    </div>
-  );
+  return <AgentSkeleton />;
 }
 
 export default async function AgentRoute({

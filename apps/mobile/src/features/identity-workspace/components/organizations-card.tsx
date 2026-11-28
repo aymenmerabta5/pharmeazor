@@ -1,8 +1,9 @@
 import type * as React from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import type { WorkspaceOrganizations } from "../use-workspace-organizations";
 import { useTranslations } from "@/lib/i18n";
@@ -18,7 +19,10 @@ export function OrganizationsCard({ model }: { model: WorkspaceOrganizations }):
       </CardHeader>
       <CardContent className="gap-3">
         {model.loading ? (
-          <ActivityIndicator accessibilityLabel={t("loadingOrganizations")} />
+          <View className="flex-row gap-2">
+            <Skeleton className="h-14 w-44 rounded-lg" />
+            <Skeleton className="h-14 w-44 rounded-lg" />
+          </View>
         ) : model.ready && organizations.length === 0 ? (
           <Text>{t("noOrganizations")}</Text>
         ) : null}

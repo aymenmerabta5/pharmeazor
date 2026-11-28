@@ -1,7 +1,7 @@
 import { designSystemContract } from "@repo/ui/contract";
 import * as React from "react";
 import type { Metadata } from "next";
-import { AppProviders } from "../components/providers";
+import { AppProviders, AppPageBoundary } from "../components/providers";
 import { AppShell } from "../components/app-shell";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
@@ -39,7 +39,9 @@ async function LocalizedApp({
       <script id="locale-request" dangerouslySetInnerHTML={{ __html: localeDocumentScript }} />
       <NextIntlClientProvider locale={locale} messages={messages}>
         <AppProviders>
-          <AppShell>{children}</AppShell>
+          <AppShell>
+            <AppPageBoundary>{children}</AppPageBoundary>
+          </AppShell>
         </AppProviders>
       </NextIntlClientProvider>
     </>

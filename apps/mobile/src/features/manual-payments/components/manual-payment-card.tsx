@@ -1,10 +1,11 @@
 import * as React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
+import { ManualHistoryPending, ManualSummaryPending } from "./manual-payment-pending";
 import type { ManualSummary, ManualPayment, ManualPaymentCopy } from "../types";
 export interface ManualPaymentCardProps {
   readonly copy: ManualPaymentCopy;
@@ -52,7 +53,7 @@ export function ManualPaymentCard({
             <AlertDescription>{copy.readFailed}</AlertDescription>
           </Alert>
         ) : null}
-        {summaryPending ? <ActivityIndicator accessibilityLabel={copy.loading} /> : null}
+        {summaryPending ? <ManualSummaryPending showBalance={showBalance} /> : null}
         {summary ? (
           <>
             {showBalance ? (
@@ -82,7 +83,7 @@ export function ManualPaymentCard({
         ) : null}
         <Text className="text-base font-semibold">{copy.history}</Text>
         {historyPending ? (
-          <ActivityIndicator accessibilityLabel={copy.loading} />
+          <ManualHistoryPending />
         ) : items?.length === 0 && !historyError ? (
           <Text className="text-sm text-muted-foreground">{copy.empty}</Text>
         ) : (

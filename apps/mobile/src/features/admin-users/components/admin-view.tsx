@@ -1,14 +1,16 @@
 import * as React from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { useTranslations } from "@/lib/i18n";
 
 import type { AdminScreenState } from "../screen";
+import { AdminSkeleton } from "./admin-skeleton";
 import { AdminCreateCard } from "./create-card";
 
 export function AdminView({ state }: { state: AdminScreenState }): React.JSX.Element {
@@ -21,12 +23,7 @@ export function AdminView({ state }: { state: AdminScreenState }): React.JSX.Ele
   const { identity, users, search, operations } = state;
   const { sessionPending, hasSession, applicationPending, isAdmin } = identity;
   const { pending, error } = operations;
-  if (sessionPending || (hasSession && applicationPending))
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
-      </View>
-    );
+  if (sessionPending || (hasSession && applicationPending)) return <AdminSkeleton />;
   if (!isAdmin)
     return (
       <View className="flex-1 items-center justify-center gap-3 bg-background p-6">
@@ -81,7 +78,25 @@ export function AdminView({ state }: { state: AdminScreenState }): React.JSX.Ele
                 <AlertDescription>{t("errors.requestFailed")}</AlertDescription>
               </Alert>
             ) : null}
-            {users.isPending ? <ActivityIndicator /> : null}
+            {users.isPending ? (
+              <View className="gap-3">
+                {[0, 1, 2].map((index) => (
+                  <View key={index} className="gap-2 rounded-xl border border-border p-3">
+                    <View className="flex-row items-start justify-between gap-3">
+                      <View className="flex-1 gap-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </View>
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                    </View>
+                    <View className="flex-row gap-2">
+                      <Skeleton className="h-8 w-24 rounded-lg" />
+                      <Skeleton className="h-8 w-24 rounded-lg" />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : null}
             {users.data && !users.isPending && !users.error && users.data.users.length === 0 ? (
               <Text className="text-sm text-muted-foreground">{t("list.emptyTitle")}</Text>
             ) : null}

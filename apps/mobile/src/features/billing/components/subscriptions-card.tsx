@@ -1,5 +1,6 @@
 import type * as React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,20 @@ export function SubscriptionsCard({
       </CardHeader>
       <CardContent className="gap-2">
         {isPending ? (
-          <ActivityIndicator accessibilityLabel={t("loadingSubscriptions")} />
+          <>
+            {[0, 1].map((index) => (
+              <View
+                key={index}
+                className="flex-row items-center justify-between rounded-lg border border-border px-3 py-2"
+              >
+                <View className="gap-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-32" />
+                </View>
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </View>
+            ))}
+          </>
         ) : subscriptions.length === 0 ? (
           readError ? null : (
             <Text className="text-sm text-muted-foreground">{t("noSubscriptionsTitle")}</Text>

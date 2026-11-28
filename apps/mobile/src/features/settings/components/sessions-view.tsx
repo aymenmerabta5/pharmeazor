@@ -1,13 +1,12 @@
-"use client";
 import type * as React from "react";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSurfaceTranslations } from "@/lib/translations";
 import { SettingsFeedback } from "./settings-field";
 
-import { ActivityIndicator } from "react-native";
 import type { IdentitySessions } from "../use-identity-sessions";
 export function SessionsView({ model }: { model: IdentitySessions }): React.JSX.Element {
   const t = useSurfaceTranslations("settings");
@@ -20,7 +19,14 @@ export function SessionsView({ model }: { model: IdentitySessions }): React.JSX.
       <CardContent className="gap-3">
         <SettingsFeedback error={model.error ? t("sessions.genericError") : null} />
         {model.isLoading ? (
-          <ActivityIndicator />
+          <View className="gap-3">
+            {[0, 1].map((index) => (
+              <View key={index} className="gap-2 rounded-xl border p-3">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-9 w-24 rounded-lg" />
+              </View>
+            ))}
+          </View>
         ) : model.readSucceeded && model.sessions.length === 0 ? (
           <Text className="text-sm text-muted-foreground">{t("sessions.empty")}</Text>
         ) : (
